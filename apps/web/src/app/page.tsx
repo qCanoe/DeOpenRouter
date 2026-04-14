@@ -40,7 +40,7 @@ export default function Page() {
   }, [nextId]);
 
   return (
-    <div className="min-h-screen font-mono text-sm sm:text-base selection:bg-inverse selection:text-inverse-fg">
+    <div className="min-h-screen flex flex-col font-mono text-sm sm:text-base selection:bg-inverse selection:text-inverse-fg">
       <header className="border-b-2 border-theme">
         <div className="p-4 sm:p-8 max-w-6xl mx-auto flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
@@ -103,7 +103,7 @@ export default function Page() {
         </div>
       </header>
 
-      <main className="p-4 sm:p-8 max-w-6xl mx-auto grid gap-12">
+      <main className="flex-1 w-full p-4 sm:p-8 max-w-6xl mx-auto grid gap-12 content-start">
         <section>
           <div className="border-b-2 border-theme mb-8 pb-3 flex justify-between items-end">
             <h2 className="text-xl sm:text-2xl font-bold uppercase tracking-wider">Available_Providers</h2>
@@ -124,7 +124,7 @@ export default function Page() {
         </section>
       </main>
       
-      <footer className="border-t-2 border-theme p-6 text-center text-xs font-bold text-muted uppercase tracking-widest mt-12 bg-theme">
+      <footer className="mt-auto border-t-2 border-theme p-6 text-center text-xs font-bold text-muted uppercase tracking-widest bg-theme">
         DeOpenRouter MVP {"//"} {new Date().getFullYear()} {"//"} On-chain trust {"//"} Off-chain inference
       </footer>
     </div>
