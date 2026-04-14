@@ -40,48 +40,91 @@ export default function Page() {
   }, [nextId]);
 
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold">DeOpenRouter MVP</h1>
-        <p className="text-sm text-neutral-600">
-          Local Anvil + mock API. Set <code>NEXT_PUBLIC_MARKETPLACE_ADDRESS</code> after deploy.
-        </p>
-        <div className="flex flex-wrap items-center gap-2">
-          {!isConnected ? (
-            <button
-              type="button"
-              className="rounded bg-black px-3 py-1.5 text-sm text-white"
-              onClick={() => connect({ connector: connectors[0] })}
-            >
-              Connect
-            </button>
-          ) : (
-            <button type="button" className="rounded border px-3 py-1.5 text-sm" onClick={() => disconnect()}>
-              Disconnect {address?.slice(0, 6)}…
-            </button>
-          )}
-          {chainId !== 31337 ? (
-            <button
-              type="button"
-              className="rounded border px-3 py-1.5 text-sm"
-              onClick={() => switchChain({ chainId: 31337 })}
-            >
-              Switch to Anvil (31337)
-            </button>
-          ) : (
-            <span className="text-sm text-green-700">Chain: Anvil</span>
-          )}
+    <div className="min-h-screen font-mono text-sm sm:text-base selection:bg-inverse selection:text-inverse-fg">
+      <header className="border-b-2 border-theme p-4 sm:p-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+          <h1 className="text-3xl sm:text-5xl font-bold tracking-tighter uppercase leading-none">
+            DeOpen<br className="hidden md:block"/>Router
+          </h1>
+          <p className="mt-3 text-muted uppercase tracking-widest text-xs font-semibold">
+            {"//"} Trust-minimized AI API Marketplace
+          </p>
+        </div>
+        
+        <div className="flex flex-col items-start md:items-end gap-3 text-xs uppercase tracking-widest">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-6 border border-theme p-3 bg-theme">
+            <div>
+              <span className="text-muted block text-[10px]">NETWORK</span>
+              <span className="font-bold">{chainId === 31337 ? 'ANVIL_LOCAL' : chainId}</span>
+            </div>
+            <div>
+              <span className="text-muted block text-[10px]">STATUS</span>
+              <span className="font-bold">
+                {isConnected ? (
+                  <span className="flex items-center gap-2"><span className="w-2 h-2 bg-foreground rounded-full animate-pulse"></span> ONLINE</span>
+                ) : (
+                  <span className="flex items-center gap-2"><span className="w-2 h-2 border border-foreground rounded-full"></span> OFFLINE</span>
+                )}
+              </span>
+            </div>
+          </div>
+          <div className="flex gap-2 mt-1 w-full sm:w-auto">
+            {!isConnected ? (
+              <button
+                type="button"
+                className="flex-1 sm:flex-none border-2 border-theme bg-inverse text-inverse-fg px-4 py-2 font-bold hover:bg-background hover:text-foreground transition-colors"
+                onClick={() => connect({ connector: connectors[0] })}
+              >
+                [ CONNECT_WALLET ]
+              </button>
+            ) : (
+              <button 
+                type="button" 
+                className="flex-1 sm:flex-none border-2 border-theme bg-background text-foreground px-4 py-2 font-bold hover:bg-inverse hover:text-inverse-fg transition-colors" 
+                onClick={() => disconnect()}
+              >
+                [ DISCONNECT: {address?.slice(0, 6)}… ]
+              </button>
+            )}
+            
+            {chainId !== 31337 && (
+              <button
+                type="button"
+                className="flex-1 sm:flex-none border-2 border-theme bg-background text-foreground px-4 py-2 font-bold hover:bg-inverse hover:text-inverse-fg transition-colors"
+                onClick={() => switchChain({ chainId: 31337 })}
+              >
+                [ SWITCH_TO_ANVIL ]
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
-      <section className="flex flex-col gap-3 rounded border p-4">
-        <h2 className="font-medium">Providers</h2>
-        {ids.length === 0 ? <p className="text-sm text-neutral-600">No providers yet.</p> : null}
-        {ids.map((id) => (
-          <ProviderRow key={id.toString()} marketplace={marketplace} providerId={id} mockApi={MOCK_API} />
-        ))}
-      </section>
-    </main>
+      <main className="p-4 sm:p-8 max-w-[1400px] mx-auto grid gap-12">
+        <section>
+          <div className="border-b-2 border-theme mb-8 pb-3 flex justify-between items-end">
+            <h2 className="text-xl sm:text-2xl font-bold uppercase tracking-wider">Available_Providers</h2>
+            <span className="text-muted text-sm font-bold">COUNT: {ids.length}</span>
+          </div>
+          
+          {ids.length === 0 ? (
+            <div className="border-2 border-theme p-12 text-center text-muted uppercase tracking-widest border-dashed font-bold">
+              &lt;NO_PROVIDERS_FOUND_ON_CHAIN&gt;
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8">
+              {ids.map((id) => (
+                <ProviderRow key={id.toString()} marketplace={marketplace} providerId={id} mockApi={MOCK_API} />
+              ))}
+            </div>
+          )}
+        </section>
+      </main>
+      
+      <footer className="border-t-2 border-theme p-6 text-center text-xs font-bold text-muted uppercase tracking-widest mt-12 bg-theme">
+        DeOpenRouter MVP {"//"} {new Date().getFullYear()} {"//"} On-chain trust {"//"} Off-chain inference
+      </footer>
+    </div>
   );
 }
 
@@ -100,11 +143,11 @@ function ProviderRow({
     functionName: "providers",
     args: [providerId],
   });
-  const [prompt, setPrompt] = useState("hello");
+  const [prompt, setPrompt] = useState("Explain proof of work simply.");
   const [lastHashes, setLastHashes] = useState<{ rq: string; rs: string } | null>(null);
   const { writeContractAsync, isPending } = useWriteContract();
 
-  if (!p) return <div className="text-sm">Loading provider {providerId.toString()}…</div>;
+  if (!p) return <div className="border-2 border-theme p-8 animate-pulse uppercase text-muted font-bold tracking-widest border-dashed">LOADING_PROVIDER_DATA...</div>;
   const [owner, modelId, endpoint, pricePerCall, , active] = p;
   if (!active) return null;
 
@@ -120,37 +163,80 @@ function ProviderRow({
     const rq = keccak256(stringToHex(body));
     const rs = keccak256(stringToHex(JSON.stringify({ model: "mock-mvp", response: responseText })));
     setLastHashes({ rq, rs });
-    await writeContractAsync({
-      address: marketplace,
-      abi: marketplaceAbi,
-      functionName: "invoke",
-      args: [providerId, rq, rs],
-      value: pricePerCall,
-    });
+    try {
+      await writeContractAsync({
+        address: marketplace,
+        abi: marketplaceAbi,
+        functionName: "invoke",
+        args: [providerId, rq, rs],
+        value: pricePerCall,
+      });
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded border p-3">
-      <div className="text-sm">
-        <div>
-          <span className="font-mono">id={providerId.toString()}</span> · {modelId}
-        </div>
-        <div className="text-neutral-600">owner {owner}</div>
-        <div className="text-neutral-600">endpoint {endpoint}</div>
-        <div>pricePerCall {formatEther(pricePerCall)} ETH</div>
+    <article className="border-2 border-theme flex flex-col group hover:-translate-y-1 hover:shadow-[8px_8px_0_var(--border)] transition-all bg-background relative">
+      <div className="absolute top-0 right-0 w-8 h-8 border-l-2 border-b-2 border-theme flex items-center justify-center bg-inverse text-inverse-fg text-xs font-bold">
+        {providerId.toString()}
       </div>
-      <textarea className="min-h-24 w-full rounded border p-2 text-sm" value={prompt} onChange={(e) => setPrompt(e.target.value)} />
-      <button
-        type="button"
-        disabled={isPending}
-        className="w-fit rounded bg-black px-3 py-1.5 text-sm text-white disabled:opacity-50"
-        onClick={() => void onCall()}
-      >
-        {isPending ? "Sending…" : "Mock complete + invoke on-chain"}
-      </button>
-      {lastHashes ? (
-        <pre className="overflow-x-auto text-xs">{JSON.stringify(lastHashes, null, 2)}</pre>
-      ) : null}
-    </div>
+      
+      <div className="border-b-2 border-theme p-5 bg-background flex justify-between items-start pt-8">
+        <div>
+          <h3 className="text-2xl sm:text-3xl font-bold uppercase tracking-tighter leading-none">{modelId}</h3>
+        </div>
+      </div>
+      
+      <div className="flex border-b-2 border-theme">
+        <div className="p-4 flex-1 border-r-2 border-theme">
+          <div className="text-muted text-[10px] uppercase font-bold tracking-widest mb-1">Price / Call</div>
+          <div className="text-lg font-bold">{formatEther(pricePerCall)} <span className="text-sm">ETH</span></div>
+        </div>
+        <div className="p-4 flex-1 overflow-hidden">
+          <div className="text-muted text-[10px] uppercase font-bold tracking-widest mb-1">Endpoint</div>
+          <div className="text-xs truncate font-bold">{endpoint}</div>
+        </div>
+      </div>
+
+      <div className="p-4 border-b-2 border-theme border-dashed bg-theme">
+        <div className="text-muted text-[10px] uppercase font-bold tracking-widest mb-1">Owner</div>
+        <div className="text-xs truncate font-bold">{owner}</div>
+      </div>
+
+      <div className="p-5 flex-1 flex flex-col gap-5 bg-background">
+        <div className="flex-1 relative">
+          <label className="absolute -top-2 left-2 bg-background px-2 text-[10px] text-muted uppercase font-bold tracking-widest">
+            Prompt_Input
+          </label>
+          <textarea 
+            className="w-full min-h-[120px] border-2 border-theme bg-transparent p-4 text-sm font-medium focus:outline-none focus:ring-0 focus:shadow-[4px_4px_0_var(--border)] transition-shadow resize-y" 
+            value={prompt} 
+            onChange={(e) => setPrompt(e.target.value)} 
+            spellCheck={false}
+          />
+        </div>
+        
+        <button
+          type="button"
+          disabled={isPending}
+          className="w-full border-2 border-theme bg-inverse text-inverse-fg py-4 text-sm font-bold uppercase tracking-widest hover:bg-background hover:text-foreground hover:shadow-[4px_4px_0_var(--border)] transition-all disabled:opacity-50 disabled:cursor-not-allowed active:translate-y-1 active:shadow-none"
+          onClick={() => void onCall()}
+        >
+          {isPending ? ">>> EXECUTING_TRANSACTION..." : ">>> EXECUTE_MOCK_INFERENCE"}
+        </button>
+        
+        {lastHashes && (
+          <div className="mt-2 border-2 border-theme bg-theme p-4 text-xs overflow-hidden relative">
+             <div className="absolute top-0 right-0 bg-theme border-l-2 border-b-2 border-theme px-2 py-1 text-[10px] font-bold uppercase">
+               Receipt
+             </div>
+            <div className="text-muted uppercase mb-2 font-bold tracking-widest border-b border-theme border-dashed pb-2">Transaction_Hashes</div>
+            <div className="truncate mb-1"><span className="text-muted font-bold mr-2">REQ:</span><span className="font-mono">{lastHashes.rq}</span></div>
+            <div className="truncate"><span className="text-muted font-bold mr-2">RES:</span><span className="font-mono">{lastHashes.rs}</span></div>
+          </div>
+        )}
+      </div>
+    </article>
   );
 }
