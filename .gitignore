@@ -6,3 +6,6 @@ broadcast/
 .env
 .env.local
 *.log
+
+# Local planning / agent docs — not published to remote
+docs/
