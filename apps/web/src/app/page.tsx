@@ -41,66 +41,68 @@ export default function Page() {
 
   return (
     <div className="min-h-screen font-mono text-sm sm:text-base selection:bg-inverse selection:text-inverse-fg">
-      <header className="border-b-2 border-theme p-4 sm:p-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div>
-          <h1 className="text-3xl sm:text-5xl font-bold tracking-tighter uppercase leading-none">
-            DeOpen<br className="hidden md:block"/>Router
-          </h1>
-          <p className="mt-3 text-muted uppercase tracking-widest text-xs font-semibold">
-            {"//"} Trust-minimized AI API Marketplace
-          </p>
-        </div>
-        
-        <div className="flex flex-col items-start md:items-end gap-3 text-xs uppercase tracking-widest">
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-6 border border-theme p-3 bg-theme">
-            <div>
-              <span className="text-muted block text-[10px]">NETWORK</span>
-              <span className="font-bold">{chainId === 31337 ? 'ANVIL_LOCAL' : chainId}</span>
-            </div>
-            <div>
-              <span className="text-muted block text-[10px]">STATUS</span>
-              <span className="font-bold">
-                {isConnected ? (
-                  <span className="flex items-center gap-2"><span className="w-2 h-2 bg-foreground rounded-full animate-pulse"></span> ONLINE</span>
-                ) : (
-                  <span className="flex items-center gap-2"><span className="w-2 h-2 border border-foreground rounded-full"></span> OFFLINE</span>
-                )}
-              </span>
-            </div>
+      <header className="border-b-2 border-theme">
+        <div className="p-4 sm:p-8 max-w-6xl mx-auto flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div>
+            <h1 className="text-4xl sm:text-6xl font-bold tracking-tighter uppercase leading-none">
+              DeOpen<br className="hidden md:block"/>Router
+            </h1>
+            <p className="mt-4 text-muted uppercase tracking-widest text-xs sm:text-sm font-bold">
+              {"//"} Trust-minimized AI API Marketplace
+            </p>
           </div>
-          <div className="flex gap-2 mt-1 w-full sm:w-auto">
-            {!isConnected ? (
-              <button
-                type="button"
-                className="flex-1 sm:flex-none border-2 border-theme bg-inverse text-inverse-fg px-4 py-2 font-bold hover:bg-background hover:text-foreground transition-colors"
-                onClick={() => connect({ connector: connectors[0] })}
-              >
-                [ CONNECT_WALLET ]
-              </button>
-            ) : (
-              <button 
-                type="button" 
-                className="flex-1 sm:flex-none border-2 border-theme bg-background text-foreground px-4 py-2 font-bold hover:bg-inverse hover:text-inverse-fg transition-colors" 
-                onClick={() => disconnect()}
-              >
-                [ DISCONNECT: {address?.slice(0, 6)}… ]
-              </button>
-            )}
-            
-            {chainId !== 31337 && (
-              <button
-                type="button"
-                className="flex-1 sm:flex-none border-2 border-theme bg-background text-foreground px-4 py-2 font-bold hover:bg-inverse hover:text-inverse-fg transition-colors"
-                onClick={() => switchChain({ chainId: 31337 })}
-              >
-                [ SWITCH_TO_ANVIL ]
-              </button>
-            )}
+          
+          <div className="flex flex-col items-start md:items-end gap-3 text-sm uppercase tracking-widest">
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 border-2 border-theme p-4 bg-inverse text-inverse-fg w-full sm:w-auto">
+              <div>
+                <span className="text-neutral-400 block text-[10px] sm:text-xs mb-1">NETWORK</span>
+                <span className="font-bold">{chainId === 31337 ? 'ANVIL_LOCAL' : chainId}</span>
+              </div>
+              <div>
+                <span className="text-neutral-400 block text-[10px] sm:text-xs mb-1">STATUS</span>
+                <span className="font-bold">
+                  {isConnected ? (
+                    <span className="flex items-center gap-2"><span className="w-2 h-2 bg-inverse-fg animate-pulse"></span> ONLINE</span>
+                  ) : (
+                    <span className="flex items-center gap-2"><span className="w-2 h-2 border border-inverse-fg"></span> OFFLINE</span>
+                  )}
+                </span>
+              </div>
+            </div>
+            <div className="flex gap-2 w-full sm:w-auto">
+              {!isConnected ? (
+                <button
+                  type="button"
+                  className="flex-1 sm:flex-none border-2 border-theme bg-inverse text-inverse-fg px-6 py-3 font-bold hover:bg-background hover:text-foreground transition-colors"
+                  onClick={() => connect({ connector: connectors[0] })}
+                >
+                  [ CONNECT_WALLET ]
+                </button>
+              ) : (
+                <button 
+                  type="button" 
+                  className="flex-1 sm:flex-none border-2 border-theme bg-background text-foreground px-6 py-3 font-bold hover:bg-inverse hover:text-inverse-fg transition-colors" 
+                  onClick={() => disconnect()}
+                >
+                  [ DISCONNECT: {address?.slice(0, 6)}… ]
+                </button>
+              )}
+              
+              {chainId !== 31337 && (
+                <button
+                  type="button"
+                  className="flex-1 sm:flex-none border-2 border-theme bg-background text-foreground px-6 py-3 font-bold hover:bg-inverse hover:text-inverse-fg transition-colors"
+                  onClick={() => switchChain({ chainId: 31337 })}
+                >
+                  [ SWITCH_TO_ANVIL ]
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </header>
 
-      <main className="p-4 sm:p-8 max-w-[1400px] mx-auto grid gap-12">
+      <main className="p-4 sm:p-8 max-w-6xl mx-auto grid gap-12">
         <section>
           <div className="border-b-2 border-theme mb-8 pb-3 flex justify-between items-end">
             <h2 className="text-xl sm:text-2xl font-bold uppercase tracking-wider">Available_Providers</h2>
