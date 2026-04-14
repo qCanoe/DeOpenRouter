@@ -42,8 +42,8 @@ export default function Page() {
   return (
     <div className="min-h-screen flex flex-col font-mono text-sm sm:text-base selection:bg-inverse selection:text-inverse-fg">
       <header className="border-b-2 border-theme">
-        <div className="p-4 sm:p-8 max-w-6xl mx-auto flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div>
+        <div className="p-4 sm:p-8 max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+          <div className="w-full md:w-auto">
             <h1 className="text-4xl sm:text-6xl font-bold tracking-tighter uppercase leading-none">
               DeOpen<br className="hidden md:block"/>Router
             </h1>
@@ -52,8 +52,8 @@ export default function Page() {
             </p>
           </div>
           
-          <div className="flex flex-col items-start md:items-end gap-4 uppercase tracking-widest w-full md:w-auto">
-            <div className="flex flex-row gap-8 border-2 border-theme p-4 bg-inverse text-inverse-fg w-full md:w-auto justify-between md:justify-start">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-4 uppercase tracking-widest w-full md:w-auto">
+            <div className="flex flex-row gap-8 border-2 border-theme p-4 bg-inverse text-inverse-fg w-full sm:w-auto justify-between sm:justify-start">
               <div>
                 <span className="text-neutral-400 block text-xs mb-1">NETWORK</span>
                 <span className="text-base font-bold">{chainId === 31337 ? 'ANVIL_LOCAL' : chainId}</span>
@@ -70,11 +70,11 @@ export default function Page() {
               </div>
             </div>
             
-            <div className="flex gap-3 w-full md:w-auto">
+            <div className="flex gap-3 w-full sm:w-auto mt-2 sm:mt-0">
               {!isConnected ? (
                 <button
                   type="button"
-                  className="flex-1 md:flex-none border-2 border-theme bg-inverse text-inverse-fg px-6 py-3 text-sm sm:text-base font-bold hover:bg-background hover:text-foreground transition-colors"
+                  className="flex-1 sm:flex-none border-2 border-theme bg-inverse text-inverse-fg px-6 py-4 text-sm sm:text-base font-bold hover:bg-background hover:text-foreground transition-colors leading-none"
                   onClick={() => connect({ connector: connectors[0] })}
                 >
                   [ CONNECT_WALLET ]
@@ -82,7 +82,7 @@ export default function Page() {
               ) : (
                 <button 
                   type="button" 
-                  className="flex-1 md:flex-none border-2 border-theme bg-background text-foreground px-6 py-3 text-sm sm:text-base font-bold hover:bg-inverse hover:text-inverse-fg transition-colors" 
+                  className="flex-1 sm:flex-none border-2 border-theme bg-background text-foreground px-6 py-4 text-sm sm:text-base font-bold hover:bg-inverse hover:text-inverse-fg transition-colors leading-none whitespace-nowrap" 
                   onClick={() => disconnect()}
                 >
                   [ DISCONNECT: {address?.slice(0, 6)}… ]
@@ -92,7 +92,7 @@ export default function Page() {
               {chainId !== 31337 && (
                 <button
                   type="button"
-                  className="flex-1 md:flex-none border-2 border-theme bg-background text-foreground px-6 py-3 text-sm sm:text-base font-bold hover:bg-inverse hover:text-inverse-fg transition-colors"
+                  className="flex-1 sm:flex-none border-2 border-theme bg-background text-foreground px-6 py-4 text-sm sm:text-base font-bold hover:bg-inverse hover:text-inverse-fg transition-colors leading-none whitespace-nowrap"
                   onClick={() => switchChain({ chainId: 31337 })}
                 >
                   [ SWITCH_TO_ANVIL ]
