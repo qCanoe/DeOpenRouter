@@ -83,4 +83,4 @@ forge test
 
 ## License
 
-Unspecified; add a `LICENSE` file when you choose a license.
+This project is licensed under the [MIT License](LICENSE). Third-party dependencies (e.g. `forge-std`, npm packages) remain under their respective licenses.

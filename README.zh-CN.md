@@ -83,4 +83,4 @@ forge test
 
 ## 许可证
 
-尚未指定；确定后可添加 `LICENSE` 文件。
+本项目以 [MIT 许可证](LICENSE) 发布。第三方依赖（如 `forge-std`、npm 包）仍适用各自许可条款。
