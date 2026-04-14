@@ -1,10 +1,12 @@
 # DeOpenRouter
 
+**Language / 语言:** **English** · [简体中文](README.zh-CN.md)
+
 **Transparent and trust-minimized AI API marketplace (prototype)**
 
 DeOpenRouter explores a hybrid **on-chain trust + off-chain inference** design: providers register pricing and metadata on-chain, users pay per call through a smart contract, and request/response **hashes** are anchored for auditability. Heavy model execution stays off-chain—currently mocked for the MVP.
 
-详细背景与目标见仓库根目录 [`DeOpenRouter.md`](./DeOpenRouter.md)。
+For the full product narrative (Chinese source text), see [`DeOpenRouter.md`](./DeOpenRouter.md).
 
 ---
 
