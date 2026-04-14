@@ -6,8 +6,6 @@
 
 DeOpenRouter explores a hybrid **on-chain trust + off-chain inference** design: providers register pricing and metadata on-chain, users pay per call through a smart contract, and request/response **hashes** are anchored for auditability. Heavy model execution stays off-chain—currently mocked for the MVP.
 
-For the full product narrative (Chinese source text), see [`DeOpenRouter.md`](./DeOpenRouter.md).
-
 ---
 
 ## Repository layout
@@ -17,7 +15,6 @@ For the full product narrative (Chinese source text), see [`DeOpenRouter.md`](./
 | `contracts/` | Foundry project: `DeOpenRouterMarketplace` (register, stake, `invoke`, events) |
 | `apps/api/` | Mock inference HTTP API (Hono): `GET /health`, `POST /v1/chat` |
 | `apps/web/` | Next.js + wagmi UI: browse providers, mock completion, submit `invoke` tx |
-| `docs/superpowers/plans/` | Implementation plan notes |
 
 ---
 
