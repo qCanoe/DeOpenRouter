@@ -47,33 +47,34 @@ export default function Page() {
             <h1 className="text-4xl sm:text-6xl font-bold tracking-tighter uppercase leading-none">
               DeOpen<br className="hidden md:block"/>Router
             </h1>
-            <p className="mt-4 text-muted uppercase tracking-widest text-xs sm:text-sm font-bold">
+            <p className="mt-4 text-muted uppercase tracking-widest text-sm font-bold">
               {"//"} Trust-minimized AI API Marketplace
             </p>
           </div>
           
-          <div className="flex flex-col items-start md:items-end gap-3 text-sm uppercase tracking-widest">
-            <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 border-2 border-theme p-4 bg-inverse text-inverse-fg w-full sm:w-auto">
+          <div className="flex flex-col items-start md:items-end gap-4 uppercase tracking-widest w-full md:w-auto">
+            <div className="flex flex-row gap-8 border-2 border-theme p-4 bg-inverse text-inverse-fg w-full md:w-auto justify-between md:justify-start">
               <div>
-                <span className="text-neutral-400 block text-[10px] sm:text-xs mb-1">NETWORK</span>
-                <span className="font-bold">{chainId === 31337 ? 'ANVIL_LOCAL' : chainId}</span>
+                <span className="text-neutral-400 block text-xs mb-1">NETWORK</span>
+                <span className="text-base font-bold">{chainId === 31337 ? 'ANVIL_LOCAL' : chainId}</span>
               </div>
               <div>
-                <span className="text-neutral-400 block text-[10px] sm:text-xs mb-1">STATUS</span>
-                <span className="font-bold">
+                <span className="text-neutral-400 block text-xs mb-1">STATUS</span>
+                <span className="text-base font-bold">
                   {isConnected ? (
-                    <span className="flex items-center gap-2"><span className="w-2 h-2 bg-inverse-fg animate-pulse"></span> ONLINE</span>
+                    <span className="flex items-center gap-2"><span className="w-3 h-3 bg-inverse-fg animate-pulse"></span> ONLINE</span>
                   ) : (
-                    <span className="flex items-center gap-2"><span className="w-2 h-2 border border-inverse-fg"></span> OFFLINE</span>
+                    <span className="flex items-center gap-2"><span className="w-3 h-3 border-2 border-inverse-fg"></span> OFFLINE</span>
                   )}
                 </span>
               </div>
             </div>
-            <div className="flex gap-2 w-full sm:w-auto">
+            
+            <div className="flex gap-3 w-full md:w-auto">
               {!isConnected ? (
                 <button
                   type="button"
-                  className="flex-1 sm:flex-none border-2 border-theme bg-inverse text-inverse-fg px-6 py-3 font-bold hover:bg-background hover:text-foreground transition-colors"
+                  className="flex-1 md:flex-none border-2 border-theme bg-inverse text-inverse-fg px-6 py-3 text-sm sm:text-base font-bold hover:bg-background hover:text-foreground transition-colors"
                   onClick={() => connect({ connector: connectors[0] })}
                 >
                   [ CONNECT_WALLET ]
@@ -81,7 +82,7 @@ export default function Page() {
               ) : (
                 <button 
                   type="button" 
-                  className="flex-1 sm:flex-none border-2 border-theme bg-background text-foreground px-6 py-3 font-bold hover:bg-inverse hover:text-inverse-fg transition-colors" 
+                  className="flex-1 md:flex-none border-2 border-theme bg-background text-foreground px-6 py-3 text-sm sm:text-base font-bold hover:bg-inverse hover:text-inverse-fg transition-colors" 
                   onClick={() => disconnect()}
                 >
                   [ DISCONNECT: {address?.slice(0, 6)}… ]
@@ -91,7 +92,7 @@ export default function Page() {
               {chainId !== 31337 && (
                 <button
                   type="button"
-                  className="flex-1 sm:flex-none border-2 border-theme bg-background text-foreground px-6 py-3 font-bold hover:bg-inverse hover:text-inverse-fg transition-colors"
+                  className="flex-1 md:flex-none border-2 border-theme bg-background text-foreground px-6 py-3 text-sm sm:text-base font-bold hover:bg-inverse hover:text-inverse-fg transition-colors"
                   onClick={() => switchChain({ chainId: 31337 })}
                 >
                   [ SWITCH_TO_ANVIL ]
