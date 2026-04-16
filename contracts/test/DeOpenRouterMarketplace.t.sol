@@ -55,4 +55,58 @@ contract DeOpenRouterMarketplaceTest is Test {
         assertEq(userAlice.balance, 4 ether);
         assertEq(ownerBob.balance, 20 ether - m.MIN_STAKE() + 1 ether);
     }
+
+    function test_invoke_reverts_payment_too_low() public {
+        vm.deal(address(this), 20 ether);
+        m.register{value: m.MIN_STAKE()}("m1", "http://x", 2 ether);
+        vm.expectRevert(DeOpenRouterMarketplace.PaymentTooLow.selector);
+        m.invoke{value: 1 ether}(0, bytes32(uint256(1)), bytes32(uint256(2)));
+    }
+
+    function test_deactivate_reverts_not_owner() public {
+        address ownerBob = address(0xB0B);
+        vm.deal(ownerBob, 20 ether);
+        vm.startPrank(ownerBob);
+        m.register{value: m.MIN_STAKE()}("m1", "http://x", 1 ether);
+        vm.stopPrank();
+        vm.expectRevert(DeOpenRouterMarketplace.NotOwner.selector);
+        m.deactivate(0);
+    }
+
+    function test_withdraw_stake_after_deactivate() public {
+        address ownerBob = address(0xB0B);
+        vm.deal(ownerBob, 20 ether);
+        uint256 min = m.MIN_STAKE();
+        vm.startPrank(ownerBob);
+        m.register{value: min}("m1", "http://x", 1 ether);
+        m.deactivate(0);
+        uint256 beforeBalance = ownerBob.balance;
+        m.withdrawStake(0);
+        vm.stopPrank();
+        assertEq(ownerBob.balance, beforeBalance + min);
+        (,,,, uint256 stakeAfter,) = m.providers(0);
+        assertEq(stakeAfter, 0);
+    }
+
+    function test_withdraw_reverts_when_stake_already_zero() public {
+        address ownerBob = address(0xB0B);
+        vm.deal(ownerBob, 20 ether);
+        vm.startPrank(ownerBob);
+        m.register{value: m.MIN_STAKE()}("m1", "http://x", 1 ether);
+        m.deactivate(0);
+        m.withdrawStake(0);
+        vm.expectRevert(DeOpenRouterMarketplace.InvalidStake.selector);
+        m.withdrawStake(0);
+        vm.stopPrank();
+    }
+
+    function test_withdraw_reverts_while_active() public {
+        address ownerBob = address(0xB0B);
+        vm.deal(ownerBob, 20 ether);
+        vm.startPrank(ownerBob);
+        m.register{value: m.MIN_STAKE()}("m1", "http://x", 1 ether);
+        vm.expectRevert(DeOpenRouterMarketplace.ProviderInactive.selector);
+        m.withdrawStake(0);
+        vm.stopPrank();
+    }
 }
