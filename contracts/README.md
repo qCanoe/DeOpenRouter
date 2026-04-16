@@ -1,5 +1,7 @@
 ## Foundry
 
+See [`LOCAL_LOOP.md`](./LOCAL_LOOP.md) for a **cast-only** local loop (Anvil: deploy → register → invoke → logs).
+
 **Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
 
 Foundry consists of:
@@ -48,8 +50,10 @@ $ anvil
 ### Deploy
 
 ```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
+$ forge script script/Deploy.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
 ```
+
+Set `PRIVATE_KEY` in the environment (see `script/Deploy.s.sol`).
 
 ### Cast
 
