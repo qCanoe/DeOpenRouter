@@ -23,8 +23,7 @@ DeOpenRouter explores a hybrid **on-chain trust + off-chain inference** design: 
 | `contracts/` | Foundry project: `DeOpenRouterMarketplace` (register, stake, `invoke`, slash, events) |
 | `apps/api/`  | Mock inference HTTP API (Hono): `GET /health`, `POST /v1/chat`                        |
 | `apps/web/`  | Next.js + wagmi UI: browse providers, mock completion, submit `invoke` tx             |
-| `apps/audit-server/` | Python (FastAPI): relay API audit (`GET /health`, `POST /v1/audit`); see that folder’s README |
-
+| `apps/audit-server/` | Python (FastAPI): runs **deopenrouter_audit** against a relay; `GET /health`, `POST /v1/audit` — see [apps/audit-server/README.md](apps/audit-server/README.md) |
 
 ---
 
@@ -32,6 +31,7 @@ DeOpenRouter explores a hybrid **on-chain trust + off-chain inference** design: 
 
 - **Foundry** (`forge`, `anvil`, `cast`) — [getfoundry.sh](https://getfoundry.sh)
 - **Node.js** 20+ and npm
+- **Python** 3.11+ (optional, for `apps/audit-server/`)
 
 ---
 
@@ -70,12 +70,30 @@ Default: `http://127.0.0.1:8787` (`/health`, `/v1/chat`).
 ```bash
 cd apps/web
 cp .env.local.example .env.local
-# Set NEXT_PUBLIC_MARKETPLACE_ADDRESS to the deployed contract address.
+# Set NEXT_PUBLIC_MARKETPLACE_ADDRESS to the deployed contract (RPC and mock API defaults suit local Anvil).
 npm install
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000), connect a browser wallet (e.g. MetaMask) to **Chain ID 31337**, RPC `http://127.0.0.1:8545`, and (if needed) import Anvil’s test private key for a funded account.
+
+### 5. Audit server (optional)
+
+Runs structured relay checks (risk-style JSON). From `apps/audit-server/`:
+
+```bash
+python -m venv .venv
+# Windows: .venv\Scripts\activate
+# Unix: source .venv/bin/activate
+pip install -e ".[dev]"
+uvicorn main:app --app-dir src --host 0.0.0.0 --port 8765
+```
+
+Defaults: `GET /health`, `POST /v1/audit` on `http://127.0.0.1:8765`. Full options and `curl` examples: [apps/audit-server/README.md](apps/audit-server/README.md).
+
+### CLI-only chain loop (optional)
+
+To exercise **register → invoke → `CallRecorded`** with `cast` only (no web UI), see [contracts/LOCAL_LOOP.md](contracts/LOCAL_LOOP.md).
 
 ---
 
