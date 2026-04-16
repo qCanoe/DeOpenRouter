@@ -6,15 +6,24 @@
 
 DeOpenRouter explores a hybrid **on-chain trust + off-chain inference** design: providers register pricing and metadata on-chain, users pay per call through a smart contract, and request/response **hashes** are anchored for auditability. Heavy model execution stays off-chain—currently mocked for the MVP.
 
+### On-chain surface (MVP)
+
+- **Provider registration** (`register`): `modelId`, `endpoint`, `pricePerCall`, plus commitments `metadataURI`, `metadataHash`, `identityHash`, initial stake, and block timestamps (`createdAtBlock` / `updatedAtBlock` after updates).
+- **Metadata updates** (`updateProviderMetadata`): provider owner can change `metadataURI` / `metadataHash` / `identityHash`.
+- **Calls** (`invoke`): pays `pricePerCall`, emits `CallRecorded` with `requestHash`, `responseHash`, `paid`, monotonic `callId`, and `requestFormat` / `responseFormat` (uint8) to avoid hash semantic drift.
+- **Slashing (minimal)**: `slashOperator` (deployer by default; transferable) may `slash()` with `reasonHash`; slashed ETH is sent to `slashOperator`, stake is reduced, `slashedTotal` / `lastSlashedAtBlock` updated. No complaint/arbitration flow.
+
 ---
 
 ## Repository layout
 
-| Path | Description |
-|------|-------------|
-| `contracts/` | Foundry project: `DeOpenRouterMarketplace` (register, stake, `invoke`, events) |
-| `apps/api/` | Mock inference HTTP API (Hono): `GET /health`, `POST /v1/chat` |
-| `apps/web/` | Next.js + wagmi UI: browse providers, mock completion, submit `invoke` tx |
+
+| Path         | Description                                                                    |
+| ------------ | ------------------------------------------------------------------------------ |
+| `contracts/` | Foundry project: `DeOpenRouterMarketplace` (register, stake, `invoke`, slash, events) |
+| `apps/api/`  | Mock inference HTTP API (Hono): `GET /health`, `POST /v1/chat`                 |
+| `apps/web/`  | Next.js + wagmi UI: browse providers, mock completion, submit `invoke` tx      |
+
 
 ---
 

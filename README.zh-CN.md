@@ -6,13 +6,20 @@
 
 DeOpenRouter 采用 **链上信任协调 + 链下推理** 混合架构：提供方在链上注册报价与元数据，用户通过智能合约按次付费，并将请求/响应 **哈希** 上链以便审计。重计算仍在链下执行——当前 MVP 使用模拟推理。
 
+### 链上内容（MVP）
+
+- **注册**（`register`）：`modelId`、`endpoint`、`pricePerCall`，以及链下元数据承诺 `metadataURI`、`metadataHash`、`identityHash`，初始质押与区块时间戳（`createdAtBlock`；更新后为 `updatedAtBlock`）。
+- **元数据更新**（`updateProviderMetadata`）：仅提供者可改 `metadataURI` / `metadataHash` / `identityHash`。
+- **调用**（`invoke`）：按次付费，发出 `CallRecorded`，包含 `requestHash`、`responseHash`、`paid`、单调递增 `callId`，以及 `requestFormat` / `responseFormat`（uint8），用于避免哈希语义漂移。
+- **罚没（最小实现）**：`slashOperator`（部署合约的地址，可 `transferSlashOperator`）可执行 `slash`，携带 `reasonHash`；罚没金额从质押中扣除并转给 `slashOperator`，并更新 `slashedTotal` / `lastSlashedAtBlock`。不含投诉/仲裁流程。
+
 ---
 
 ## 仓库结构
 
 | 路径 | 说明 |
 |------|------|
-| `contracts/` | Foundry：`DeOpenRouterMarketplace`（注册、质押、`invoke`、事件） |
+| `contracts/` | Foundry：`DeOpenRouterMarketplace`（注册、质押、`invoke`、罚没、事件） |
 | `apps/api/` | 模拟推理 HTTP API（Hono）：`GET /health`、`POST /v1/chat` |
 | `apps/web/` | Next.js + wagmi：浏览提供方、模拟补全、提交 `invoke` 交易 |
 

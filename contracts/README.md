@@ -2,6 +2,8 @@
 
 See [`LOCAL_LOOP.md`](./LOCAL_LOOP.md) for a **cast-only** local loop (Anvil: deploy → register → invoke → logs).
 
+`DeOpenRouterMarketplace` stores provider commitments (`metadataURI` / `metadataHash` / `identityHash`), per-call `CallRecorded` logs with `callId` and format tags, and minimal `slash` under `slashOperator`. Details: root [`README.md`](../README.md) section **On-chain surface (MVP)**.
+
 **Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
 
 Foundry consists of:
