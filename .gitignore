@@ -10,3 +10,14 @@ broadcast/
 # Local planning / agent docs — not published to remote
 docs/
 DeOpenRouter.md
+
+# Local reference clone (not part of DeOpenRouter; do not commit)
+_api_relay_audit_src/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.venv/
+venv/

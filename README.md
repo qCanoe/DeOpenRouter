@@ -18,11 +18,12 @@ DeOpenRouter explores a hybrid **on-chain trust + off-chain inference** design: 
 ## Repository layout
 
 
-| Path         | Description                                                                    |
-| ------------ | ------------------------------------------------------------------------------ |
+| Path         | Description                                                                           |
+| ------------ | ------------------------------------------------------------------------------------- |
 | `contracts/` | Foundry project: `DeOpenRouterMarketplace` (register, stake, `invoke`, slash, events) |
-| `apps/api/`  | Mock inference HTTP API (Hono): `GET /health`, `POST /v1/chat`                 |
-| `apps/web/`  | Next.js + wagmi UI: browse providers, mock completion, submit `invoke` tx      |
+| `apps/api/`  | Mock inference HTTP API (Hono): `GET /health`, `POST /v1/chat`                        |
+| `apps/web/`  | Next.js + wagmi UI: browse providers, mock completion, submit `invoke` tx             |
+| `apps/audit-server/` | Python (FastAPI): relay API audit (`GET /health`, `POST /v1/audit`); see that folder’s README |
 
 
 ---
