@@ -10,7 +10,7 @@ import {
   useSwitchChain,
   useWriteContract,
 } from "wagmi";
-import { marketplaceAbi } from "@/lib/marketplaceAbi";
+import { marketplaceAbi, REQUEST_FORMAT_V1, RESPONSE_FORMAT_V1 } from "@/lib/marketplaceAbi";
 import { keccak256, stringToHex, formatEther } from "viem";
 
 const MOCK_API =
@@ -171,7 +171,7 @@ function ProviderRow({
         address: marketplace,
         abi: marketplaceAbi,
         functionName: "invoke",
-        args: [providerId, rq, rs],
+        args: [providerId, rq, rs, REQUEST_FORMAT_V1, RESPONSE_FORMAT_V1],
         value: pricePerCall,
       });
     } catch (err) {
