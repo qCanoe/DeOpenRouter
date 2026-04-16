@@ -9,7 +9,8 @@
   },
   "dependencies": {
     "@hono/node-server": "^1.13.0",
-    "hono": "^4.6.0"
+    "hono": "^4.6.0",
+    "viem": "^2.48.0"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",

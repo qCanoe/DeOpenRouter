@@ -7,6 +7,9 @@ contract DeOpenRouterMarketplace {
     /// @notice Executes slashing; set to `msg.sender` at deploy time.
     address public slashOperator;
 
+    /// @notice May call `recordAudit` to anchor off-chain audit report hashes (demo / ops).
+    address public auditRecorder;
+
     struct ProviderRegistration {
         string modelId;
         string endpoint;
@@ -40,6 +43,7 @@ contract DeOpenRouterMarketplace {
 
     uint256 public nextProviderId;
     uint256 public nextCallId;
+    uint256 public nextAuditId;
     mapping(uint256 => Provider) public providers;
 
     event ProviderRegistered(
@@ -82,20 +86,45 @@ contract DeOpenRouterMarketplace {
         uint256 remainingStake
     );
 
+    /// @notice Off-chain audit JSON (full report) is committed as `reportHash`; `riskLevel` is LOW=0, MEDIUM=1, HIGH=2.
+    event AuditRecorded(
+        uint256 indexed auditId,
+        uint256 indexed providerId,
+        address indexed recorder,
+        bytes32 reportHash,
+        uint8 riskLevel
+    );
+
     error InvalidStake();
     error ProviderInactive();
     error PaymentTooLow();
     error NotOwner();
     error NotSlashOperator();
     error SlashExceedsStake();
+    error NotAuditRecorder();
+    error InvalidProviderId();
 
     constructor() {
         slashOperator = msg.sender;
+        auditRecorder = msg.sender;
     }
 
     function transferSlashOperator(address newOperator) external {
         if (msg.sender != slashOperator) revert NotSlashOperator();
         slashOperator = newOperator;
+    }
+
+    function transferAuditRecorder(address newRecorder) external {
+        if (msg.sender != auditRecorder) revert NotAuditRecorder();
+        auditRecorder = newRecorder;
+    }
+
+    /// @param riskLevel LOW=0, MEDIUM=1, HIGH=2 (must match off-chain audit summary).
+    function recordAudit(uint256 providerId, bytes32 reportHash, uint8 riskLevel) external {
+        if (msg.sender != auditRecorder) revert NotAuditRecorder();
+        if (providerId >= nextProviderId) revert InvalidProviderId();
+        uint256 auditId = nextAuditId++;
+        emit AuditRecorded(auditId, providerId, msg.sender, reportHash, riskLevel);
     }
 
     function register(ProviderRegistration calldata info) external payable {

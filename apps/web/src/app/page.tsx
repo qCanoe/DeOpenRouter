@@ -161,10 +161,11 @@ function ProviderRow({
       headers: { "content-type": "application/json" },
       body,
     });
-    const json = (await res.json()) as { response?: string };
+    const json = (await res.json()) as { model?: string; response?: string };
     const responseText = typeof json.response === "string" ? json.response : "";
+    const modelForHash = typeof json.model === "string" && json.model.length > 0 ? json.model : "mock-mvp";
     const rq = keccak256(stringToHex(body));
-    const rs = keccak256(stringToHex(JSON.stringify({ model: "mock-mvp", response: responseText })));
+    const rs = keccak256(stringToHex(JSON.stringify({ model: modelForHash, response: responseText })));
     setLastHashes({ rq, rs });
     try {
       await writeContractAsync({

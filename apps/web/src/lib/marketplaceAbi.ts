@@ -7,6 +7,8 @@ export const marketplaceAbi = [
   { type: "function", name: "slashOperator", stateMutability: "view", inputs: [], outputs: [{ type: "address", name: "" }] },
   { type: "function", name: "nextProviderId", stateMutability: "view", inputs: [], outputs: [{ type: "uint256", name: "" }] },
   { type: "function", name: "nextCallId", stateMutability: "view", inputs: [], outputs: [{ type: "uint256", name: "" }] },
+  { type: "function", name: "nextAuditId", stateMutability: "view", inputs: [], outputs: [{ type: "uint256", name: "" }] },
+  { type: "function", name: "auditRecorder", stateMutability: "view", inputs: [], outputs: [{ type: "address", name: "" }] },
   {
     type: "function",
     name: "providers",
@@ -109,6 +111,24 @@ export const marketplaceAbi = [
     name: "transferSlashOperator",
     stateMutability: "nonpayable",
     inputs: [{ type: "address", name: "newOperator" }],
+    outputs: [],
+  },
+  {
+    type: "function",
+    name: "transferAuditRecorder",
+    stateMutability: "nonpayable",
+    inputs: [{ type: "address", name: "newRecorder" }],
+    outputs: [],
+  },
+  {
+    type: "function",
+    name: "recordAudit",
+    stateMutability: "nonpayable",
+    inputs: [
+      { type: "uint256", name: "providerId" },
+      { type: "bytes32", name: "reportHash" },
+      { type: "uint8", name: "riskLevel" },
+    ],
     outputs: [],
   },
 ] as const;

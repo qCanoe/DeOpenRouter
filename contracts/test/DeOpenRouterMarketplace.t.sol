@@ -251,4 +251,35 @@ contract DeOpenRouterMarketplaceTest is Test {
         m.transferSlashOperator(newOp);
         assertEq(m.slashOperator(), newOp);
     }
+
+    function test_record_audit_emits() public {
+        vm.deal(address(this), 10 ether);
+        m.register{value: m.MIN_STAKE()}(_reg("m1", "http://x", 1 ether));
+        bytes32 rh = keccak256("audit-report-json");
+        assertEq(m.nextAuditId(), 0);
+        vm.expectEmit(true, true, true, true);
+        emit DeOpenRouterMarketplace.AuditRecorded(0, 0, address(this), rh, 2);
+        m.recordAudit(0, rh, 2);
+        assertEq(m.nextAuditId(), 1);
+    }
+
+    function test_record_audit_reverts_bad_provider() public {
+        vm.expectRevert(DeOpenRouterMarketplace.InvalidProviderId.selector);
+        m.recordAudit(0, bytes32(uint256(1)), 0);
+    }
+
+    function test_record_audit_reverts_not_recorder() public {
+        vm.deal(address(this), 10 ether);
+        m.register{value: m.MIN_STAKE()}(_reg("m1", "http://x", 1 ether));
+        vm.startPrank(address(0xDEAD));
+        vm.expectRevert(DeOpenRouterMarketplace.NotAuditRecorder.selector);
+        m.recordAudit(0, bytes32(uint256(1)), 0);
+        vm.stopPrank();
+    }
+
+    function test_transfer_audit_recorder() public {
+        address newR = address(0xBEEF);
+        m.transferAuditRecorder(newR);
+        assertEq(m.auditRecorder(), newR);
+    }
 }
