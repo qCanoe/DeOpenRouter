@@ -25,13 +25,48 @@
 body {
   color: var(--foreground);
   background: var(--background);
+  line-height: 1.55;
+  font-feature-settings: "kern" 1, "liga" 1;
   /* Fallback to monospaced styling for that 'code' aesthetic */
   font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 /* Custom utilities */
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+}
+
+/* Shared UI: focus + interaction (keyboard / a11y) */
+@layer components {
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+
+  .transition-ui {
+    @apply motion-safe:transition-colors motion-safe:duration-150 motion-safe:ease-out;
+  }
+
+  .section-heading {
+    @apply text-xl font-bold uppercase leading-tight tracking-wider text-foreground sm:text-2xl;
+  }
+
+  .section-eyebrow {
+    @apply text-xs font-bold uppercase leading-snug tracking-widest text-muted;
+  }
+
+  .input-brutal {
+    @apply focus-ring border-2 border-theme bg-transparent px-4 py-3 text-sm font-medium leading-normal text-foreground placeholder:text-muted;
+  }
+
+  .btn-brutal {
+    @apply focus-ring transition-ui inline-flex min-h-[44px] min-w-[44px] cursor-pointer items-center justify-center border-2 border-theme px-5 py-2.5 text-xs font-bold uppercase tracking-widest sm:text-sm;
   }
 }
