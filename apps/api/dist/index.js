@@ -35,9 +35,18 @@ async function fetchOpenRouterChat(body) {
         body: JSON.stringify(body),
     });
 }
-/** OpenAI-compatible POST body → OpenRouter or mock. */
+async function parseOpenRouterJson(response) {
+    try {
+        return (await response.json());
+    }
+    catch {
+        return null;
+    }
+}
 async function handleChatCompletionJson(body) {
-    const model = typeof body.model === "string" && body.model.length > 0 ? body.model : OPENROUTER_MODEL;
+    const model = typeof body.model === "string" && body.model.length > 0
+        ? body.model
+        : OPENROUTER_MODEL;
     const messages = Array.isArray(body.messages) ? body.messages : [];
     const max_tokens = typeof body.max_tokens === "number" ? body.max_tokens : 512;
     if (!OPENROUTER_API_KEY) {
@@ -56,17 +65,100 @@ async function handleChatCompletionJson(body) {
             ],
         };
     }
-    const upstream = await fetchOpenRouterChat({
-        model,
-        messages,
-        max_tokens,
-    });
-    const raw = (await upstream.json());
+    let upstream;
+    try {
+        upstream = await fetchOpenRouterChat({
+            model,
+            messages,
+            max_tokens,
+        });
+    }
+    catch (e) {
+        return {
+            _error: true,
+            error: "openrouter_unreachable",
+            status: 502,
+            detail: e instanceof Error ? e.message : "upstream_fetch_failed",
+        };
+    }
+    const raw = await parseOpenRouterJson(upstream);
+    if (!raw) {
+        return {
+            _error: true,
+            error: "openrouter_invalid_json",
+            status: 502,
+            detail: "OpenRouter returned non-JSON output.",
+        };
+    }
     if (!upstream.ok) {
         const msg = raw.error?.message ?? upstream.statusText ?? "openrouter_error";
-        return { _error: true, status: upstream.status, detail: msg };
+        return {
+            _error: true,
+            error: "openrouter_http",
+            status: upstream.status,
+            detail: msg,
+        };
     }
     return raw;
+}
+function normalizePrivateKey(value) {
+    const trimmed = value.trim();
+    if (!trimmed)
+        return null;
+    const normalized = trimmed.startsWith("0x") ? trimmed : `0x${trimmed}`;
+    return /^0x[a-fA-F0-9]{64}$/.test(normalized) ? normalized : null;
+}
+const port = Number(process.env.PORT ?? "8787");
+const auditInterval = Number(process.env.AUDIT_INTERVAL_MS ?? "0");
+const auditServerUrl = process.env.AUDIT_SERVER_URL ?? "";
+const auditRelayBaseUrl = process.env.AUDIT_RELAY_BASE_URL ?? `http://127.0.0.1:${port}`;
+const marketplaceAddress = (process.env.MARKETPLACE_ADDRESS ?? "");
+const rpcUrl = process.env.CHAIN_RPC_URL ?? "http://127.0.0.1:8545";
+const auditPk = normalizePrivateKey(process.env.AUDIT_PRIVATE_KEY ?? "");
+const providerId = BigInt(process.env.AUDIT_PROVIDER_ID ?? "0");
+const auditTimeoutSec = Number(process.env.AUDIT_TIMEOUT_SEC ?? "120");
+function getAuditHealth() {
+    const requested = auditInterval > 0;
+    if (!requested) {
+        return {
+            requested,
+            scheduled: false,
+            reason: "AUDIT_INTERVAL_MS not set.",
+        };
+    }
+    if (!auditServerUrl) {
+        return {
+            requested,
+            scheduled: false,
+            reason: "AUDIT_SERVER_URL missing.",
+        };
+    }
+    if (!marketplaceAddress || marketplaceAddress === zeroAddress) {
+        return {
+            requested,
+            scheduled: false,
+            reason: "MARKETPLACE_ADDRESS missing or zero address.",
+        };
+    }
+    if (!auditPk) {
+        return {
+            requested,
+            scheduled: false,
+            reason: "AUDIT_PRIVATE_KEY missing or invalid.",
+        };
+    }
+    if (!OPENROUTER_API_KEY) {
+        return {
+            requested,
+            scheduled: false,
+            reason: "OPENROUTER_API_KEY missing.",
+        };
+    }
+    return {
+        requested,
+        scheduled: true,
+        reason: null,
+    };
 }
 const app = new Hono();
 app.use("/*", cors({
@@ -78,9 +170,7 @@ app.get("/health", (c) => c.json({
     ok: true,
     mode: OPENROUTER_API_KEY ? "openrouter" : "mock_echo",
     model: OPENROUTER_API_KEY ? OPENROUTER_MODEL : "mock-mvp",
-    audit: {
-        scheduled: Number(process.env.AUDIT_INTERVAL_MS ?? "0") > 0,
-    },
+    audit: getAuditHealth(),
 }));
 app.post("/v1/chat/completions", async (c) => {
     let body;
@@ -91,8 +181,8 @@ app.post("/v1/chat/completions", async (c) => {
         return c.json({ error: "invalid_json" }, 400);
     }
     const out = await handleChatCompletionJson(body);
-    if (out && typeof out === "object" && "_error" in out && out._error) {
-        return c.json({ error: "openrouter_http", status: out.status, detail: out.detail }, 502);
+    if ("_error" in out && out._error) {
+        return c.json({ error: out.error, status: out.status, detail: out.detail }, 502);
     }
     return c.json(out);
 });
@@ -107,7 +197,8 @@ app.post("/v1/chat", async (c) => {
     const prompt = typeof body.prompt === "string" ? body.prompt : "";
     if (!OPENROUTER_API_KEY) {
         const response = `echo:${prompt}`;
-        return c.json({ model: "mock-mvp", response });
+        const usage = Math.max(1, prompt.length);
+        return c.json({ model: "mock-mvp", response, usage });
     }
     let upstream;
     try {
@@ -120,52 +211,50 @@ app.post("/v1/chat", async (c) => {
         const msg = e instanceof Error ? e.message : "upstream_fetch_failed";
         return c.json({ error: "openrouter_unreachable", detail: msg }, 502);
     }
-    const raw = (await upstream.json());
+    const raw = await parseOpenRouterJson(upstream);
+    if (!raw) {
+        return c.json({
+            error: "openrouter_invalid_json",
+            status: upstream.status,
+            detail: "OpenRouter returned non-JSON output.",
+        }, 502);
+    }
     if (!upstream.ok) {
         const msg = raw.error?.message ?? upstream.statusText ?? "openrouter_error";
         return c.json({ error: "openrouter_http", status: upstream.status, detail: msg }, 502);
     }
     const text = raw.choices?.[0]?.message?.content ?? "";
-    const model = typeof raw.model === "string" && raw.model.length > 0 ? raw.model : OPENROUTER_MODEL;
-    return c.json({ model, response: text });
+    const model = typeof raw.model === "string" && raw.model.length > 0
+        ? raw.model
+        : OPENROUTER_MODEL;
+    const usage = typeof raw.usage?.total_tokens === "number"
+        ? raw.usage.total_tokens
+        : typeof raw.usage?.prompt_tokens === "number" &&
+            typeof raw.usage?.completion_tokens === "number"
+            ? raw.usage.prompt_tokens + raw.usage.completion_tokens
+            : undefined;
+    return c.json({ model, response: text, ...(usage !== undefined ? { usage } : {}) });
 });
-const port = Number(process.env.PORT ?? "8787");
 serve({ fetch: app.fetch, port });
 console.log(`[api] listening on http://127.0.0.1:${port}`);
 console.log(OPENROUTER_API_KEY
     ? `[api] OpenRouter enabled (model=${OPENROUTER_MODEL})`
-    : "[api] OPENROUTER_API_KEY unset — using mock echo; set key for live OpenRouter");
-const auditInterval = Number(process.env.AUDIT_INTERVAL_MS ?? "0");
-const auditServerUrl = process.env.AUDIT_SERVER_URL ?? "";
-const auditRelayBaseUrl = process.env.AUDIT_RELAY_BASE_URL ?? `http://127.0.0.1:${port}`;
-const marketplaceAddress = (process.env.MARKETPLACE_ADDRESS ?? "");
-const rpcUrl = process.env.CHAIN_RPC_URL ?? "http://127.0.0.1:8545";
-const auditPk = (process.env.AUDIT_PRIVATE_KEY ?? "");
-const providerId = BigInt(process.env.AUDIT_PROVIDER_ID ?? "0");
-const auditTimeoutSec = Number(process.env.AUDIT_TIMEOUT_SEC ?? "120");
-if (auditInterval > 0) {
-    if (!auditServerUrl ||
-        !marketplaceAddress ||
-        marketplaceAddress === zeroAddress ||
-        !auditPk ||
-        auditPk.length < 64) {
-        console.warn("[audit] AUDIT_INTERVAL_MS set but missing AUDIT_SERVER_URL, MARKETPLACE_ADDRESS, or AUDIT_PRIVATE_KEY — scheduler disabled");
-    }
-    else if (!OPENROUTER_API_KEY) {
-        console.warn("[audit] OPENROUTER_API_KEY required for meaningful audit — scheduler disabled");
-    }
-    else {
-        startAuditLoop({
-            auditServerUrl,
-            auditRelayBaseUrl,
-            openrouterApiKey: OPENROUTER_API_KEY,
-            openrouterModel: OPENROUTER_MODEL,
-            providerId,
-            marketplaceAddress,
-            rpcUrl,
-            privateKey: auditPk.startsWith("0x") ? auditPk : `0x${auditPk}`,
-            intervalMs: auditInterval,
-            auditTimeoutSec,
-        });
-    }
+    : "[api] OPENROUTER_API_KEY unset - using mock echo; set key for live OpenRouter");
+const auditHealth = getAuditHealth();
+if (auditHealth.scheduled) {
+    startAuditLoop({
+        auditServerUrl,
+        auditRelayBaseUrl,
+        openrouterApiKey: OPENROUTER_API_KEY,
+        openrouterModel: OPENROUTER_MODEL,
+        providerId,
+        marketplaceAddress,
+        rpcUrl,
+        privateKey: auditPk,
+        intervalMs: auditInterval,
+        auditTimeoutSec,
+    });
+}
+else if (auditHealth.requested) {
+    console.warn(`[audit] scheduler disabled: ${auditHealth.reason}`);
 }
