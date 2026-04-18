@@ -74,6 +74,8 @@ npm install
 npm run dev
 ```
 
+请保持 **apps/api** 运行（上文步骤 3），以便 `NEXT_PUBLIC_MOCK_API`（默认 `http://127.0.0.1:8787`）提供 `POST /v1/chat`，前端在提交链上 `invoke` 前可对请求/响应做哈希。若只需命令行走链上流程、不用网页，见 [contracts/LOCAL_LOOP.md](contracts/LOCAL_LOOP.md)。
+
 浏览器打开 [http://localhost:3000](http://localhost:3000)，使用 MetaMask 等连接 **Chain ID 31337**，RPC `http://127.0.0.1:8545`；如需资金可导入 Anvil 测试私钥。
 
 ### 5. 审计服务（可选）

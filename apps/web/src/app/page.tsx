@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Header } from "@/components/Header";
 import type { AppRole } from "@/components/RoleTabs";
-import { UserView, type SimulateBundle } from "@/components/user/UserView";
+import { UserView } from "@/components/user/UserView";
 import { ProviderView } from "@/components/provider/ProviderView";
 
 export default function Page() {
@@ -26,8 +26,6 @@ export default function Page() {
     };
   }, []);
 
-  const simulate: SimulateBundle = useSimulateBundle(showToast);
-
   return (
     <div className="flex min-h-screen flex-col font-mono text-base leading-normal selection:bg-inverse selection:text-inverse-fg">
       <Header role={role} onRoleChange={setRole} />
@@ -39,9 +37,9 @@ export default function Page() {
         className="mx-auto grid w-full max-w-[min(88rem,calc(100%-4rem))] flex-1 content-start gap-14 sm:gap-16 px-6 py-8 sm:px-8 sm:py-10 lg:px-12 lg:py-12"
       >
         {role === "user" ? (
-          <UserView simulate={simulate} />
+          <UserView />
         ) : (
-          <ProviderView simulate={simulate} />
+          <ProviderView showToast={showToast} />
         )}
       </main>
 
@@ -59,30 +57,5 @@ export default function Page() {
         </div>
       )}
     </div>
-  );
-}
-
-function useSimulateBundle(showToast: (msg: string) => void): SimulateBundle {
-  const action = useCallback(
-    (label: string) => {
-      const L = label.replace(/:/g, "_").toUpperCase();
-      showToast(`${L} — SIMULATED (NO BACKEND)`);
-    },
-    [showToast],
-  );
-
-  const wouldCall = useCallback(
-    (fn: string) => {
-      showToast(`SIMULATED — WOULD CALL ${fn}()`);
-    },
-    [showToast],
-  );
-
-  return useMemo(
-    () => ({
-      action,
-      wouldCall,
-    }),
-    [action, wouldCall],
   );
 }

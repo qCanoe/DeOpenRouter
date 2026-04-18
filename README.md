@@ -75,6 +75,8 @@ npm install
 npm run dev
 ```
 
+Keep **apps/api** running (step 3) so `NEXT_PUBLIC_MOCK_API` (default `http://127.0.0.1:8787`) can serve `POST /v1/chat` before the UI submits an on-chain `invoke` with hashed request/response. For a cast-only chain loop without the web app, see [contracts/LOCAL_LOOP.md](contracts/LOCAL_LOOP.md).
+
 Open [http://localhost:3000](http://localhost:3000), connect a browser wallet (e.g. MetaMask) to **Chain ID 31337**, RPC `http://127.0.0.1:8545`, and (if needed) import Anvil’s test private key for a funded account.
 
 ### 5. Audit server (optional)
