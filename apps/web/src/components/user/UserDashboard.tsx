@@ -23,7 +23,7 @@ export function UserDashboard({
         <div className="flex min-h-[7.5rem] flex-col justify-between border-2 border-theme p-6">
           <p className="section-eyebrow mb-2">Balance (ETH)</p>
           <p className="text-3xl font-bold tabular-nums tracking-tighter sm:text-4xl">
-            {isLoadingBalance ? "…" : ethBalanceFormatted ?? "—"}
+            {isLoadingBalance ? "..." : ethBalanceFormatted ?? "--"}
           </p>
         </div>
         <div className="flex min-h-[7.5rem] flex-col justify-between border-2 border-theme p-6">

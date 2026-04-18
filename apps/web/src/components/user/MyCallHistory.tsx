@@ -22,7 +22,7 @@ export function MyCallHistory({
 
       {isLoading ? (
         <div className="border-2 border-theme p-12 text-center text-sm font-bold uppercase tracking-widest text-muted">
-          LOADING LOGS…
+          LOADING LOGS...
         </div>
       ) : calls.length === 0 ? (
         <div className="border-2 border-theme p-12 text-center text-sm font-bold uppercase leading-relaxed tracking-widest text-muted">
@@ -51,22 +51,22 @@ export function MyCallHistory({
               </tr>
             </thead>
             <tbody>
-              {calls.map((c) => (
-                <tr key={c.id} className="border-b border-theme last:border-b-0">
+              {calls.map((call) => (
+                <tr key={call.id} className="border-b border-theme last:border-b-0">
                   <td className="whitespace-nowrap px-4 py-3.5 align-top font-bold">
-                    #{String(c.providerId)}
+                    #{String(call.providerId)}
                   </td>
                   <td className="px-4 py-3.5 align-top font-bold">
-                    {resolveModelId(Number(c.providerId))}
+                    {resolveModelId(Number(call.providerId))}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3.5 align-top text-muted">
-                    #{String(c.blockNumber)}
+                    #{String(call.blockNumber)}
                   </td>
                   <td className="px-4 py-3.5 align-top tabular-nums">
-                    {formatEther(c.paid)} ETH
+                    {formatEther(call.paid)} ETH
                   </td>
                   <td className="whitespace-nowrap px-4 py-3.5 align-top font-medium">
-                    {shortenHex(c.requestHash, 6, 4)}
+                    {shortenHex(call.requestHash, 6, 4)}
                   </td>
                 </tr>
               ))}
