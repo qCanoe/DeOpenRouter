@@ -8,7 +8,7 @@ contract Deploy is Script {
     function run() external {
         uint256 pk = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(pk);
-        new DeOpenRouterMarketplace();
+        new DeOpenRouterMarketplace(100);
         vm.stopBroadcast();
     }
 }

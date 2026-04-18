@@ -14,9 +14,9 @@ type ProviderMarketplaceProps = {
   onInvoked?: () => void;
 };
 
-function matchesSearch(p: ChainProviderRow, q: string): boolean {
-  if (!q.trim()) return true;
-  return p.modelId.toLowerCase().includes(q.trim().toLowerCase());
+function matchesSearch(provider: ChainProviderRow, query: string): boolean {
+  if (!query.trim()) return true;
+  return provider.modelId.toLowerCase().includes(query.trim().toLowerCase());
 }
 
 export function ProviderMarketplace({
@@ -29,16 +29,16 @@ export function ProviderMarketplace({
   const [sort, setSort] = useState<SortKey>("price_asc");
 
   const filtered = useMemo(() => {
-    const list = rows.filter((p) => matchesSearch(p, query));
+    const list = rows.filter((provider) => matchesSearch(provider, query));
     const next = [...list];
     next.sort((a, b) => {
-      const pa = a.pricePerCall;
-      const pb = b.pricePerCall;
+      const priceA = a.effectivePriceWei;
+      const priceB = b.effectivePriceWei;
       switch (sort) {
         case "price_asc":
-          return pa < pb ? -1 : pa > pb ? 1 : 0;
+          return priceA < priceB ? -1 : priceA > priceB ? 1 : 0;
         case "price_desc":
-          return pb < pa ? -1 : pb > pa ? 1 : 0;
+          return priceB < priceA ? -1 : priceB > priceA ? 1 : 0;
         case "model_asc":
           return a.modelId.localeCompare(b.modelId);
         default:
@@ -94,16 +94,16 @@ export function ProviderMarketplace({
             onChange={(e) => setSort(e.target.value as SortKey)}
             className="input-brutal min-h-[44px] cursor-pointer bg-background font-bold uppercase tracking-widest"
           >
-            <option value="price_asc">Price · low → high</option>
-            <option value="price_desc">Price · high → low</option>
-            <option value="model_asc">Model A → Z</option>
+            <option value="price_asc">Price / low to high</option>
+            <option value="price_desc">Price / high to low</option>
+            <option value="model_asc">Model / A to Z</option>
           </select>
         </label>
       </div>
 
       {isLoading ? (
         <div className="border-2 border-theme p-12 text-center text-sm font-bold uppercase tracking-widest text-muted">
-          LOADING PROVIDERS…
+          LOADING PROVIDERS...
         </div>
       ) : filtered.length === 0 ? (
         <div className="border-2 border-dashed border-theme p-12 text-center text-sm font-bold uppercase leading-relaxed tracking-widest text-muted">
@@ -111,11 +111,11 @@ export function ProviderMarketplace({
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((p) => (
+          {filtered.map((provider) => (
             <ProviderCard
-              key={p.id}
+              key={provider.id}
               marketplace={marketplace}
-              row={p}
+              row={provider}
               onInvoked={onInvoked}
             />
           ))}

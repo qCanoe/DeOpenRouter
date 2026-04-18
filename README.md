@@ -8,10 +8,13 @@ DeOpenRouter explores a hybrid **on-chain trust + off-chain inference** design: 
 
 ### On-chain surface (MVP)
 
-- **Provider registration** (`register`): `modelId`, `endpoint`, `pricePerCall`, plus commitments `metadataURI`, `metadataHash`, `identityHash`, initial stake, and block timestamps (`createdAtBlock` / `updatedAtBlock` after updates).
-- **Metadata updates** (`updateProviderMetadata`): provider owner can change `metadataURI` / `metadataHash` / `identityHash`.
-- **Calls** (`invoke`): pays `pricePerCall`, emits `CallRecorded` with `requestHash`, `responseHash`, `paid`, monotonic `callId`, and `requestFormat` / `responseFormat` (uint8) to avoid hash semantic drift.
-- **Slashing (minimal)**: `slashOperator` (deployer by default; transferable) may `slash()` with `reasonHash`; slashed ETH is sent to `slashOperator`, stake is reduced, `slashedTotal` / `lastSlashedAtBlock` updated. No complaint/arbitration flow.
+- **Constructor**: `priceDelayBlocks` (must be > 0; deploy script uses `100` on mainnet-style networks; tests use a small value). Announced price changes apply after this many blocks.
+- **Provider registration** (`register`): `modelId`, `modelVersion`, `endpointCommitment` (bytes32, non-zero; web UI hashes a short **endpointId** with `keccak256(utf8(endpointId))`), `capabilityHash`, `pricePerCall`, `stakeLockBlocks` (withdraw after deactivate only when `block.number >= createdAtBlock + stakeLockBlocks`), plus `metadataURI`, `metadataHash`, `identityHash`, initial stake, and block timestamps (`createdAtBlock` / `updatedAtBlock` after updates).
+- **Metadata updates** (`updateProviderMetadata`): provider owner can change `metadataURI` / `metadataHash` / `identityHash` (not `endpointCommitment` in this version).
+- **Pricing** (`announcePriceChange`): owner schedules a new price; it becomes the charged price after `priceDelayBlocks`. `getEffectivePrice` returns what the next `invoke` will charge.
+- **Calls** (`invoke`): pays the effective per-call price, emits `CallRecorded` with `requestHash`, `responseHash`, `paid`, `usageUnits`, `recordedBlock`, `recordedAt`, monotonic `callId`, `requestFormat` / `responseFormat`, and `settlementStatus`. A `calls(callId)` mapping stores the same for audit reads.
+- **Slashing (minimal)**: `slashOperator` (deployer by default; transferable) may `slash()` with `reasonHash`; slashed ETH is sent to `slashOperator`, stake is reduced, `slashedTotal` / `lastSlashedAtBlock` updated, and `slashRecords(slashId)` stores each event. No complaint/arbitration flow.
+- **Audit anchoring (ops / demo)**: `auditRecorder` (deployer by default; `transferAuditRecorder`) may `recordAudit(providerId, reportHash, riskLevel)`; emits `AuditRecorded` with monotonic `auditId`. `riskLevel` is LOW=0, MEDIUM=1, HIGH=2.
 
 ---
 
@@ -49,11 +52,12 @@ In a second terminal (example private key is Anvil’s first test account—**ne
 
 ```bash
 cd contracts
+# Optional: copy .env.example to .env so Forge loads PRIVATE_KEY (local dev only).
 export PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
 forge script script/Deploy.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
 ```
 
-Copy the deployed `DeOpenRouterMarketplace` address from the script output or `contracts/broadcast/Deploy.s.sol/31337/run-latest.json`.
+Copy the deployed `DeOpenRouterMarketplace` address from the script output or your local `contracts/broadcast/Deploy.s.sol/<chainId>/run-latest.json` after `--broadcast`.
 
 ### 3. Mock API
 
@@ -63,7 +67,9 @@ npm install
 npm run dev
 ```
 
-Default: `http://127.0.0.1:8787` (`/health`, `/v1/chat`).
+Default: `http://127.0.0.1:8787` (`/health`, `/v1/chat`, plus OpenAI-compatible `POST /v1/chat/completions`).
+
+Without `OPENROUTER_API_KEY`, responses are a local echo so you can test the UI offline. With a key, the API proxies to OpenRouter. Optional: set `AUDIT_INTERVAL_MS` > 0 together with `AUDIT_SERVER_URL`, `MARKETPLACE_ADDRESS`, `CHAIN_RPC_URL`, `AUDIT_PRIVATE_KEY`, and `AUDIT_PROVIDER_ID` to run a background loop that anchors audit hashes on-chain (the loop also requires `OPENROUTER_API_KEY`). See `GET /health` (`audit` field) for whether the scheduler started.
 
 ### 4. Web (Next.js)
 

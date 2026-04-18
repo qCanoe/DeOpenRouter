@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import {
   useAccount,
-  useWriteContract,
   useWaitForTransactionReceipt,
+  useWriteContract,
 } from "wagmi";
 import { formatEther, type Address } from "viem";
 import {
@@ -66,7 +66,7 @@ export function ProviderCard({ marketplace, row, onInvoked }: ProviderCardProps)
     }
     setChatLoading(true);
     try {
-      const { response } = await postChat(getMockApiBase(), prompt.trim());
+      const { response, usageUnits } = await postChat(getMockApiBase(), prompt.trim());
       const reqH = requestHashV1(prompt.trim());
       const resH = responseHashV1(response);
       writeContract({
@@ -79,8 +79,9 @@ export function ProviderCard({ marketplace, row, onInvoked }: ProviderCardProps)
           resH,
           REQUEST_FORMAT_V1,
           RESPONSE_FORMAT_V1,
+          usageUnits,
         ],
-        value: row.pricePerCall,
+        value: row.effectivePriceWei,
       });
     } catch (e) {
       setLocalErr(e instanceof Error ? e.message : "invoke_failed");
@@ -115,11 +116,17 @@ export function ProviderCard({ marketplace, row, onInvoked }: ProviderCardProps)
 
       <div className="flex border-b-2 border-theme">
         <div className="flex-1 border-r-2 border-theme p-4">
-          <div className="section-eyebrow mb-1">Price / call</div>
+          <div className="section-eyebrow mb-1">Price / call (effective)</div>
           <div className="text-lg font-bold tabular-nums leading-tight">
-            {formatEther(row.pricePerCall)}{" "}
+            {formatEther(row.effectivePriceWei)}{" "}
             <span className="text-sm font-bold">ETH</span>
           </div>
+          {row.hasPendingPrice && (
+            <p className="mt-1 text-xs font-bold uppercase tracking-widest text-muted">
+              Pending {formatEther(row.pendingPriceDisplay)} ETH @ block{" "}
+              {row.pendingAppliesAtBlock.toString()}
+            </p>
+          )}
         </div>
         <div className="min-w-0 flex-1 p-4">
           <div className="section-eyebrow mb-1">Stake</div>
@@ -130,8 +137,13 @@ export function ProviderCard({ marketplace, row, onInvoked }: ProviderCardProps)
       </div>
 
       <div className="border-b-2 border-dashed border-theme bg-background p-4">
-        <div className="section-eyebrow mb-1">Endpoint</div>
-        <div className="truncate text-sm font-bold leading-snug">{row.endpoint}</div>
+        <div className="section-eyebrow mb-1">Endpoint commitment</div>
+        <div className="truncate font-mono text-sm font-bold leading-snug">
+          {shortenHex(row.endpointCommitment, 6, 6)}
+        </div>
+        <p className="mt-1 text-xs font-bold uppercase tracking-widest text-muted">
+          v{row.modelVersion}
+        </p>
       </div>
 
       <div className="border-b-2 border-theme p-4">
@@ -163,7 +175,7 @@ export function ProviderCard({ marketplace, row, onInvoked }: ProviderCardProps)
           className="btn-brutal w-full border-theme bg-inverse text-inverse-fg hover:bg-background hover:text-foreground disabled:opacity-50"
           onClick={() => void handleInvoke()}
         >
-          {working ? "[ WORKING… ]" : "[ INVOKE ]"}
+          {working ? "[ WORKING... ]" : "[ INVOKE ]"}
         </button>
       </div>
     </article>

@@ -9,46 +9,55 @@ import {
 } from "react";
 import {
   useAccount,
-  useWriteContract,
   useWaitForTransactionReceipt,
+  useWriteContract,
 } from "wagmi";
 import {
-  formatEther,
   keccak256,
-  stringToHex,
   parseEther,
+  stringToBytes,
+  stringToHex,
   type Address,
   type Hex,
 } from "viem";
 import { marketplaceAbi } from "@/lib/marketplaceAbi";
-import type { ChainProviderRow } from "@/hooks/useMarketplaceProviders";
 
 export type RegisterFormValues = {
   modelId: string;
-  endpoint: string;
+  modelVersion: string;
+  endpointId: string;
+  capabilityHash: string;
   pricePerCall: string;
   stake: string;
+  stakeLockBlocks: string;
   metadataURI: string;
   identityHash: string;
 };
 
 export const emptyRegisterValues: RegisterFormValues = {
   modelId: "",
-  endpoint: "",
+  modelVersion: "1.0.0",
+  endpointId: "",
+  capabilityHash: "",
   pricePerCall: "",
   stake: "",
+  stakeLockBlocks: "0",
   metadataURI: "",
   identityHash: "",
 };
 
 const MIN_STAKE_WEI = parseEther("0.01");
 
-function isEthDecimal(s: string): boolean {
-  return /^\d+(\.\d+)?$/.test(s.trim());
+function isEthDecimal(value: string): boolean {
+  return /^\d+(\.\d+)?$/.test(value.trim());
 }
 
-function isIdentityHash(s: string): boolean {
-  return /^0x[a-fA-F0-9]{64}$/.test(s.trim());
+function isHex32(value: string): boolean {
+  return /^0x[a-fA-F0-9]{64}$/.test(value.trim());
+}
+
+function isUintString(value: string): boolean {
+  return /^\d+$/.test(value.trim());
 }
 
 type ProviderRegisterFormProps = {
@@ -62,12 +71,7 @@ export const ProviderRegisterForm = forwardRef<
   HTMLDivElement,
   ProviderRegisterFormProps
 >(function ProviderRegisterForm(
-  {
-    seed,
-    initialValues,
-    marketplace,
-    onRegistered,
-  },
+  { seed, initialValues, marketplace, onRegistered },
   ref,
 ) {
   const baseId = useId();
@@ -112,36 +116,44 @@ export const ProviderRegisterForm = forwardRef<
       return;
     }
 
-    const v = values;
+    const value = values;
     if (
-      !v.modelId.trim() ||
-      !v.endpoint.trim() ||
-      !v.pricePerCall.trim() ||
-      !v.stake.trim() ||
-      !v.metadataURI.trim() ||
-      !v.identityHash.trim()
+      !value.modelId.trim() ||
+      !value.modelVersion.trim() ||
+      !value.endpointId.trim() ||
+      !value.capabilityHash.trim() ||
+      !value.pricePerCall.trim() ||
+      !value.stake.trim() ||
+      !value.stakeLockBlocks.trim() ||
+      !value.metadataURI.trim() ||
+      !value.identityHash.trim()
     ) {
       setError("All fields are required.");
       return;
     }
-    if (!isEthDecimal(v.pricePerCall) || !isEthDecimal(v.stake)) {
+    if (!isEthDecimal(value.pricePerCall) || !isEthDecimal(value.stake)) {
       setError("pricePerCall and stake must be positive decimal ETH strings.");
       return;
     }
-    if (!isIdentityHash(v.identityHash)) {
-      setError("identityHash must be 0x followed by 64 hex characters.");
+    if (!isUintString(value.stakeLockBlocks)) {
+      setError("stakeLockBlocks must be a non-negative integer.");
+      return;
+    }
+    if (!isHex32(value.identityHash) || !isHex32(value.capabilityHash)) {
+      setError("identityHash and capabilityHash must be 0x + 64 hex chars.");
       return;
     }
 
-    const priceWei = parseEther(v.pricePerCall.trim());
-    const stakeWei = parseEther(v.stake.trim());
+    const priceWei = parseEther(value.pricePerCall.trim());
+    const stakeWei = parseEther(value.stake.trim());
     if (stakeWei < MIN_STAKE_WEI) {
       setError("Stake must be at least 0.01 ETH (MIN_STAKE).");
       return;
     }
 
-    const metadataHash = keccak256(stringToHex(v.metadataURI.trim()));
-    const identityHash = v.identityHash.trim() as Hex;
+    const endpointCommitment = keccak256(stringToBytes(value.endpointId.trim())) as Hex;
+    const metadataHash = keccak256(stringToHex(value.metadataURI.trim()));
+    const stakeLockBlocks = BigInt(value.stakeLockBlocks.trim());
 
     writeContract({
       address: marketplace,
@@ -149,12 +161,15 @@ export const ProviderRegisterForm = forwardRef<
       functionName: "register",
       args: [
         {
-          modelId: v.modelId.trim(),
-          endpoint: v.endpoint.trim(),
+          modelId: value.modelId.trim(),
+          modelVersion: value.modelVersion.trim(),
+          endpointCommitment,
+          capabilityHash: value.capabilityHash.trim() as Hex,
           pricePerCall: priceWei,
-          metadataURI: v.metadataURI.trim(),
+          stakeLockBlocks,
+          metadataURI: value.metadataURI.trim(),
           metadataHash,
-          identityHash,
+          identityHash: value.identityHash.trim() as Hex,
         },
       ],
       value: stakeWei,
@@ -166,8 +181,8 @@ export const ProviderRegisterForm = forwardRef<
   return (
     <section ref={ref}>
       <div className="mb-8 flex flex-wrap items-end justify-between gap-2 border-b-2 border-theme pb-3">
-        <h2 className="section-heading">Register_Or_Edit</h2>
-        <span className="section-eyebrow">On-chain register</span>
+        <h2 className="section-heading">Register_Provider</h2>
+        <span className="section-eyebrow">New on-chain provider</span>
       </div>
 
       <form
@@ -175,6 +190,11 @@ export const ProviderRegisterForm = forwardRef<
         className="grid gap-5 border-2 border-theme p-4 sm:p-6"
         noValidate
       >
+        <p className="text-xs font-bold uppercase leading-relaxed tracking-widest text-muted">
+          Endpoint commitment is keccak256(utf8(endpointId)) - store the real URL
+          off-chain; only the short id is hashed.
+        </p>
+
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           <label className="flex flex-col gap-2">
             <span className="section-eyebrow">modelId</span>
@@ -188,18 +208,47 @@ export const ProviderRegisterForm = forwardRef<
               autoComplete="off"
             />
           </label>
-          <label className="flex flex-col gap-2 md:col-span-2">
-            <span className="section-eyebrow">endpoint</span>
+
+          <label className="flex flex-col gap-2">
+            <span className="section-eyebrow">modelVersion</span>
             <input
-              id={`${baseId}-endpoint`}
-              value={values.endpoint}
+              id={`${baseId}-modelVersion`}
+              value={values.modelVersion}
               onChange={(e) =>
-                setValues((prev) => ({ ...prev, endpoint: e.target.value }))
+                setValues((prev) => ({ ...prev, modelVersion: e.target.value }))
               }
               className="input-brutal min-h-[44px]"
               autoComplete="off"
             />
           </label>
+
+          <label className="flex flex-col gap-2 md:col-span-2">
+            <span className="section-eyebrow">endpointId (preimage for commitment)</span>
+            <input
+              id={`${baseId}-endpointId`}
+              value={values.endpointId}
+              onChange={(e) =>
+                setValues((prev) => ({ ...prev, endpointId: e.target.value }))
+              }
+              className="input-brutal min-h-[44px]"
+              autoComplete="off"
+            />
+          </label>
+
+          <label className="flex flex-col gap-2 md:col-span-2">
+            <span className="section-eyebrow">capabilityHash</span>
+            <input
+              id={`${baseId}-capability`}
+              value={values.capabilityHash}
+              onChange={(e) =>
+                setValues((prev) => ({ ...prev, capabilityHash: e.target.value }))
+              }
+              className="input-brutal min-h-[44px] font-mono text-xs leading-normal"
+              spellCheck={false}
+              autoComplete="off"
+            />
+          </label>
+
           <label className="flex flex-col gap-2">
             <span className="section-eyebrow">pricePerCall (ETH)</span>
             <input
@@ -213,6 +262,7 @@ export const ProviderRegisterForm = forwardRef<
               autoComplete="off"
             />
           </label>
+
           <label className="flex flex-col gap-2">
             <span className="section-eyebrow">stake (ETH)</span>
             <input
@@ -226,6 +276,21 @@ export const ProviderRegisterForm = forwardRef<
               autoComplete="off"
             />
           </label>
+
+          <label className="flex flex-col gap-2 md:col-span-2">
+            <span className="section-eyebrow">stakeLockBlocks (0 = no extra lock)</span>
+            <input
+              id={`${baseId}-lock`}
+              value={values.stakeLockBlocks}
+              onChange={(e) =>
+                setValues((prev) => ({ ...prev, stakeLockBlocks: e.target.value }))
+              }
+              className="input-brutal min-h-[44px] tabular-nums"
+              inputMode="numeric"
+              autoComplete="off"
+            />
+          </label>
+
           <label className="flex flex-col gap-2 md:col-span-2">
             <span className="section-eyebrow">metadataURI</span>
             <input
@@ -238,6 +303,7 @@ export const ProviderRegisterForm = forwardRef<
               autoComplete="off"
             />
           </label>
+
           <label className="flex flex-col gap-2 md:col-span-2">
             <span className="section-eyebrow">identityHash</span>
             <input
@@ -267,22 +333,9 @@ export const ProviderRegisterForm = forwardRef<
           disabled={working || !marketplace}
           className="btn-brutal w-full border-theme bg-inverse text-inverse-fg hover:bg-background hover:text-foreground disabled:opacity-50 sm:w-auto sm:self-start"
         >
-          {working ? "[ SUBMITTING… ]" : "[ REGISTER_ON_CHAIN ]"}
+          {working ? "[ SUBMITTING... ]" : "[ REGISTER_ON_CHAIN ]"}
         </button>
       </form>
     </section>
   );
 });
-
-export function chainProviderToFormValues(
-  p: ChainProviderRow,
-): RegisterFormValues {
-  return {
-    modelId: p.modelId,
-    endpoint: p.endpoint,
-    pricePerCall: formatEther(p.pricePerCall),
-    stake: formatEther(p.stake),
-    metadataURI: p.metadataURI,
-    identityHash: p.identityHash,
-  };
-}
