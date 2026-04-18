@@ -7,13 +7,26 @@ import "../src/DeOpenRouterMarketplace.sol";
 contract DeOpenRouterMarketplaceTest is Test {
     DeOpenRouterMarketplace public m;
 
+    uint256 internal constant PRICE_DELAY = 5;
+
     receive() external payable {}
 
-    function _reg(string memory modelId, string memory endpoint, uint256 pricePerCall) internal pure returns (DeOpenRouterMarketplace.ProviderRegistration memory) {
+    function _ep() internal pure returns (bytes32) {
+        return keccak256("endpoint-id");
+    }
+
+    function _reg(string memory modelId, uint256 pricePerCall, uint256 stakeLockBlocks)
+        internal
+        pure
+        returns (DeOpenRouterMarketplace.ProviderRegistration memory)
+    {
         return DeOpenRouterMarketplace.ProviderRegistration({
             modelId: modelId,
-            endpoint: endpoint,
+            modelVersion: "1.0.0",
+            endpointCommitment: keccak256("endpoint-id"),
+            capabilityHash: keccak256("capabilities"),
             pricePerCall: pricePerCall,
+            stakeLockBlocks: stakeLockBlocks,
             metadataURI: "ipfs://QmExample",
             metadataHash: keccak256("metadata"),
             identityHash: keccak256("identity")
@@ -21,25 +34,37 @@ contract DeOpenRouterMarketplaceTest is Test {
     }
 
     function setUp() public {
-        m = new DeOpenRouterMarketplace();
+        m = new DeOpenRouterMarketplace(PRICE_DELAY);
     }
 
     function test_register_reverts_below_min_stake() public {
         vm.expectRevert(DeOpenRouterMarketplace.InvalidStake.selector);
-        m.register{value: 0}(_reg("m1", "http://localhost:8787", 1 ether));
+        m.register{value: 0}(_reg("m1", 1 ether, 0));
+    }
+
+    function test_register_reverts_zero_endpoint_commitment() public {
+        vm.deal(address(this), 10 ether);
+        uint256 min = m.MIN_STAKE();
+        DeOpenRouterMarketplace.ProviderRegistration memory bad = _reg("m1", 1 ether, 0);
+        bad.endpointCommitment = bytes32(0);
+        vm.expectRevert(DeOpenRouterMarketplace.InvalidEndpointCommitment.selector);
+        m.register{value: min}(bad);
     }
 
     function test_register_emits_and_increments() public {
         vm.deal(address(this), 10 ether);
         uint256 min = m.MIN_STAKE();
-        DeOpenRouterMarketplace.ProviderRegistration memory info = _reg("m1", "http://localhost:8787", 1 ether);
+        DeOpenRouterMarketplace.ProviderRegistration memory info = _reg("m1", 1 ether, 0);
         vm.expectEmit(true, true, true, true);
         emit DeOpenRouterMarketplace.ProviderRegistered(
             0,
             address(this),
             "m1",
-            "http://localhost:8787",
+            "1.0.0",
+            _ep(),
+            keccak256("capabilities"),
             1 ether,
+            0,
             min,
             "ipfs://QmExample",
             keccak256("metadata"),
@@ -52,8 +77,13 @@ contract DeOpenRouterMarketplaceTest is Test {
             address owner,
             ,
             ,
+            bytes32 ec,
             ,
+            uint256 price,
+            uint256 pend,
+            uint256 pendBlock,
             uint256 stake,
+            uint256 lockBlocks,
             bool active,
             string memory uri,
             bytes32 mh,
@@ -64,7 +94,12 @@ contract DeOpenRouterMarketplaceTest is Test {
             uint256 lastSlash
         ) = m.providers(0);
         assertEq(owner, address(this));
+        assertEq(ec, _ep());
+        assertEq(price, 1 ether);
+        assertEq(pend, 0);
+        assertEq(pendBlock, 0);
         assertEq(stake, min);
+        assertEq(lockBlocks, 0);
         assertTrue(active);
         assertEq(uri, "ipfs://QmExample");
         assertEq(mh, keccak256("metadata"));
@@ -77,17 +112,17 @@ contract DeOpenRouterMarketplaceTest is Test {
 
     function test_invoke_reverts_inactive() public {
         vm.deal(address(this), 20 ether);
-        m.register{value: m.MIN_STAKE()}(_reg("m1", "http://x", 1 ether));
+        m.register{value: m.MIN_STAKE()}(_reg("m1", 1 ether, 0));
         m.deactivate(0);
         vm.expectRevert(DeOpenRouterMarketplace.ProviderInactive.selector);
-        m.invoke{value: 2 ether}(0, bytes32(uint256(1)), bytes32(uint256(2)), 1, 1);
+        m.invoke{value: 2 ether}(0, bytes32(uint256(1)), bytes32(uint256(2)), 1, 1, 0);
     }
 
     function test_invoke_pays_owner_and_records() public {
         address ownerBob = address(0xB0B);
         vm.deal(ownerBob, 20 ether);
         vm.startPrank(ownerBob);
-        m.register{value: m.MIN_STAKE()}(_reg("m1", "http://x", 1 ether));
+        m.register{value: m.MIN_STAKE()}(_reg("m1", 1 ether, 0));
         vm.stopPrank();
         address userAlice = address(0xA11CE);
         vm.deal(userAlice, 5 ether);
@@ -95,27 +130,51 @@ contract DeOpenRouterMarketplaceTest is Test {
         bytes32 rq = keccak256("req");
         bytes32 rs = keccak256("res");
         assertEq(m.nextCallId(), 0);
+        uint256 bn = block.number;
+        uint256 ts = block.timestamp;
         vm.expectEmit(true, true, true, true);
-        emit DeOpenRouterMarketplace.CallRecorded(0, userAlice, rq, rs, 1 ether, 0, 1, 1);
-        m.invoke{value: 2 ether}(0, rq, rs, 1, 1);
+        emit DeOpenRouterMarketplace.CallRecorded(
+            0, userAlice, rq, rs, 1 ether, 0, 42, bn, ts, 1, 1, m.SETTLEMENT_SETTLED()
+        );
+        m.invoke{value: 2 ether}(0, rq, rs, 1, 1, 42);
         vm.stopPrank();
         assertEq(m.nextCallId(), 1);
         assertEq(userAlice.balance, 4 ether);
         assertEq(ownerBob.balance, 20 ether - m.MIN_STAKE() + 1 ether);
+        (
+            uint256 pid,
+            address caller,
+            bytes32 qh,
+            bytes32 rh,
+            uint256 paid,
+            uint256 usage,
+            uint256 recBlock,
+            uint256 recAt,
+            uint8 status
+        ) = m.calls(0);
+        assertEq(pid, 0);
+        assertEq(caller, userAlice);
+        assertEq(qh, rq);
+        assertEq(rh, rs);
+        assertEq(paid, 1 ether);
+        assertEq(usage, 42);
+        assertEq(recBlock, bn);
+        assertEq(recAt, ts);
+        assertEq(status, m.SETTLEMENT_SETTLED());
     }
 
     function test_invoke_reverts_payment_too_low() public {
         vm.deal(address(this), 20 ether);
-        m.register{value: m.MIN_STAKE()}(_reg("m1", "http://x", 2 ether));
+        m.register{value: m.MIN_STAKE()}(_reg("m1", 2 ether, 0));
         vm.expectRevert(DeOpenRouterMarketplace.PaymentTooLow.selector);
-        m.invoke{value: 1 ether}(0, bytes32(uint256(1)), bytes32(uint256(2)), 1, 1);
+        m.invoke{value: 1 ether}(0, bytes32(uint256(1)), bytes32(uint256(2)), 1, 1, 0);
     }
 
     function test_deactivate_reverts_not_owner() public {
         address ownerBob = address(0xB0B);
         vm.deal(ownerBob, 20 ether);
         vm.startPrank(ownerBob);
-        m.register{value: m.MIN_STAKE()}(_reg("m1", "http://x", 1 ether));
+        m.register{value: m.MIN_STAKE()}(_reg("m1", 1 ether, 0));
         vm.stopPrank();
         vm.expectRevert(DeOpenRouterMarketplace.NotOwner.selector);
         m.deactivate(0);
@@ -126,21 +185,54 @@ contract DeOpenRouterMarketplaceTest is Test {
         vm.deal(ownerBob, 20 ether);
         uint256 min = m.MIN_STAKE();
         vm.startPrank(ownerBob);
-        m.register{value: min}(_reg("m1", "http://x", 1 ether));
+        m.register{value: min}(_reg("m1", 1 ether, 0));
         m.deactivate(0);
         uint256 beforeBalance = ownerBob.balance;
         m.withdrawStake(0);
         vm.stopPrank();
         assertEq(ownerBob.balance, beforeBalance + min);
-        (,,,, uint256 stakeAfter,,,,,,,,) = m.providers(0);
+        (
+            address o,
+            ,
+            ,
+            bytes32 ec,
+            ,
+            uint256 pp,
+            uint256 pend,
+            uint256 pblk,
+            uint256 stakeAfter,
+            uint256 slb,
+            bool act,
+            string memory uri,
+            bytes32 mh,
+            bytes32 ih,
+            uint256 c,
+            uint256 u,
+            uint256 st,
+            uint256 ls
+        ) = m.providers(0);
+        assertEq(o, ownerBob);
+        assertEq(ec, _ep());
+        assertEq(pp, 1 ether);
+        assertEq(pend, 0);
+        assertEq(pblk, 0);
         assertEq(stakeAfter, 0);
+        assertEq(slb, 0);
+        assertTrue(act == false);
+        assertEq(keccak256(bytes(uri)), keccak256("ipfs://QmExample"));
+        assertEq(mh, keccak256("metadata"));
+        assertEq(ih, keccak256("identity"));
+        assertEq(c, block.number);
+        assertEq(u, block.number);
+        assertEq(st, 0);
+        assertEq(ls, 0);
     }
 
     function test_withdraw_reverts_when_stake_already_zero() public {
         address ownerBob = address(0xB0B);
         vm.deal(ownerBob, 20 ether);
         vm.startPrank(ownerBob);
-        m.register{value: m.MIN_STAKE()}(_reg("m1", "http://x", 1 ether));
+        m.register{value: m.MIN_STAKE()}(_reg("m1", 1 ether, 0));
         m.deactivate(0);
         m.withdrawStake(0);
         vm.expectRevert(DeOpenRouterMarketplace.InvalidStake.selector);
@@ -152,15 +244,29 @@ contract DeOpenRouterMarketplaceTest is Test {
         address ownerBob = address(0xB0B);
         vm.deal(ownerBob, 20 ether);
         vm.startPrank(ownerBob);
-        m.register{value: m.MIN_STAKE()}(_reg("m1", "http://x", 1 ether));
+        m.register{value: m.MIN_STAKE()}(_reg("m1", 1 ether, 0));
         vm.expectRevert(DeOpenRouterMarketplace.ProviderInactive.selector);
+        m.withdrawStake(0);
+        vm.stopPrank();
+    }
+
+    function test_withdraw_reverts_stake_locked() public {
+        address ownerBob = address(0xB0B);
+        vm.deal(ownerBob, 20 ether);
+        uint256 min = m.MIN_STAKE();
+        vm.startPrank(ownerBob);
+        m.register{value: min}(_reg("m1", 1 ether, 100));
+        m.deactivate(0);
+        vm.expectRevert(DeOpenRouterMarketplace.StakeLocked.selector);
+        m.withdrawStake(0);
+        vm.roll(block.number + 100);
         m.withdrawStake(0);
         vm.stopPrank();
     }
 
     function test_update_provider_metadata() public {
         vm.deal(address(this), 10 ether);
-        m.register{value: m.MIN_STAKE()}(_reg("m1", "http://x", 1 ether));
+        m.register{value: m.MIN_STAKE()}(_reg("m1", 1 ether, 0));
         bytes32 newMh = keccak256("new-meta");
         bytes32 newIh = keccak256("new-id");
         DeOpenRouterMarketplace.ProviderMetadataUpdate memory upd = DeOpenRouterMarketplace.ProviderMetadataUpdate({
@@ -171,7 +277,7 @@ contract DeOpenRouterMarketplaceTest is Test {
         vm.expectEmit(true, true, true, true);
         emit DeOpenRouterMarketplace.ProviderMetadataUpdated(0, "ipfs://updated", newMh, newIh, block.number);
         m.updateProviderMetadata(0, upd);
-        (,,,,,, string memory uri, bytes32 mh, bytes32 ih,, uint256 updated,,) = m.providers(0);
+        (,,,,,,,,,,, string memory uri, bytes32 mh, bytes32 ih,, uint256 updated,,) = m.providers(0);
         assertEq(uri, "ipfs://updated");
         assertEq(mh, newMh);
         assertEq(ih, newIh);
@@ -182,7 +288,7 @@ contract DeOpenRouterMarketplaceTest is Test {
         address ownerBob = address(0xB0B);
         vm.deal(ownerBob, 20 ether);
         vm.startPrank(ownerBob);
-        m.register{value: m.MIN_STAKE()}(_reg("m1", "http://x", 1 ether));
+        m.register{value: m.MIN_STAKE()}(_reg("m1", 1 ether, 0));
         vm.stopPrank();
         DeOpenRouterMarketplace.ProviderMetadataUpdate memory upd = DeOpenRouterMarketplace.ProviderMetadataUpdate({
             metadataURI: "x",
@@ -197,38 +303,64 @@ contract DeOpenRouterMarketplaceTest is Test {
         address ownerBob = address(0xB0B);
         vm.deal(ownerBob, 20 ether);
         vm.startPrank(ownerBob);
-        m.register{value: m.MIN_STAKE()}(_reg("m1", "http://x", 1 ether));
+        m.register{value: m.MIN_STAKE()}(_reg("m1", 1 ether, 0));
         vm.stopPrank();
         address op = m.slashOperator();
         uint256 opBefore = op.balance;
         bytes32 reason = keccak256("fraud");
+        assertEq(m.nextSlashId(), 0);
         vm.expectEmit(true, true, true, true);
-        emit DeOpenRouterMarketplace.ProviderSlashed(0, op, 0.005 ether, reason, m.MIN_STAKE() - 0.005 ether);
+        emit DeOpenRouterMarketplace.ProviderSlashed(0, 0, op, 0.005 ether, reason, m.MIN_STAKE() - 0.005 ether);
         m.slash(0, 0.005 ether, reason);
         assertEq(op.balance, opBefore + 0.005 ether);
+        assertEq(m.nextSlashId(), 1);
+        (uint256 pid, address sop, uint256 amt, bytes32 rh, uint256 bnum, uint256 ts) = m.slashRecords(0);
+        assertEq(pid, 0);
+        assertEq(sop, op);
+        assertEq(amt, 0.005 ether);
+        assertEq(rh, reason);
+        assertEq(bnum, block.number);
+        assertEq(ts, block.timestamp);
         (
+            address bob,
             ,
             ,
+            bytes32 ec,
             ,
-            ,
+            uint256 pp,
+            uint256 pend,
+            uint256 pblk,
             uint256 stake,
-            ,
-            ,
-            ,
-            ,
-            ,
-            ,
+            uint256 slb,
+            bool act,
+            string memory uri,
+            bytes32 mh,
+            bytes32 ih,
+            uint256 c,
+            uint256 u,
             uint256 slashedTot,
             uint256 lastSlash
         ) = m.providers(0);
+        assertEq(bob, ownerBob);
+        assertEq(ec, _ep());
+        assertEq(pp, 1 ether);
+        assertEq(pend, 0);
+        assertEq(pblk, 0);
         assertEq(stake, m.MIN_STAKE() - 0.005 ether);
+        assertEq(slb, 0);
+        assertTrue(act);
+        assertEq(keccak256(bytes(uri)), keccak256("ipfs://QmExample"));
+        assertEq(mh, keccak256("metadata"));
+        assertEq(ih, keccak256("identity"));
+        assertEq(c, block.number);
+        assertEq(u, block.number);
         assertEq(slashedTot, 0.005 ether);
         assertEq(lastSlash, block.number);
     }
 
     function test_slash_reverts_not_operator() public {
         vm.deal(address(this), 10 ether);
-        m.register{value: m.MIN_STAKE()}(_reg("m1", "http://x", 1 ether));
+        m.register{value: m.MIN_STAKE()}(_reg("m1", 1 ether, 0));
         vm.startPrank(address(0xDEAD));
         vm.expectRevert(DeOpenRouterMarketplace.NotSlashOperator.selector);
         m.slash(0, 1, bytes32(0));
@@ -239,11 +371,16 @@ contract DeOpenRouterMarketplaceTest is Test {
         address ownerBob = address(0xB0B);
         vm.deal(ownerBob, 20 ether);
         vm.startPrank(ownerBob);
-        m.register{value: m.MIN_STAKE()}(_reg("m1", "http://x", 1 ether));
+        m.register{value: m.MIN_STAKE()}(_reg("m1", 1 ether, 0));
         vm.stopPrank();
         uint256 tooMuch = m.MIN_STAKE() + 1;
         vm.expectRevert(DeOpenRouterMarketplace.SlashExceedsStake.selector);
         m.slash(0, tooMuch, bytes32(0));
+    }
+
+    function test_slash_reverts_invalid_provider() public {
+        vm.expectRevert(DeOpenRouterMarketplace.InvalidProviderId.selector);
+        m.slash(0, 0, bytes32(0));
     }
 
     function test_transfer_slash_operator() public {
@@ -252,9 +389,14 @@ contract DeOpenRouterMarketplaceTest is Test {
         assertEq(m.slashOperator(), newOp);
     }
 
+    function test_transfer_slash_operator_reverts_zero_address() public {
+        vm.expectRevert(DeOpenRouterMarketplace.ZeroAddress.selector);
+        m.transferSlashOperator(address(0));
+    }
+
     function test_record_audit_emits() public {
         vm.deal(address(this), 10 ether);
-        m.register{value: m.MIN_STAKE()}(_reg("m1", "http://x", 1 ether));
+        m.register{value: m.MIN_STAKE()}(_reg("m1", 1 ether, 0));
         bytes32 rh = keccak256("audit-report-json");
         assertEq(m.nextAuditId(), 0);
         vm.expectEmit(true, true, true, true);
@@ -270,7 +412,7 @@ contract DeOpenRouterMarketplaceTest is Test {
 
     function test_record_audit_reverts_not_recorder() public {
         vm.deal(address(this), 10 ether);
-        m.register{value: m.MIN_STAKE()}(_reg("m1", "http://x", 1 ether));
+        m.register{value: m.MIN_STAKE()}(_reg("m1", 1 ether, 0));
         vm.startPrank(address(0xDEAD));
         vm.expectRevert(DeOpenRouterMarketplace.NotAuditRecorder.selector);
         m.recordAudit(0, bytes32(uint256(1)), 0);
@@ -281,5 +423,33 @@ contract DeOpenRouterMarketplaceTest is Test {
         address newR = address(0xBEEF);
         m.transferAuditRecorder(newR);
         assertEq(m.auditRecorder(), newR);
+    }
+
+    function test_transfer_audit_recorder_reverts_zero_address() public {
+        vm.expectRevert(DeOpenRouterMarketplace.ZeroAddress.selector);
+        m.transferAuditRecorder(address(0));
+    }
+
+    function test_price_announce_invoke_uses_old_price_until_effective() public {
+        vm.deal(address(this), 30 ether);
+        m.register{value: m.MIN_STAKE()}(_reg("m1", 1 ether, 0));
+        m.announcePriceChange(0, 2 ether);
+        (uint256 weiPrice,,,) = m.getEffectivePrice(0);
+        assertEq(weiPrice, 1 ether);
+        m.invoke{value: 1 ether}(0, bytes32(uint256(1)), bytes32(uint256(2)), 1, 1, 0);
+        vm.roll(block.number + PRICE_DELAY);
+        (weiPrice,,,) = m.getEffectivePrice(0);
+        assertEq(weiPrice, 2 ether);
+        m.invoke{value: 2 ether}(0, bytes32(uint256(3)), bytes32(uint256(4)), 1, 1, 0);
+    }
+
+    function test_price_applied_on_announce_if_past_effective() public {
+        vm.deal(address(this), 30 ether);
+        m.register{value: m.MIN_STAKE()}(_reg("m1", 1 ether, 0));
+        m.announcePriceChange(0, 2 ether);
+        vm.roll(block.number + PRICE_DELAY);
+        m.announcePriceChange(0, 3 ether);
+        (uint256 weiPrice,,,) = m.getEffectivePrice(0);
+        assertEq(weiPrice, 2 ether);
     }
 }
