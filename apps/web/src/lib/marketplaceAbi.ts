@@ -4,10 +4,13 @@
  */
 export const marketplaceAbi = [
   { type: "function", name: "MIN_STAKE", stateMutability: "view", inputs: [], outputs: [{ type: "uint256", name: "" }] },
+  { type: "function", name: "priceDelayBlocks", stateMutability: "view", inputs: [], outputs: [{ type: "uint256", name: "" }] },
+  { type: "function", name: "SETTLEMENT_SETTLED", stateMutability: "view", inputs: [], outputs: [{ type: "uint8", name: "" }] },
   { type: "function", name: "slashOperator", stateMutability: "view", inputs: [], outputs: [{ type: "address", name: "" }] },
   { type: "function", name: "nextProviderId", stateMutability: "view", inputs: [], outputs: [{ type: "uint256", name: "" }] },
   { type: "function", name: "nextCallId", stateMutability: "view", inputs: [], outputs: [{ type: "uint256", name: "" }] },
   { type: "function", name: "nextAuditId", stateMutability: "view", inputs: [], outputs: [{ type: "uint256", name: "" }] },
+  { type: "function", name: "nextSlashId", stateMutability: "view", inputs: [], outputs: [{ type: "uint256", name: "" }] },
   { type: "function", name: "auditRecorder", stateMutability: "view", inputs: [], outputs: [{ type: "address", name: "" }] },
   {
     type: "function",
@@ -17,9 +20,14 @@ export const marketplaceAbi = [
     outputs: [
       { type: "address", name: "owner" },
       { type: "string", name: "modelId" },
-      { type: "string", name: "endpoint" },
+      { type: "string", name: "modelVersion" },
+      { type: "bytes32", name: "endpointCommitment" },
+      { type: "bytes32", name: "capabilityHash" },
       { type: "uint256", name: "pricePerCall" },
+      { type: "uint256", name: "pendingPriceWei" },
+      { type: "uint256", name: "pendingEffectiveBlock" },
       { type: "uint256", name: "stake" },
+      { type: "uint256", name: "stakeLockBlocks" },
       { type: "bool", name: "active" },
       { type: "string", name: "metadataURI" },
       { type: "bytes32", name: "metadataHash" },
@@ -32,6 +40,18 @@ export const marketplaceAbi = [
   },
   {
     type: "function",
+    name: "getEffectivePrice",
+    stateMutability: "view",
+    inputs: [{ type: "uint256", name: "providerId" }],
+    outputs: [
+      { type: "uint256", name: "priceWei" },
+      { type: "bool", name: "hasPending" },
+      { type: "uint256", name: "pendingPrice" },
+      { type: "uint256", name: "pendingAppliesAtBlock" },
+    ],
+  },
+  {
+    type: "function",
     name: "register",
     stateMutability: "payable",
     inputs: [
@@ -40,8 +60,11 @@ export const marketplaceAbi = [
         type: "tuple",
         components: [
           { name: "modelId", type: "string" },
-          { name: "endpoint", type: "string" },
+          { name: "modelVersion", type: "string" },
+          { name: "endpointCommitment", type: "bytes32" },
+          { name: "capabilityHash", type: "bytes32" },
           { name: "pricePerCall", type: "uint256" },
+          { name: "stakeLockBlocks", type: "uint256" },
           { name: "metadataURI", type: "string" },
           { name: "metadataHash", type: "bytes32" },
           { name: "identityHash", type: "bytes32" },
@@ -70,6 +93,16 @@ export const marketplaceAbi = [
   },
   {
     type: "function",
+    name: "announcePriceChange",
+    stateMutability: "nonpayable",
+    inputs: [
+      { type: "uint256", name: "providerId" },
+      { type: "uint256", name: "newPrice" },
+    ],
+    outputs: [],
+  },
+  {
+    type: "function",
     name: "deactivate",
     stateMutability: "nonpayable",
     inputs: [{ type: "uint256", name: "providerId" }],
@@ -85,6 +118,7 @@ export const marketplaceAbi = [
       { type: "bytes32", name: "responseHash" },
       { type: "uint8", name: "requestFormat" },
       { type: "uint8", name: "responseFormat" },
+      { type: "uint256", name: "usageUnits" },
     ],
     outputs: [],
   },
