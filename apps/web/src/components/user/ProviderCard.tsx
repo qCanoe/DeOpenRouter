@@ -1,92 +1,169 @@
-import type { MockProvider, RiskLevel } from "@/lib/mockData";
+"use client";
+
+import { useEffect, useState } from "react";
+import {
+  useAccount,
+  useWriteContract,
+  useWaitForTransactionReceipt,
+} from "wagmi";
+import { formatEther, type Address } from "viem";
+import {
+  marketplaceAbi,
+  REQUEST_FORMAT_V1,
+  RESPONSE_FORMAT_V1,
+} from "@/lib/marketplaceAbi";
+import type { ChainProviderRow } from "@/hooks/useMarketplaceProviders";
+import { postChat } from "@/lib/chatClient";
+import { getMockApiBase } from "@/lib/marketplaceEnv";
+import { requestHashV1, responseHashV1 } from "@/lib/hashMvp";
 import { shortenHex } from "@/lib/format";
 
-type SimulateCallbacks = {
-  action: (label: string) => void;
+export type ProviderCardProps = {
+  marketplace: Address;
+  row: ChainProviderRow;
+  onInvoked?: () => void;
 };
 
-type ProviderCardProps = {
-  provider: MockProvider;
-  simulate: SimulateCallbacks;
-};
+export function ProviderCard({ marketplace, row, onInvoked }: ProviderCardProps) {
+  const { isConnected } = useAccount();
+  const [prompt, setPrompt] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
+  const [localErr, setLocalErr] = useState<string | null>(null);
 
-const riskOrder: Record<RiskLevel, number> = {
-  low: 0,
-  medium: 1,
-  high: 2,
-};
+  const { writeContract, data: hash, isPending, error, reset } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  });
 
-export function riskRank(r: RiskLevel): number {
-  return riskOrder[r];
-}
+  useEffect(() => {
+    if (error) {
+      setLocalErr(error.message);
+    }
+  }, [error]);
 
-function RiskBadge({ risk }: { risk: RiskLevel }) {
-  const label = risk === "low" ? "LOW" : risk === "medium" ? "MED" : "HIGH";
-  const base =
-    "inline-flex min-h-[1.75rem] items-center px-2 py-1 text-xs font-bold uppercase leading-none tracking-widest border-theme";
-  if (risk === "low") {
-    return (
-      <span className={`${base} border-2 text-muted border-muted`}>{label}</span>
-    );
+  useEffect(() => {
+    if (isSuccess) {
+      onInvoked?.();
+      setPrompt("");
+      reset();
+      setLocalErr(null);
+    }
+  }, [isSuccess, onInvoked, reset]);
+
+  async function handleInvoke() {
+    setLocalErr(null);
+    if (!prompt.trim()) {
+      setLocalErr("Enter a prompt.");
+      return;
+    }
+    if (!isConnected) {
+      setLocalErr("Connect wallet first.");
+      return;
+    }
+    if (!row.active) {
+      setLocalErr("Provider is inactive.");
+      return;
+    }
+    setChatLoading(true);
+    try {
+      const { response } = await postChat(getMockApiBase(), prompt.trim());
+      const reqH = requestHashV1(prompt.trim());
+      const resH = responseHashV1(response);
+      writeContract({
+        address: marketplace,
+        abi: marketplaceAbi,
+        functionName: "invoke",
+        args: [
+          BigInt(row.id),
+          reqH,
+          resH,
+          REQUEST_FORMAT_V1,
+          RESPONSE_FORMAT_V1,
+        ],
+        value: row.pricePerCall,
+      });
+    } catch (e) {
+      setLocalErr(e instanceof Error ? e.message : "invoke_failed");
+    } finally {
+      setChatLoading(false);
+    }
   }
-  if (risk === "medium") {
-    return (
-      <span
-        className={`${base} border-4 text-amber-600 dark:text-amber-400 border-amber-600 dark:border-amber-400`}
-      >
-        {label}
-      </span>
-    );
-  }
-  return (
-    <span className={`${base} border-4 text-red-600 dark:text-red-400 border-red-600 dark:border-red-400`}>
-      {label}
-    </span>
-  );
-}
 
-export function ProviderCard({ provider, simulate }: ProviderCardProps) {
+  const working = chatLoading || isPending || isConfirming;
+
   return (
     <article className="flex flex-col border-2 border-theme bg-background">
       <div className="flex items-start justify-between gap-4 border-b-2 border-theme p-5">
         <div className="min-w-0">
           <h3 className="truncate text-xl font-bold uppercase leading-tight tracking-tighter sm:text-2xl">
-            {provider.modelId}
+            {row.modelId}
           </h3>
           <p className="mt-2 truncate text-xs font-bold uppercase tracking-widest text-muted">
-            {shortenHex(provider.owner, 4, 4)}
+            {shortenHex(row.owner, 4, 4)}
           </p>
         </div>
-        <RiskBadge risk={provider.risk} />
+        <span
+          className={`inline-flex min-h-[1.75rem] items-center border-2 px-2 py-1 text-xs font-bold uppercase tracking-widest ${
+            row.active
+              ? "border-muted text-muted"
+              : "border-red-600 text-red-600 dark:border-red-400 dark:text-red-400"
+          }`}
+        >
+          {row.active ? "ACTIVE" : "INACTIVE"}
+        </span>
       </div>
 
       <div className="flex border-b-2 border-theme">
         <div className="flex-1 border-r-2 border-theme p-4">
           <div className="section-eyebrow mb-1">Price / call</div>
           <div className="text-lg font-bold tabular-nums leading-tight">
-            {provider.pricePerCall} <span className="text-sm font-bold">ETH</span>
+            {formatEther(row.pricePerCall)}{" "}
+            <span className="text-sm font-bold">ETH</span>
           </div>
         </div>
         <div className="min-w-0 flex-1 p-4">
           <div className="section-eyebrow mb-1">Stake</div>
           <div className="text-lg font-bold tabular-nums leading-tight">
-            {provider.stake} <span className="text-sm font-bold">ETH</span>
+            {formatEther(row.stake)} <span className="text-sm font-bold">ETH</span>
           </div>
         </div>
       </div>
 
       <div className="border-b-2 border-dashed border-theme bg-background p-4">
         <div className="section-eyebrow mb-1">Endpoint</div>
-        <div className="truncate text-sm font-bold leading-snug">{provider.endpoint}</div>
+        <div className="truncate text-sm font-bold leading-snug">{row.endpoint}</div>
       </div>
+
+      <div className="border-b-2 border-theme p-4">
+        <label className="flex flex-col gap-2">
+          <span className="section-eyebrow">Prompt (sent to mock API, then hashed)</span>
+          <textarea
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            rows={3}
+            className="input-brutal min-h-[5rem] resize-y font-mono text-sm"
+            placeholder="User message for /v1/chat"
+          />
+        </label>
+      </div>
+
+      {localErr && (
+        <p
+          role="alert"
+          className="border-b-2 border-red-600 px-4 py-2 text-xs font-bold uppercase text-red-600 dark:border-red-400 dark:text-red-400"
+        >
+          {localErr}
+        </p>
+      )}
 
       <div className="mt-auto p-5">
         <button
           type="button"
-          className="btn-brutal w-full border-theme bg-inverse text-inverse-fg hover:bg-background hover:text-foreground"
-          onClick={() => simulate.action(`invoke:${provider.modelId}`)}
+          disabled={working}
+          className="btn-brutal w-full border-theme bg-inverse text-inverse-fg hover:bg-background hover:text-foreground disabled:opacity-50"
+          onClick={() => void handleInvoke()}
         >
-          [ INVOKE ]
+          {working ? "[ WORKING… ]" : "[ INVOKE ]"}
         </button>
       </div>
     </article>
