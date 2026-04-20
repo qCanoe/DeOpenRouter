@@ -75,10 +75,10 @@ export function MyProviderCard({
     }
 
     const messages: Record<ProviderAction, string> = {
-      metadata: "METADATA_UPDATED",
-      price: "PRICE_CHANGE_SCHEDULED",
-      deactivate: "PROVIDER_DEACTIVATED",
-      withdraw: "STAKE_WITHDRAWN",
+      metadata: "Metadata Updated",
+      price: "Price Change Scheduled",
+      deactivate: "Provider Deactivated",
+      withdraw: "Stake Withdrawn",
     };
 
     onChanged?.(messages[pendingAction]);
@@ -111,7 +111,7 @@ export function MyProviderCard({
       });
     } catch (e) {
       setPendingAction(null);
-      setActionError(e instanceof Error ? e.message : "provider_action_failed");
+      setActionError(e instanceof Error ? e.message : "Provider action failed");
     }
   }
 
@@ -142,7 +142,7 @@ export function MyProviderCard({
 
   function handlePriceSchedule() {
     if (!isEthDecimal(nextPrice)) {
-      setActionError("next price must be a positive decimal ETH string.");
+      setActionError("Next price must be a positive decimal ETH string.");
       return;
     }
 
@@ -166,70 +166,70 @@ export function MyProviderCard({
     });
   }
 
-  const pendingSlotMinClass = "min-h-[2.875rem] pt-1";
+  const pendingSlotMinClass = "min-h-[2rem] pt-1";
 
   return (
-    <article className="flex h-full min-h-0 flex-col border-2 border-theme">
-      <div className="flex min-h-[6.5rem] shrink-0 flex-col gap-4 border-b-2 border-theme bg-background p-6 sm:flex-row sm:items-start sm:justify-between">
+    <article className="card-modern flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="flex min-h-[6rem] shrink-0 flex-col gap-4 border-b border-[var(--border)] p-6 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <p className="section-eyebrow">Provider #{provider.id}</p>
-          <h3 className="mt-2 break-all text-2xl font-bold uppercase leading-tight tracking-tighter sm:text-3xl">
+          <p className="text-xs font-medium text-[var(--muted)]">Provider #{provider.id}</p>
+          <h3 className="mt-1 break-all text-2xl font-semibold tracking-tight sm:text-3xl">
             {provider.modelId}
           </h3>
-          <p className="mt-2 text-xs font-bold uppercase tracking-widest text-muted">
-            Owner {shortenHex(provider.owner, 4, 4)} / v{provider.modelVersion}
+          <p className="mt-1.5 text-xs font-medium text-[var(--muted)]">
+            Owner {shortenHex(provider.owner, 4, 4)} &middot; v{provider.modelVersion}
           </p>
         </div>
         <span
-          className={`border-2 px-2 py-1 text-xs font-bold uppercase tracking-widest ${
+          className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-wider ${
             provider.active
-              ? "border-foreground text-foreground"
-              : "border-muted text-muted"
+              ? "bg-[var(--foreground)] text-[var(--background)]"
+              : "bg-[var(--muted-bg)] text-[var(--muted)]"
           }`}
         >
           {provider.active ? "ACTIVE" : "INACTIVE"}
         </span>
       </div>
 
-      <div className="grid grid-cols-1 items-stretch gap-4 border-b-2 border-theme p-4 sm:grid-cols-3">
-        <div className="flex min-h-[6.5rem] flex-col justify-between border-2 border-theme bg-background p-4">
-          <p className="section-eyebrow mb-1">Total calls</p>
-          <p className="text-2xl font-bold tabular-nums leading-tight text-foreground">{totalCalls}</p>
+      <div className="grid grid-cols-1 items-stretch border-b border-[var(--border)] sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-[var(--border)]">
+        <div className="flex min-h-[6rem] flex-col justify-between p-5">
+          <p className="text-xs font-medium text-[var(--muted)]">Total calls</p>
+          <p className="text-2xl font-semibold tabular-nums tracking-tight">{totalCalls}</p>
         </div>
-        <div className="flex min-h-[6.5rem] flex-col justify-between border-2 border-theme bg-background p-4">
-          <p className="section-eyebrow mb-1">Total earned (ETH)</p>
-          <p className="text-2xl font-bold tabular-nums leading-tight text-foreground">{totalEarnedEth}</p>
+        <div className="flex min-h-[6rem] flex-col justify-between p-5">
+          <p className="text-xs font-medium text-[var(--muted)]">Total earned (ETH)</p>
+          <p className="text-2xl font-semibold tabular-nums tracking-tight">{totalEarnedEth}</p>
         </div>
-        <div className="flex min-h-[6.5rem] flex-col justify-between border-2 border-theme bg-background p-4">
-          <p className="section-eyebrow mb-1">Current stake (ETH)</p>
-          <p className="text-2xl font-bold tabular-nums leading-tight text-foreground">
+        <div className="flex min-h-[6rem] flex-col justify-between p-5">
+          <p className="text-xs font-medium text-[var(--muted)]">Current stake (ETH)</p>
+          <p className="text-2xl font-semibold tabular-nums tracking-tight">
             {formatEther(provider.stake)}
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 items-stretch border-b-2 border-theme lg:grid-cols-2 lg:items-stretch">
-        <div className="flex min-h-0 flex-col border-b-2 border-theme p-5 lg:border-b-0 lg:border-r-2">
-          <div className="section-eyebrow mb-2">Endpoint commitment</div>
-          <div className="break-all font-mono text-sm font-bold leading-snug">
+      <div className="grid grid-cols-1 items-stretch border-b border-[var(--border)] lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-[var(--border)]">
+        <div className="flex min-h-0 flex-col p-6">
+          <div className="mb-2 text-xs font-medium text-[var(--muted)]">Endpoint Commitment</div>
+          <div className="break-all font-mono text-[13px] font-medium text-[var(--foreground)]">
             {provider.endpointCommitment}
           </div>
 
-          <div className="section-eyebrow mb-2 mt-4">Capability hash</div>
-          <div className="break-all font-mono text-sm font-bold leading-snug">
+          <div className="mb-2 mt-5 text-xs font-medium text-[var(--muted)]">Capability Hash</div>
+          <div className="break-all font-mono text-[13px] font-medium text-[var(--foreground)]">
             {provider.capabilityHash}
           </div>
         </div>
 
-        <div className="grid min-h-0 gap-5 p-5 lg:flex lg:min-h-full lg:flex-col">
+        <div className="grid min-h-0 gap-6 p-6 lg:flex lg:flex-col lg:justify-between">
           <div className="shrink-0">
-            <div className="section-eyebrow mb-1">Current effective price</div>
-            <div className="text-lg font-bold tabular-nums leading-tight">
-              {formatEther(provider.effectivePriceWei)} ETH
+            <div className="mb-1.5 text-xs font-medium text-[var(--muted)]">Current Effective Price</div>
+            <div className="text-xl font-semibold tabular-nums tracking-tight">
+              {formatEther(provider.effectivePriceWei)} <span className="text-sm font-medium text-[var(--muted)]">ETH</span>
             </div>
             <div className={pendingSlotMinClass}>
               {provider.hasPendingPrice ? (
-                <p className="text-xs font-bold uppercase tracking-widest text-muted">
+                <p className="text-[11px] text-[var(--muted)]">
                   Pending {formatEther(provider.pendingPriceDisplay)} ETH @ block{" "}
                   {provider.pendingAppliesAtBlock.toString()}
                 </p>
@@ -237,34 +237,32 @@ export function MyProviderCard({
             </div>
           </div>
 
-          <label className="flex flex-col gap-2">
-            <span className="section-eyebrow">Schedule new price (ETH)</span>
+          <label className="flex flex-col gap-2.5">
+            <span className="text-xs font-medium text-[var(--muted)]">Schedule New Price (ETH)</span>
             <div className="flex flex-col gap-3 sm:flex-row">
               <input
                 value={nextPrice}
                 onChange={(e) => setNextPrice(e.target.value)}
-                className="input-brutal min-h-[44px] flex-1 tabular-nums"
+                className="input-modern flex-1 tabular-nums"
                 inputMode="decimal"
                 placeholder="e.g. 0.0025"
               />
               <button
                 type="button"
-                className="btn-brutal border-theme bg-background"
+                className="btn-secondary"
                 disabled={working}
                 onClick={handlePriceSchedule}
               >
-                [ ANNOUNCE_PRICE ]
+                Announce Price
               </button>
             </div>
-            <div className="flex flex-wrap gap-2 pt-1">
-              <span className="w-full text-xs font-bold uppercase tracking-widest text-muted">
-                Quick price (ETH)
-              </span>
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <span className="text-[11px] font-medium text-[var(--muted)]">Quick values:</span>
               {DASHBOARD_PRICE_CHIPS.map((eth) => (
                 <button
                   key={eth}
                   type="button"
-                  className="border-2 border-theme bg-background px-2 py-1 text-xs font-bold uppercase tracking-widest hover:bg-foreground hover:text-background"
+                  className="rounded-md border border-[var(--border)] bg-[var(--background)] px-2 py-0.5 text-[10px] font-medium text-[var(--muted)] transition-ui hover:border-[var(--muted)] hover:text-[var(--foreground)]"
                   disabled={working}
                   onClick={() => setNextPrice(eth)}
                 >
@@ -276,15 +274,15 @@ export function MyProviderCard({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 border-b-2 border-theme p-5">
-        <div className="border-2 border-dashed border-theme bg-background p-4">
-          <p className="section-eyebrow mb-3">Quick metadata presets</p>
+      <div className="grid grid-cols-1 gap-6 p-6">
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--muted-bg)] p-4">
+          <p className="mb-3 text-xs font-medium text-[var(--muted)]">Quick metadata presets</p>
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             {DASHBOARD_METADATA_PRESETS.map((preset) => (
               <button
                 key={preset.id}
                 type="button"
-                className="btn-brutal border-theme bg-background text-left sm:min-w-[12rem]"
+                className="card-modern px-4 py-3 text-left transition-ui sm:min-w-[12rem] bg-[var(--background)]"
                 disabled={working}
                 onClick={() => {
                   setActionError(null);
@@ -292,8 +290,8 @@ export function MyProviderCard({
                   setIdentityHash(preset.identityHash);
                 }}
               >
-                <span className="block font-bold uppercase tracking-tight">{preset.label}</span>
-                <span className="mt-1 block truncate font-mono text-[10px] font-bold uppercase leading-snug tracking-widest text-muted">
+                <span className="block text-sm font-semibold tracking-tight text-[var(--foreground)]">{preset.label}</span>
+                <span className="mt-1 block truncate font-mono text-[10px] text-[var(--muted)]">
                   {preset.metadataURI}
                 </span>
               </button>
@@ -302,65 +300,65 @@ export function MyProviderCard({
         </div>
 
         <label className="flex flex-col gap-2">
-          <span className="section-eyebrow">metadataURI</span>
+          <span className="text-xs font-medium text-[var(--muted)]">Metadata URI</span>
           <input
             value={metadataURI}
             onChange={(e) => setMetadataURI(e.target.value)}
-            className="input-brutal min-h-[44px]"
+            className="input-modern"
             autoComplete="off"
           />
         </label>
         <label className="flex flex-col gap-2">
-          <span className="section-eyebrow">identityHash</span>
+          <span className="text-xs font-medium text-[var(--muted)]">Identity Hash</span>
           <input
             value={identityHash}
             onChange={(e) => setIdentityHash(e.target.value)}
-            className="input-brutal min-h-[44px] font-mono text-xs leading-normal"
+            className="input-modern font-mono text-[13px]"
             spellCheck={false}
             autoComplete="off"
           />
         </label>
 
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap items-center gap-3 pt-2">
           <button
             type="button"
-            className="btn-brutal border-theme bg-background"
+            className="btn-secondary"
             disabled={working}
             onClick={handleMetadataUpdate}
           >
-            [ UPDATE_METADATA ]
+            Update Metadata
           </button>
           <button
             type="button"
-            className="btn-brutal border-theme bg-background"
+            className="btn-secondary"
             disabled={working || !provider.active}
             onClick={handleDeactivate}
           >
-            [ DEACTIVATE ]
+            Deactivate
           </button>
           <button
             type="button"
-            className="btn-brutal border-theme bg-background"
+            className="btn-secondary"
             disabled={working || provider.active || provider.stake === 0n}
             onClick={handleWithdraw}
           >
-            [ WITHDRAW_STAKE ]
+            Withdraw Stake
           </button>
           <button
             type="button"
-            className="btn-brutal border-theme bg-inverse text-inverse-fg hover:bg-background hover:text-foreground"
+            className="btn-primary"
             disabled={working}
             onClick={onScrollToRegister}
           >
-            [ REGISTER_ANOTHER ]
+            Register Another
           </button>
         </div>
       </div>
 
       {actionError && (
-        <p className="border-b-2 border-red-600 px-5 py-3 text-xs font-bold uppercase tracking-widest text-red-600 dark:border-red-400 dark:text-red-400">
+        <div className="border-t border-red-200 bg-red-50/50 px-6 py-4 text-sm font-medium text-red-600 dark:border-red-900/50 dark:bg-red-900/10 dark:text-red-400">
           {actionError}
-        </p>
+        </div>
       )}
     </article>
   );

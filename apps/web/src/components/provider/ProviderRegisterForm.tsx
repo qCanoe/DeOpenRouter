@@ -181,36 +181,36 @@ export const ProviderRegisterForm = forwardRef<
 
   return (
     <section ref={ref}>
-      <div className="mb-8 flex flex-wrap items-end justify-between gap-2 border-b-2 border-theme pb-3">
-        <h2 className="section-heading">Register_Provider</h2>
+      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between border-b border-[var(--border)] pb-4">
+        <h2 className="section-heading">Register Provider</h2>
         <span className="section-eyebrow">New on-chain provider</span>
       </div>
 
       <form
         onSubmit={handleSubmit}
-        className="grid gap-5 border-2 border-theme p-4 sm:p-6"
+        className="card-modern flex flex-col gap-8 p-6 sm:p-8"
         noValidate
       >
-        <div className="border-2 border-dashed border-theme bg-background p-4">
-          <p className="section-eyebrow mb-3">Quick presets</p>
-          <p className="mb-4 max-w-[65ch] text-xs font-bold uppercase leading-relaxed tracking-widest text-muted">
-            Load a full valid example, then edit any field before registering.
-          </p>
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--muted-bg)] p-5">
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold text-[var(--foreground)]">Quick Presets</h3>
+            <p className="text-xs text-[var(--muted)]">Load a valid example, then edit fields before registering.</p>
+          </div>
           <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap">
             {REGISTER_PRESETS.map((preset) => (
               <button
                 key={preset.id}
                 type="button"
-                className="focus-ring transition-ui flex h-auto min-h-0 w-full flex-col items-stretch gap-2.5 border-2 border-theme bg-background px-4 py-4 text-left sm:min-w-[12.5rem] sm:max-w-[20rem]"
+                className="card-modern flex h-auto min-h-0 flex-1 flex-col items-start gap-1 p-4 text-left transition-ui sm:min-w-[12.5rem] bg-[var(--background)]"
                 onClick={() => {
                   setError(null);
                   setValues({ ...preset.values });
                 }}
               >
-                <span className="text-sm font-bold uppercase leading-tight tracking-wide text-foreground">
+                <span className="text-sm font-semibold tracking-tight text-[var(--foreground)]">
                   {preset.label}
                 </span>
-                <span className="block text-xs font-semibold uppercase leading-relaxed tracking-wider text-muted">
+                <span className="text-xs font-medium text-[var(--muted)]">
                   {preset.description}
                 </span>
               </button>
@@ -218,129 +218,129 @@ export const ProviderRegisterForm = forwardRef<
           </div>
         </div>
 
-        <p className="text-xs font-bold uppercase leading-relaxed tracking-widest text-muted">
-          Endpoint commitment is keccak256(utf8(endpointId)) - store the real URL
-          off-chain; only the short id is hashed.
+        <p className="text-xs font-medium text-[var(--muted)]">
+          Endpoint commitment is <code className="rounded bg-[var(--muted-bg)] px-1 py-0.5 font-mono">keccak256(utf8(endpointId))</code>. 
+          Store the real URL off-chain; only the hashed short ID is saved to the contract.
         </p>
 
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <label className="flex flex-col gap-2">
-            <span className="section-eyebrow">modelId</span>
+            <span className="text-xs font-medium text-[var(--muted)]">Model ID</span>
             <input
               id={`${baseId}-modelId`}
               value={values.modelId}
               onChange={(e) =>
                 setValues((prev) => ({ ...prev, modelId: e.target.value }))
               }
-              className="input-brutal min-h-[44px]"
+              className="input-modern"
               autoComplete="off"
             />
           </label>
 
           <label className="flex flex-col gap-2">
-            <span className="section-eyebrow">modelVersion</span>
+            <span className="text-xs font-medium text-[var(--muted)]">Model Version</span>
             <input
               id={`${baseId}-modelVersion`}
               value={values.modelVersion}
               onChange={(e) =>
                 setValues((prev) => ({ ...prev, modelVersion: e.target.value }))
               }
-              className="input-brutal min-h-[44px]"
+              className="input-modern"
               autoComplete="off"
             />
           </label>
 
           <label className="flex flex-col gap-2 md:col-span-2">
-            <span className="section-eyebrow">endpointId (preimage for commitment)</span>
+            <span className="text-xs font-medium text-[var(--muted)]">Endpoint ID (preimage for commitment)</span>
             <input
               id={`${baseId}-endpointId`}
               value={values.endpointId}
               onChange={(e) =>
                 setValues((prev) => ({ ...prev, endpointId: e.target.value }))
               }
-              className="input-brutal min-h-[44px]"
+              className="input-modern"
               autoComplete="off"
             />
           </label>
 
           <label className="flex flex-col gap-2 md:col-span-2">
-            <span className="section-eyebrow">capabilityHash</span>
+            <span className="text-xs font-medium text-[var(--muted)]">Capability Hash</span>
             <input
               id={`${baseId}-capability`}
               value={values.capabilityHash}
               onChange={(e) =>
                 setValues((prev) => ({ ...prev, capabilityHash: e.target.value }))
               }
-              className="input-brutal min-h-[44px] font-mono text-xs leading-normal"
+              className="input-modern font-mono text-[13px]"
               spellCheck={false}
               autoComplete="off"
             />
           </label>
 
           <label className="flex flex-col gap-2">
-            <span className="section-eyebrow">pricePerCall (ETH)</span>
+            <span className="text-xs font-medium text-[var(--muted)]">Price Per Call (ETH)</span>
             <input
               id={`${baseId}-price`}
               value={values.pricePerCall}
               onChange={(e) =>
                 setValues((prev) => ({ ...prev, pricePerCall: e.target.value }))
               }
-              className="input-brutal min-h-[44px] tabular-nums"
+              className="input-modern tabular-nums"
               inputMode="decimal"
               autoComplete="off"
             />
           </label>
 
           <label className="flex flex-col gap-2">
-            <span className="section-eyebrow">stake (ETH)</span>
+            <span className="text-xs font-medium text-[var(--muted)]">Stake (ETH)</span>
             <input
               id={`${baseId}-stake`}
               value={values.stake}
               onChange={(e) =>
                 setValues((prev) => ({ ...prev, stake: e.target.value }))
               }
-              className="input-brutal min-h-[44px] tabular-nums"
+              className="input-modern tabular-nums"
               inputMode="decimal"
               autoComplete="off"
             />
           </label>
 
           <label className="flex flex-col gap-2 md:col-span-2">
-            <span className="section-eyebrow">stakeLockBlocks (0 = no extra lock)</span>
+            <span className="text-xs font-medium text-[var(--muted)]">Stake Lock Blocks (0 = no extra lock)</span>
             <input
               id={`${baseId}-lock`}
               value={values.stakeLockBlocks}
               onChange={(e) =>
                 setValues((prev) => ({ ...prev, stakeLockBlocks: e.target.value }))
               }
-              className="input-brutal min-h-[44px] tabular-nums"
+              className="input-modern tabular-nums"
               inputMode="numeric"
               autoComplete="off"
             />
           </label>
 
           <label className="flex flex-col gap-2 md:col-span-2">
-            <span className="section-eyebrow">metadataURI</span>
+            <span className="text-xs font-medium text-[var(--muted)]">Metadata URI</span>
             <input
               id={`${baseId}-metadata`}
               value={values.metadataURI}
               onChange={(e) =>
                 setValues((prev) => ({ ...prev, metadataURI: e.target.value }))
               }
-              className="input-brutal min-h-[44px]"
+              className="input-modern"
               autoComplete="off"
             />
           </label>
 
           <label className="flex flex-col gap-2 md:col-span-2">
-            <span className="section-eyebrow">identityHash</span>
+            <span className="text-xs font-medium text-[var(--muted)]">Identity Hash</span>
             <input
               id={`${baseId}-identity`}
               value={values.identityHash}
               onChange={(e) =>
                 setValues((prev) => ({ ...prev, identityHash: e.target.value }))
               }
-              className="input-brutal min-h-[44px] font-mono text-xs leading-normal"
+              className="input-modern font-mono text-[13px]"
               spellCheck={false}
               autoComplete="off"
             />
@@ -348,21 +348,23 @@ export const ProviderRegisterForm = forwardRef<
         </div>
 
         {error && (
-          <p
+          <div
             role="alert"
-            className="border-2 border-red-600 px-4 py-3 text-sm font-bold uppercase leading-snug tracking-widest text-red-600 dark:border-red-400 dark:text-red-400"
+            className="rounded-lg border border-red-200 bg-red-50/50 p-4 text-sm font-medium text-red-600 dark:border-red-900/50 dark:bg-red-900/10 dark:text-red-400"
           >
             {error}
-          </p>
+          </div>
         )}
 
-        <button
-          type="submit"
-          disabled={working || !marketplace}
-          className="btn-brutal w-full border-theme bg-inverse text-inverse-fg hover:bg-background hover:text-foreground disabled:opacity-50 sm:w-auto sm:self-start"
-        >
-          {working ? "[ SUBMITTING... ]" : "[ REGISTER_ON_CHAIN ]"}
-        </button>
+        <div className="pt-2">
+          <button
+            type="submit"
+            disabled={working || !marketplace}
+            className="btn-primary w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed px-8"
+          >
+            {working ? "Submitting..." : "Register on Chain"}
+          </button>
+        </div>
       </form>
     </section>
   );
