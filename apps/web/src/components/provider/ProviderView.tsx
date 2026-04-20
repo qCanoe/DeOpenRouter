@@ -80,7 +80,7 @@ export function ProviderView({ showToast }: ProviderViewProps) {
 
   const onRegistered = useCallback(() => {
     refresh();
-    showToast("REGISTER_CONFIRMED");
+    showToast("Registration Confirmed");
   }, [refresh, showToast]);
 
   const onProviderChanged = useCallback(
@@ -99,27 +99,28 @@ export function ProviderView({ showToast }: ProviderViewProps) {
 
   if (!marketplace) {
     return (
-      <div className="border-2 border-dashed border-theme p-12 text-center text-sm font-bold uppercase leading-relaxed tracking-widest text-muted">
-        Set NEXT_PUBLIC_MARKETPLACE_ADDRESS in apps/web/.env.local (see repository
-        README).
+      <div className="card-modern border-dashed p-12 text-center text-sm font-medium text-[var(--muted)]">
+        Set NEXT_PUBLIC_MARKETPLACE_ADDRESS in apps/web/.env.local
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-12 sm:gap-14">
+    <div className="flex flex-col gap-12 sm:gap-16">
       {myProviders && myProviders.length > 0 ? (
         <section className="flex flex-col gap-8">
-          <div className="flex flex-col gap-3 border-b-2 border-theme pb-3 sm:flex-row sm:items-end sm:justify-between">
-            <h2 className="section-heading">My_Providers</h2>
-            <div className="flex flex-wrap gap-3 text-xs font-bold uppercase tracking-widest text-muted">
+          <div className="flex flex-col gap-4 border-b border-[var(--border)] pb-4 sm:flex-row sm:items-end sm:justify-between">
+            <h2 className="section-heading">My Providers</h2>
+            <div className="flex flex-wrap gap-4 text-xs font-medium text-[var(--muted)]">
               <span>Providers: {myProviders.length}</span>
+              <span>&middot;</span>
               <span>Incoming calls: {callRows.length}</span>
+              <span>&middot;</span>
               <span>Earned: {totalEarned} ETH</span>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 items-stretch gap-8 xl:grid-cols-2 [&>*]:min-h-0 [&>*]:h-full">
+          <div className="grid grid-cols-1 items-stretch gap-6 xl:grid-cols-2 [&>*]:min-h-0 [&>*]:h-full">
             {myProviders.map((provider) => (
               <MyProviderCard
                 key={provider.id}
@@ -134,11 +135,11 @@ export function ProviderView({ showToast }: ProviderViewProps) {
         </section>
       ) : (
         <section>
-          <div className="mb-8 flex flex-wrap items-end justify-between gap-2 border-b-2 border-theme pb-3">
-            <h2 className="section-heading">My_Providers</h2>
+          <div className="mb-6 flex flex-wrap items-end justify-between gap-2 border-b border-[var(--border)] pb-4">
+            <h2 className="section-heading">My Providers</h2>
           </div>
-          <div className="border-2 border-theme p-12 text-center text-sm font-bold uppercase tracking-widest text-muted">
-            {isLoading ? "LOADING..." : "No on-chain provider for this wallet. Register below."}
+          <div className="card-modern border-dashed p-12 text-center text-sm font-medium text-[var(--muted)]">
+            {isLoading ? "Loading..." : "No on-chain provider for this wallet. Register below."}
           </div>
         </section>
       )}
