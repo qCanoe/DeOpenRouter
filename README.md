@@ -16,7 +16,7 @@ Traditional AI gateways usually ask users to trust a centralized operator for pr
 - provider identity commitments and metadata are registered on-chain
 - pricing changes are delayed and observable on-chain
 - each paid invocation emits a durable call record
-- stake can be slashed by an operator in the current MVP
+- stake can be slashed after a **challengeable on-chain proposal** (funds go to a configurable treasury)
 - external audit results can be anchored on-chain as report hashes
 
 The actual model call remains off-chain, which keeps the system practical while still making settlement and auditability harder to fake.
@@ -34,7 +34,7 @@ The actual model call remains off-chain, which keeps the system practical while 
 2. The web app shows registered providers in a marketplace UI and lets users simulate a request through the relay API.
 3. The frontend hashes the request and response, then submits `invoke(...)` on-chain with payment.
 4. The contract forwards payment to the provider, stores the call record, and emits `CallRecorded`.
-5. Optionally, the audit flow probes a relay off-chain, hashes the resulting report JSON, and anchors that hash on-chain via `recordAudit(...)`.
+5. Optionally, the audit flow probes a relay off-chain, **canonicalizes** the JSON report, optionally publishes it off-chain, and anchors `keccak256(canonicalJson)` on-chain via `recordAudit` / `recordAuditWithUri`.
 
 ## Core Contract Surface
 
@@ -44,13 +44,15 @@ The main contract is `contracts/src/DeOpenRouterMarketplace.sol`.
 - `updateProviderMetadata`: updates `metadataURI`, `metadataHash`, and `identityHash`
 - `announcePriceChange`: schedules a future price update after `priceDelayBlocks`
 - `getEffectivePrice`: reads the currently chargeable price without mutating state
+- `getProviderCore`: compact view of owner, pricing, stake, and slash metadata
 - `invoke`: collects payment, records hashes, and emits `CallRecorded`
 - `deactivate` + `withdrawStake`: disables a provider and allows stake withdrawal after the lock period
-- `slash`: reduces provider stake and transfers the slashed ETH to `slashOperator`
-- `recordAudit`: anchors an off-chain audit report hash with a coarse risk level
+- **Governance:** `proposeSlashOperator` / `acceptSlashOperator`, `proposeAuditRecorder` / `acceptAuditRecorder`, `setSlashTreasury`, `setSlashChallengePeriodBlocks`
+- **Audits:** `recordAudit`, `recordAuditWithUri`, `beginAuditRound`, `setAuditor`, `attestAudit` (multi-attestor events)
+- **Slashing:** `proposeSlash` → provider `challengeSlashProposal` (during the challenge window) → `finalizeSlashProposal` (sends ETH to `slashTreasury`)
 
 > [!WARNING]
-> Slashing and audit recording are operator-driven in this MVP. There is no complaint, arbitration, escrow, or cryptographic proof-of-inference flow yet.
+> Economic security still depends on how you configure multisigs / treasuries. On-chain rules implement **delay + challenge** for slashes and **allowlisted auditors** for attestations, but there is no full arbitration market, escrow settlement, or cryptographic proof-of-inference yet. See `docs/AUDIT_GOVERNANCE.md` and `docs/TRUST_LAYERS.md`.
 
 ## Repository Layout
 
@@ -60,6 +62,7 @@ The main contract is `contracts/src/DeOpenRouterMarketplace.sol`.
 | `apps/web/` | Next.js 14 + wagmi frontend with user and provider workflows |
 | `apps/api/` | Hono relay API for mock inference or OpenRouter proxying |
 | `apps/audit-server/` | FastAPI service that runs structured relay checks and returns risk-style JSON |
+| `docs/` | Governance notes for audits/slashing and optional trust layers |
 | `README.zh-CN.md` | Chinese version of this README |
 
 ## Tech Stack
@@ -95,7 +98,7 @@ cd contracts
 forge script script/Deploy.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
 ```
 
-The deployment script creates `DeOpenRouterMarketplace(100)`, so price changes become effective after 100 blocks in the default local/web flow.
+The deployment script creates `DeOpenRouterMarketplace(100, 100)` — price changes apply after **100 blocks**, and slash proposals can be challenged for **100 blocks** before finalization in the default Anvil flow.
 
 Copy the deployed contract address from the script output or from:
 
@@ -134,11 +137,11 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000), connect your wallet, and switch to Anvil (`31337`) if needed.
+Open [http://localhost:3020](http://localhost:3020) (see `apps/web/package.json` `dev` port), connect your wallet, and switch to Anvil (`31337`) if needed.
 
 The web app has two main modes:
 
-- **User view:** inspect providers, simulate a prompt, and submit an on-chain `invoke`
+- **User view:** inspect providers, simulate a prompt, submit an on-chain `invoke`, and browse anchored `AuditRecorded` events
 - **Provider view:** register providers, review your providers, and inspect incoming call activity
 
 ### 5. Optional: start the audit server
@@ -177,6 +180,7 @@ For request examples and audit-specific options, see `apps/audit-server/README.m
 | `NEXT_PUBLIC_MARKETPLACE_ADDRESS` | Yes | Deployed `DeOpenRouterMarketplace` address |
 | `NEXT_PUBLIC_ANVIL_RPC` | No | Defaults to `http://127.0.0.1:8545` |
 | `NEXT_PUBLIC_MOCK_API` | No | Defaults to `http://127.0.0.1:8787` |
+| `NEXT_PUBLIC_AUDIT_LOGS_FROM_BLOCK` | No | First block to scan for audit events (defaults to `0`) |
 
 ### `apps/api/.env`
 
@@ -194,8 +198,10 @@ For request examples and audit-specific options, see `apps/audit-server/README.m
 | `AUDIT_PROVIDER_ID` | No | Provider ID used when anchoring `recordAudit(...)` |
 | `AUDIT_TIMEOUT_SEC` | No | Audit request timeout passed through to the audit server |
 | `CHAIN_RPC_URL` | No | EVM RPC URL for `recordAudit(...)` transactions |
+| `CHAIN_ID` | No | Defaults to `31337` (Anvil); set to match your RPC network |
 | `MARKETPLACE_ADDRESS` | No | Marketplace contract address for audit anchoring |
 | `AUDIT_PRIVATE_KEY` | No | Signer for audit anchoring; typically the deployer in this MVP |
+| `AUDIT_REPORT_PUBLISH_URL` | No | `POST` canonical JSON; response is a plain URI or JSON `{ uri, url, cid }` |
 
 ## Local Demo Flow
 
@@ -233,14 +239,23 @@ cd apps/audit-server
 pytest
 ```
 
+### Relay API (unit tests)
+
+```bash
+cd apps/api
+npm install
+npm test
+```
+
 ## Current MVP Limits
 
 - endpoint URLs are not published on-chain; only a commitment to a short `endpointId` is stored
 - call records store hashes, not full prompts or responses
 - settlement is immediate and single-shot; there is no escrow, streaming, or async settlement
-- slashing is centralized to `slashOperator`
-- audit anchoring stores report hashes and a coarse risk level, not full reports on-chain
-- there is no decentralized discovery, reputation, complaint handling, or proof-of-execution mechanism yet
+- slash **proposals** still originate from `slashOperator`, but execution is delayed, challengeable, and pays `slashTreasury` (not necessarily the operator)
+- multi-auditor **quorum / aggregation** is off-chain; the contract stores attestations as events
+- audit anchoring stores hashes (+ optional URI) and a coarse risk level, not full reports on-chain
+- there is no decentralized discovery, reputation, automated arbitration market, or proof-of-execution network yet
 
 ## Useful References
 
@@ -248,3 +263,5 @@ pytest
 - `apps/audit-server/README.md`: audit server details and example requests
 - `contracts/src/DeOpenRouterMarketplace.sol`: contract implementation
 - `contracts/test/DeOpenRouterMarketplace.t.sol`: contract test coverage
+- `docs/AUDIT_GOVERNANCE.md`: roles, audit rounds, slash flow
+- `docs/TRUST_LAYERS.md`: optional TEE / zk / AVS directions

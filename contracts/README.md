@@ -2,7 +2,7 @@
 
 See [`LOCAL_LOOP.md`](./LOCAL_LOOP.md) for a **cast-only** local loop (Anvil: deploy → register → invoke → logs).
 
-`DeOpenRouterMarketplace` stores provider fields (`endpointCommitment`, `capabilityHash`, `stakeLockBlocks`, delayed pricing, etc.), per-call `CallRecorded` + `calls` mapping, and `slash` / `slashRecords` under `slashOperator`. Details: root [`README.md`](../README.md) section **On-chain surface (MVP)**.
+`DeOpenRouterMarketplace` stores provider fields (`endpointCommitment`, `capabilityHash`, `stakeLockBlocks`, delayed pricing, etc.), per-call `CallRecorded` + `calls` mapping, **challengeable slash proposals** paying `slashTreasury`, and audit anchoring via `recordAudit` / multi-attestor `attestAudit`. Details: root [`README.md`](../README.md) **Core Contract Surface** and [`docs/AUDIT_GOVERNANCE.md`](../docs/AUDIT_GOVERNANCE.md).
 
 **Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
 

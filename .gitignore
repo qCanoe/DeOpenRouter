@@ -8,8 +8,11 @@ broadcast/
 *.log
 
 # Local planning / agent docs — not published to remote
-docs/
+docs/superpowers/
 DeOpenRouter.md
+
+# API build output (run `npm run build` in apps/api)
+apps/api/dist/
 
 # Local reference clone (not part of DeOpenRouter; do not commit)
 _api_relay_audit_src/
