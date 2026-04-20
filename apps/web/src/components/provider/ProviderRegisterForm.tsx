@@ -52,21 +52,21 @@ const MIN_STAKE_WEI = parseEther("0.01");
 /** Visual + layout for preset tiles (avoid btn-brutal’s centered inline-flex, which collapses multi-line labels). */
 const PRESET_BUTTON_CLASS: Record<string, string> = {
   budget:
-    "border-teal-600 bg-teal-50 text-teal-950 hover:bg-teal-100/90 dark:border-teal-500 dark:bg-teal-950/45 dark:text-teal-50 dark:hover:bg-teal-950/65",
+    "bg-emerald-100 hover:bg-emerald-200 text-emerald-950 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 dark:text-emerald-100",
   standard:
-    "border-blue-700 bg-blue-50 text-blue-950 hover:bg-blue-100/90 dark:border-blue-500 dark:bg-blue-950/45 dark:text-blue-50 dark:hover:bg-blue-950/65",
+    "bg-blue-100 hover:bg-blue-200 text-blue-950 dark:bg-blue-950/40 dark:hover:bg-blue-900/60 dark:text-blue-100",
   premium:
-    "border-violet-700 bg-violet-50 text-violet-950 hover:bg-violet-100/90 dark:border-violet-500 dark:bg-violet-950/45 dark:text-violet-50 dark:hover:bg-violet-950/65",
+    "bg-violet-100 hover:bg-violet-200 text-violet-950 dark:bg-violet-950/40 dark:hover:bg-violet-900/60 dark:text-violet-100",
 };
 
 const PRESET_DESC_CLASS: Record<string, string> = {
-  budget: "text-teal-900/80 dark:text-teal-200/85",
-  standard: "text-blue-900/80 dark:text-blue-200/85",
-  premium: "text-violet-900/80 dark:text-violet-200/85",
+  budget: "text-emerald-900/70 dark:text-emerald-200/70",
+  standard: "text-blue-900/70 dark:text-blue-200/70",
+  premium: "text-violet-900/70 dark:text-violet-200/70",
 };
 
 function presetTileClass(id: string): string {
-  return PRESET_BUTTON_CLASS[id] ?? "border-theme bg-background hover:bg-zinc-100 dark:hover:bg-zinc-900/60";
+  return PRESET_BUTTON_CLASS[id] ?? "bg-background hover:bg-zinc-100 dark:hover:bg-zinc-900/60";
 }
 
 function presetDescClass(id: string): string {
@@ -227,7 +227,7 @@ export const ProviderRegisterForm = forwardRef<
               <button
                 key={preset.id}
                 type="button"
-                className={`focus-ring transition-ui flex h-auto min-h-0 w-full flex-col items-stretch gap-2.5 border-2 px-4 py-4 text-left sm:min-w-[12.5rem] sm:max-w-[20rem] ${presetTileClass(preset.id)}`}
+                className={`focus-ring transition-ui flex h-auto min-h-0 w-full flex-col items-stretch gap-2.5 border-2 border-theme px-4 py-4 text-left sm:min-w-[12.5rem] sm:max-w-[20rem] ${presetTileClass(preset.id)}`}
                 onClick={() => {
                   setError(null);
                   setValues({ ...preset.values });
