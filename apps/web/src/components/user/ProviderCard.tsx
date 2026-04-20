@@ -117,7 +117,7 @@ export function ProviderCard({
           Simulated API provider — not on-chain
         </div>
       )}
-      <div className="flex min-h-[6.5rem] shrink-0 items-start justify-between gap-4 border-b-2 border-theme bg-zinc-50 p-5 dark:bg-zinc-900/30">
+      <div className="flex min-h-[6.5rem] shrink-0 items-start justify-between gap-4 border-b-2 border-theme bg-background p-5">
         <div className="min-w-0">
           <h3 className="line-clamp-2 text-xl font-bold uppercase leading-tight tracking-tighter sm:text-2xl">
             {row.modelId}
@@ -133,10 +133,10 @@ export function ProviderCard({
             </span>
           )}
           <span
-            className={`inline-flex min-h-[1.75rem] items-center border-2 border-theme px-2 py-1 text-xs font-bold uppercase tracking-widest ${
+            className={`inline-flex min-h-[1.75rem] items-center border-2 px-2 py-1 text-xs font-bold uppercase tracking-widest ${
               row.active
-                ? "bg-emerald-200 text-emerald-950 dark:bg-emerald-900/40 dark:text-emerald-200"
-                : "bg-red-200 text-red-950 dark:bg-red-900/40 dark:text-red-200"
+                ? "border-foreground text-foreground"
+                : "border-muted text-muted"
             }`}
           >
             {row.active ? "ACTIVE" : "INACTIVE"}
@@ -145,28 +145,24 @@ export function ProviderCard({
       </div>
 
       <div className="flex min-h-[9.5rem] shrink-0 items-stretch border-b-2 border-theme">
-        <div className="flex min-w-0 flex-1 flex-col border-r-2 border-theme bg-emerald-50 p-4 dark:bg-emerald-900/20">
-          <div className="mb-1 text-xs font-bold uppercase leading-snug tracking-widest text-emerald-900/70 dark:text-emerald-200/70">
-            Price / call (effective)
-          </div>
-          <div className="text-lg font-bold tabular-nums leading-tight text-emerald-950 dark:text-emerald-100">
+        <div className="flex min-w-0 flex-1 flex-col border-r-2 border-theme bg-background p-4">
+          <div className="section-eyebrow mb-1">Price / call (effective)</div>
+          <div className="text-lg font-bold tabular-nums leading-tight text-foreground">
             {formatEther(row.effectivePriceWei)}{" "}
             <span className="text-sm font-bold">ETH</span>
           </div>
           <div className={pendingSlotMinClass}>
             {row.hasPendingPrice ? (
-              <p className="text-xs font-bold uppercase tracking-widest text-emerald-900/60 dark:text-emerald-200/60">
+              <p className="text-xs font-bold uppercase tracking-widest text-muted">
                 Pending {formatEther(row.pendingPriceDisplay)} ETH @ block{" "}
                 {row.pendingAppliesAtBlock.toString()}
               </p>
             ) : null}
           </div>
         </div>
-        <div className="flex min-w-0 flex-1 flex-col bg-fuchsia-50 p-4 dark:bg-fuchsia-900/20">
-          <div className="mb-1 text-xs font-bold uppercase leading-snug tracking-widest text-fuchsia-900/70 dark:text-fuchsia-200/70">
-            Stake
-          </div>
-          <div className="text-lg font-bold tabular-nums leading-tight text-fuchsia-950 dark:text-fuchsia-100">
+        <div className="flex min-w-0 flex-1 flex-col bg-background p-4">
+          <div className="section-eyebrow mb-1">Stake</div>
+          <div className="text-lg font-bold tabular-nums leading-tight text-foreground">
             {formatEther(row.stake)} <span className="text-sm font-bold">ETH</span>
           </div>
           <div className={pendingSlotMinClass} aria-hidden />

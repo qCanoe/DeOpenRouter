@@ -170,7 +170,7 @@ export function MyProviderCard({
 
   return (
     <article className="flex h-full min-h-0 flex-col border-2 border-theme">
-      <div className="flex min-h-[6.5rem] shrink-0 flex-col gap-4 border-b-2 border-theme bg-zinc-50 p-6 dark:bg-zinc-900/30 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex min-h-[6.5rem] shrink-0 flex-col gap-4 border-b-2 border-theme bg-background p-6 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <p className="section-eyebrow">Provider #{provider.id}</p>
           <h3 className="mt-2 break-all text-2xl font-bold uppercase leading-tight tracking-tighter sm:text-3xl">
@@ -181,10 +181,10 @@ export function MyProviderCard({
           </p>
         </div>
         <span
-          className={`border-2 border-theme px-2 py-1 text-xs font-bold uppercase tracking-widest ${
+          className={`border-2 px-2 py-1 text-xs font-bold uppercase tracking-widest ${
             provider.active
-              ? "bg-emerald-200 text-emerald-950 dark:bg-emerald-900/40 dark:text-emerald-200"
-              : "bg-red-200 text-red-950 dark:bg-red-900/40 dark:text-red-200"
+              ? "border-foreground text-foreground"
+              : "border-muted text-muted"
           }`}
         >
           {provider.active ? "ACTIVE" : "INACTIVE"}
@@ -192,17 +192,17 @@ export function MyProviderCard({
       </div>
 
       <div className="grid grid-cols-1 items-stretch gap-4 border-b-2 border-theme p-4 sm:grid-cols-3">
-        <div className="flex min-h-[6.5rem] flex-col justify-between border-2 border-theme bg-sky-50 p-4 dark:bg-sky-900/20">
-          <p className="text-xs font-bold uppercase leading-snug tracking-widest text-sky-900/70 dark:text-sky-200/70 mb-1">Total calls</p>
-          <p className="text-2xl font-bold tabular-nums leading-tight text-sky-950 dark:text-sky-100">{totalCalls}</p>
+        <div className="flex min-h-[6.5rem] flex-col justify-between border-2 border-theme bg-background p-4">
+          <p className="section-eyebrow mb-1">Total calls</p>
+          <p className="text-2xl font-bold tabular-nums leading-tight text-foreground">{totalCalls}</p>
         </div>
-        <div className="flex min-h-[6.5rem] flex-col justify-between border-2 border-theme bg-amber-50 p-4 dark:bg-amber-900/20">
-          <p className="text-xs font-bold uppercase leading-snug tracking-widest text-amber-900/70 dark:text-amber-200/70 mb-1">Total earned (ETH)</p>
-          <p className="text-2xl font-bold tabular-nums leading-tight text-amber-950 dark:text-amber-100">{totalEarnedEth}</p>
+        <div className="flex min-h-[6.5rem] flex-col justify-between border-2 border-theme bg-background p-4">
+          <p className="section-eyebrow mb-1">Total earned (ETH)</p>
+          <p className="text-2xl font-bold tabular-nums leading-tight text-foreground">{totalEarnedEth}</p>
         </div>
-        <div className="flex min-h-[6.5rem] flex-col justify-between border-2 border-theme bg-fuchsia-50 p-4 dark:bg-fuchsia-900/20">
-          <p className="text-xs font-bold uppercase leading-snug tracking-widest text-fuchsia-900/70 dark:text-fuchsia-200/70 mb-1">Current stake (ETH)</p>
-          <p className="text-2xl font-bold tabular-nums leading-tight text-fuchsia-950 dark:text-fuchsia-100">
+        <div className="flex min-h-[6.5rem] flex-col justify-between border-2 border-theme bg-background p-4">
+          <p className="section-eyebrow mb-1">Current stake (ETH)</p>
+          <p className="text-2xl font-bold tabular-nums leading-tight text-foreground">
             {formatEther(provider.stake)}
           </p>
         </div>
@@ -264,7 +264,7 @@ export function MyProviderCard({
                 <button
                   key={eth}
                   type="button"
-                  className="border-2 border-theme bg-zinc-50 px-2 py-1 text-xs font-bold uppercase tracking-widest hover:bg-foreground hover:text-background dark:bg-zinc-900/30"
+                  className="border-2 border-theme bg-background px-2 py-1 text-xs font-bold uppercase tracking-widest hover:bg-foreground hover:text-background"
                   disabled={working}
                   onClick={() => setNextPrice(eth)}
                 >
@@ -277,14 +277,14 @@ export function MyProviderCard({
       </div>
 
       <div className="grid grid-cols-1 gap-5 border-b-2 border-theme p-5">
-        <div className="border-2 border-dashed border-theme bg-zinc-50 p-4 dark:bg-zinc-900/30">
-          <p className="mb-3 text-xs font-bold uppercase leading-snug tracking-widest text-zinc-600 dark:text-zinc-400">Quick metadata presets</p>
+        <div className="border-2 border-dashed border-theme bg-background p-4">
+          <p className="section-eyebrow mb-3">Quick metadata presets</p>
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             {DASHBOARD_METADATA_PRESETS.map((preset) => (
               <button
                 key={preset.id}
                 type="button"
-                className="btn-brutal border-theme bg-zinc-100/50 text-left hover:bg-zinc-200/50 dark:bg-zinc-950/40 dark:hover:bg-zinc-800/60 sm:min-w-[12rem]"
+                className="btn-brutal border-theme bg-background text-left sm:min-w-[12rem]"
                 disabled={working}
                 onClick={() => {
                   setActionError(null);
