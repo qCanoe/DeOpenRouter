@@ -1,10 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
+import { useChainId } from "wagmi";
 import { zeroAddress, type Address } from "viem";
 import { ProviderCard } from "@/components/user/ProviderCard";
 import type { ChainProviderRow } from "@/hooks/useMarketplaceProviders";
 import { DEMO_MARKETPLACE_ROWS } from "@/lib/providerDemoData";
+import { resolveProviderMetrics } from "@/lib/providerMetrics";
+import { OnChainSheet } from "@/components/chain/OnChainSheet";
+import { MarketplaceOnChainDetails } from "@/components/chain/MarketplaceOnChainDetails";
+import { MOCK_PANEL_COPY, ON_CHAIN_PANEL_DESIGN_MOCK } from "@/lib/mockOnChainPanel";
 
 type SortKey = "price_asc" | "price_desc" | "model_asc";
 
@@ -17,37 +22,94 @@ type ProviderMarketplaceProps = {
 
 function matchesSearch(provider: ChainProviderRow, query: string): boolean {
   if (!query.trim()) return true;
-  return provider.modelId.toLowerCase().includes(query.trim().toLowerCase());
+  const q = query.trim().toLowerCase();
+  const m = resolveProviderMetrics(provider);
+  return (
+    provider.modelId.toLowerCase().includes(q) ||
+    m.region.toLowerCase().includes(q) ||
+    m.apiFormat.toLowerCase().includes(q)
+  );
 }
 
-function SimulatedProviderGrid({
-  marketplace,
+function CustomSortDropdown({
+  sort,
+  setSort,
 }: {
-  marketplace: Address;
+  sort: SortKey;
+  setSort: (s: SortKey) => void;
 }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const options: { value: SortKey; label: string }[] = [
+    { value: "price_asc", label: "Price / low to high" },
+    { value: "price_desc", label: "Price / high to low" },
+    { value: "model_asc", label: "Model / A to Z" },
+  ];
+
+  const currentLabel = options.find((o) => o.value === sort)?.label;
+
   return (
-    <div className="mt-10 border-t-2 border-theme pt-10">
-      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h3 className="text-lg font-bold uppercase tracking-tight sm:text-xl">
-            Simulated_API_providers
-          </h3>
-          <p className="mt-2 max-w-2xl text-xs font-bold uppercase leading-relaxed tracking-widest text-muted">
-            Static examples of how a filled marketplace card looks. Register real providers above
-            for live invoke + settlement.
-          </p>
+    <div className="relative" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="input-modern flex w-full items-center justify-between bg-[var(--background)] text-left shadow-sm"
+      >
+        <span className="truncate">{currentLabel}</span>
+        <svg
+          className={`h-4 w-4 shrink-0 text-[var(--muted)] transition-transform duration-200 ${
+            isOpen ? "rotate-180" : ""
+          }`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {isOpen && (
+        <div className="absolute z-10 mt-1.5 w-full rounded-xl border border-[var(--border)] bg-[var(--background)] py-1.5 shadow-lg">
+          {options.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => {
+                setSort(option.value);
+                setIsOpen(false);
+              }}
+              className={`flex w-full items-center px-4 py-2.5 text-sm transition-colors hover:bg-[var(--muted-bg)] ${
+                sort === option.value
+                  ? "font-medium text-[var(--foreground)] bg-[var(--muted-bg)]"
+                  : "text-[var(--muted)] hover:text-[var(--foreground)]"
+              }`}
+            >
+              <span className="truncate">{option.label}</span>
+              {sort === option.value && (
+                <svg
+                  className="ml-auto h-4 w-4 shrink-0 text-[var(--foreground)]"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </button>
+          ))}
         </div>
-      </div>
-      <div className="grid grid-cols-1 items-stretch gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3 [&>*]:min-h-0 [&>*]:h-full">
-        {DEMO_MARKETPLACE_ROWS.map((row) => (
-          <ProviderCard
-            key={row.id}
-            marketplace={marketplace}
-            row={row}
-            isMock
-          />
-        ))}
-      </div>
+      )}
     </div>
   );
 }
@@ -58,11 +120,18 @@ export function ProviderMarketplace({
   isLoading,
   onInvoked,
 }: ProviderMarketplaceProps) {
+  const chainId = useChainId();
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortKey>("price_asc");
+  const [chainPanelOpen, setChainPanelOpen] = useState(false);
+
+  const combinedRows = useMemo(() => {
+    const demo = [...DEMO_MARKETPLACE_ROWS];
+    return [...rows, ...demo];
+  }, [rows]);
 
   const filtered = useMemo(() => {
-    const list = rows.filter((provider) => matchesSearch(provider, query));
+    const list = combinedRows.filter((provider) => matchesSearch(provider, query));
     const next = [...list];
     next.sort((a, b) => {
       const priceA = a.effectivePriceWei;
@@ -79,76 +148,92 @@ export function ProviderMarketplace({
       }
     });
     return next;
-  }, [rows, query, sort]);
+  }, [combinedRows, query, sort]);
 
-  if (!marketplace) {
-    return (
-      <section>
-        <div className="mb-8 flex flex-col gap-4 border-b-2 border-theme pb-3 sm:flex-row sm:items-end sm:justify-between">
-          <h2 className="section-heading">Provider_Marketplace</h2>
-          <span className="section-eyebrow">On-chain</span>
-        </div>
-        <div className="border-2 border-dashed border-theme p-12 text-center text-sm font-bold uppercase leading-relaxed tracking-widest text-muted">
-          <p className="mb-4">Set NEXT_PUBLIC_MARKETPLACE_ADDRESS in apps/web/.env.local</p>
-          <p>
-            Deploy with{" "}
-            <code className="text-foreground">
-              forge script script/Deploy.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
-            </code>{" "}
-            (see repo README), then paste the contract address.
-          </p>
-        </div>
-        <SimulatedProviderGrid marketplace={zeroAddress} />
-      </section>
-    );
-  }
+  const resolvedMarketplace = marketplace ?? zeroAddress;
 
   return (
     <section>
-      <div className="mb-8 flex flex-col gap-4 border-b-2 border-theme pb-3 sm:flex-row sm:items-end sm:justify-between">
-        <h2 className="section-heading">Provider_Marketplace</h2>
-        <span className="section-eyebrow">On-chain catalog</span>
+      <div className="mb-8 flex flex-col gap-4 border-b border-[var(--border)] pb-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 className="section-heading">API Providers</h2>
+          <p className="mt-1 max-w-2xl text-sm text-[var(--muted)]">
+            Browse models, compare pricing and throughput, and open the playground to try a call.
+          </p>
+        </div>
+        <div className="flex flex-col gap-2 sm:items-end">
+          <span className="section-eyebrow">Demo catalog</span>
+          <button
+            type="button"
+            className="btn-secondary w-full px-4 py-2.5 text-sm font-medium sm:w-auto"
+            onClick={() => setChainPanelOpen(true)}
+          >
+            View on chain
+          </button>
+        </div>
       </div>
+
+      {!marketplace && (
+        <p className="mb-6 rounded-xl border border-dashed border-[var(--border)] bg-[var(--muted-bg)]/50 px-4 py-3 text-sm text-[var(--muted)]">
+          Optional: set{" "}
+          <code className="rounded bg-[var(--background)] px-1.5 py-0.5 text-[var(--foreground)]">
+            NEXT_PUBLIC_MARKETPLACE_ADDRESS
+          </code>{" "}
+          in{" "}
+          <code className="rounded bg-[var(--background)] px-1.5 py-0.5 text-[var(--foreground)]">
+            apps/web/.env.local
+          </code>{" "}
+          to list providers from your deployed contract alongside the samples below.
+        </p>
+      )}
 
       <div className="mb-8 flex flex-col gap-4 lg:flex-row">
         <label className="flex flex-1 flex-col gap-2">
-          <span className="section-eyebrow">Search modelId</span>
+          <span className="text-sm font-medium text-[var(--muted)]">Search</span>
           <input
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="e.g. llama"
-            className="input-brutal min-h-[44px]"
+            placeholder="Model, region, or API format…"
+            className="input-modern"
           />
         </label>
         <label className="flex w-full flex-col gap-2 lg:w-64">
-          <span className="section-eyebrow">Sort</span>
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value as SortKey)}
-            className="input-brutal min-h-[44px] cursor-pointer bg-background font-bold uppercase tracking-widest"
-          >
-            <option value="price_asc">Price / low to high</option>
-            <option value="price_desc">Price / high to low</option>
-            <option value="model_asc">Model / A to Z</option>
-          </select>
+          <span className="text-sm font-medium text-[var(--muted)]">Sort By</span>
+          <CustomSortDropdown sort={sort} setSort={setSort} />
         </label>
       </div>
 
-      {isLoading ? (
-        <div className="border-2 border-theme p-12 text-center text-sm font-bold uppercase tracking-widest text-muted">
-          LOADING PROVIDERS...
+      {marketplace && isLoading && (
+        <div className="mb-6 flex items-center gap-2 text-sm text-[var(--muted)]">
+          <svg
+            className="h-4 w-4 shrink-0 animate-spin"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            aria-hidden
+          >
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            />
+          </svg>
+          Syncing on-chain provider list…
         </div>
-      ) : filtered.length === 0 ? (
-        <div className="border-2 border-dashed border-theme p-12 text-center text-sm font-bold uppercase leading-relaxed tracking-widest text-muted">
-          &lt;NO_PROVIDERS_REGISTERED&gt;
+      )}
+
+      {filtered.length === 0 ? (
+        <div className="card-modern border-dashed p-12 text-center text-sm font-medium text-[var(--muted)]">
+          No providers match your filters
         </div>
       ) : (
-        <div className="grid grid-cols-1 items-stretch gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3 [&>*]:min-h-0 [&>*]:h-full">
+        <div className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-2 lg:grid-cols-3 [&>*]:min-h-0 [&>*]:h-full">
           {filtered.map((provider) => (
             <ProviderCard
-              key={provider.id}
-              marketplace={marketplace}
+              key={`${provider.id}-${provider.modelId}`}
+              marketplace={resolvedMarketplace}
               row={provider}
               onInvoked={onInvoked}
             />
@@ -156,7 +241,22 @@ export function ProviderMarketplace({
         </div>
       )}
 
-      <SimulatedProviderGrid marketplace={marketplace} />
+      <OnChainSheet
+        open={chainPanelOpen}
+        onClose={() => setChainPanelOpen(false)}
+        title={
+          ON_CHAIN_PANEL_DESIGN_MOCK
+            ? MOCK_PANEL_COPY.sheetMarketplaceTitle
+            : "Marketplace on chain"
+        }
+        description={
+          ON_CHAIN_PANEL_DESIGN_MOCK
+            ? MOCK_PANEL_COPY.sheetMarketplaceDesc
+            : "Contract address, network, and full provider structs as read from the registry."
+        }
+      >
+        <MarketplaceOnChainDetails marketplace={marketplace} chainId={chainId} providers={rows} />
+      </OnChainSheet>
     </section>
   );
 }

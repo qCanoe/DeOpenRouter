@@ -15,26 +15,26 @@ export function UserDashboard({
 }: UserDashboardProps) {
   return (
     <section>
-      <div className="mb-8 flex flex-wrap items-end justify-between gap-2 border-b-2 border-theme pb-3">
-        <h2 className="section-heading">User_Dashboard</h2>
+      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between border-b border-[var(--border)] pb-4">
+        <h2 className="section-heading">User Dashboard</h2>
         <span className="section-eyebrow">On-chain snapshot</span>
       </div>
       <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-3">
-        <div className="flex min-h-[7.5rem] flex-col justify-between border-2 border-theme p-6">
-          <p className="section-eyebrow mb-2">Balance (ETH)</p>
-          <p className="text-3xl font-bold tabular-nums tracking-tighter sm:text-4xl">
+        <div className="card-modern flex min-h-[8rem] flex-col justify-between p-6">
+          <p className="text-sm font-medium text-[var(--muted)]">Balance (ETH)</p>
+          <p className="text-3xl font-semibold tracking-tight sm:text-4xl">
             {isLoadingBalance ? "..." : ethBalanceFormatted ?? "--"}
           </p>
         </div>
-        <div className="flex min-h-[7.5rem] flex-col justify-between border-2 border-theme p-6">
-          <p className="section-eyebrow mb-2">Total spent (ETH)</p>
-          <p className="text-3xl font-bold tabular-nums tracking-tighter sm:text-4xl">
+        <div className="card-modern flex min-h-[8rem] flex-col justify-between p-6">
+          <p className="text-sm font-medium text-[var(--muted)]">Total spent (ETH)</p>
+          <p className="text-3xl font-semibold tracking-tight sm:text-4xl">
             {totalSpentEth}
           </p>
         </div>
-        <div className="flex min-h-[7.5rem] flex-col justify-between border-2 border-theme p-6">
-          <p className="section-eyebrow mb-2">Call count</p>
-          <p className="text-3xl font-bold tabular-nums tracking-tighter sm:text-4xl">
+        <div className="card-modern flex min-h-[8rem] flex-col justify-between p-6">
+          <p className="text-sm font-medium text-[var(--muted)]">Call count</p>
+          <p className="text-3xl font-semibold tracking-tight sm:text-4xl">
             {callCount}
           </p>
         </div>
