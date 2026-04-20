@@ -17,7 +17,7 @@ export default function Page() {
     toastTimer.current = setTimeout(() => {
       setToast(null);
       toastTimer.current = null;
-    }, 2000);
+    }, 2500);
   }, []);
 
   useEffect(() => {
@@ -27,14 +27,14 @@ export default function Page() {
   }, []);
 
   return (
-    <div className="flex min-h-screen flex-col font-mono text-base leading-normal selection:bg-inverse selection:text-inverse-fg">
+    <div className="flex min-h-screen flex-col bg-[var(--muted-bg)] text-[var(--foreground)] selection:bg-[var(--foreground)] selection:text-[var(--background)]">
       <Header role={role} onRoleChange={setRole} />
 
       <main
         id="role-panel"
         role="tabpanel"
         aria-labelledby={role === "user" ? "tab-user" : "tab-provider"}
-        className="mx-auto grid w-full max-w-[min(88rem,calc(100%-4rem))] flex-1 content-start gap-14 sm:gap-16 px-6 py-8 sm:px-8 sm:py-10 lg:px-12 lg:py-12"
+        className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-10 px-4 py-8 sm:gap-14 sm:px-6 sm:py-10 md:px-8 md:py-12"
       >
         {role === "user" ? (
           <UserView />
@@ -43,13 +43,13 @@ export default function Page() {
         )}
       </main>
 
-      <footer className="mt-auto border-t-2 border-theme bg-theme px-6 py-8 text-center text-xs font-bold uppercase leading-relaxed tracking-widest text-muted">
-        DeOpenRouter MVP {"//"} {new Date().getFullYear()} {"//"} On-chain trust {"//"} Off-chain inference
+      <footer className="mt-auto border-t border-[var(--border)] bg-[var(--background)] px-6 py-8 text-center text-xs text-[var(--muted)]">
+        DeOpenRouter MVP &middot; {new Date().getFullYear()} &middot; On-chain trust &middot; Off-chain inference
       </footer>
 
       {toast && (
         <div
-          className="fixed bottom-6 left-1/2 z-50 w-[min(100%,28rem)] max-w-[calc(100vw-2rem)] -translate-x-1/2 border-2 border-theme bg-inverse px-5 py-4 text-center text-[11px] font-bold uppercase leading-snug tracking-widest text-inverse-fg shadow-none sm:text-xs"
+          className="fixed bottom-6 left-1/2 z-50 w-[min(100%,24rem)] -translate-x-1/2 rounded-xl bg-[var(--inverse-bg)] px-5 py-3 text-center text-sm font-medium text-[var(--inverse-fg)] shadow-lg sm:bottom-8"
           role="status"
           aria-live="polite"
         >
