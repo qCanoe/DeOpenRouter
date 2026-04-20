@@ -49,30 +49,6 @@ export const emptyRegisterValues: RegisterFormValues = {
 
 const MIN_STAKE_WEI = parseEther("0.01");
 
-/** Visual + layout for preset tiles (avoid btn-brutal’s centered inline-flex, which collapses multi-line labels). */
-const PRESET_BUTTON_CLASS: Record<string, string> = {
-  budget:
-    "bg-emerald-100 hover:bg-emerald-200 text-emerald-950 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 dark:text-emerald-100",
-  standard:
-    "bg-blue-100 hover:bg-blue-200 text-blue-950 dark:bg-blue-950/40 dark:hover:bg-blue-900/60 dark:text-blue-100",
-  premium:
-    "bg-violet-100 hover:bg-violet-200 text-violet-950 dark:bg-violet-950/40 dark:hover:bg-violet-900/60 dark:text-violet-100",
-};
-
-const PRESET_DESC_CLASS: Record<string, string> = {
-  budget: "text-emerald-900/70 dark:text-emerald-200/70",
-  standard: "text-blue-900/70 dark:text-blue-200/70",
-  premium: "text-violet-900/70 dark:text-violet-200/70",
-};
-
-function presetTileClass(id: string): string {
-  return PRESET_BUTTON_CLASS[id] ?? "bg-background hover:bg-zinc-100 dark:hover:bg-zinc-900/60";
-}
-
-function presetDescClass(id: string): string {
-  return PRESET_DESC_CLASS[id] ?? "text-muted";
-}
-
 function isEthDecimal(value: string): boolean {
   return /^\d+(\.\d+)?$/.test(value.trim());
 }
@@ -215,11 +191,9 @@ export const ProviderRegisterForm = forwardRef<
         className="grid gap-5 border-2 border-theme p-4 sm:p-6"
         noValidate
       >
-        <div className="border-2 border-dashed border-theme bg-zinc-100/70 p-4 dark:bg-zinc-900/35">
-          <p className="mb-2 text-xs font-bold uppercase leading-snug tracking-widest text-zinc-600 dark:text-zinc-400">
-            Quick presets
-          </p>
-          <p className="mb-5 max-w-[65ch] text-sm font-medium leading-relaxed text-zinc-700 dark:text-zinc-300">
+        <div className="border-2 border-dashed border-theme bg-background p-4">
+          <p className="section-eyebrow mb-3">Quick presets</p>
+          <p className="mb-4 max-w-[65ch] text-xs font-bold uppercase leading-relaxed tracking-widest text-muted">
             Load a full valid example, then edit any field before registering.
           </p>
           <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap">
@@ -227,18 +201,16 @@ export const ProviderRegisterForm = forwardRef<
               <button
                 key={preset.id}
                 type="button"
-                className={`focus-ring transition-ui flex h-auto min-h-0 w-full flex-col items-stretch gap-2.5 border-2 border-theme px-4 py-4 text-left sm:min-w-[12.5rem] sm:max-w-[20rem] ${presetTileClass(preset.id)}`}
+                className="focus-ring transition-ui flex h-auto min-h-0 w-full flex-col items-stretch gap-2.5 border-2 border-theme bg-background px-4 py-4 text-left sm:min-w-[12.5rem] sm:max-w-[20rem]"
                 onClick={() => {
                   setError(null);
                   setValues({ ...preset.values });
                 }}
               >
-                <span className="text-sm font-bold uppercase leading-tight tracking-wide text-current">
+                <span className="text-sm font-bold uppercase leading-tight tracking-wide text-foreground">
                   {preset.label}
                 </span>
-                <span
-                  className={`block text-xs font-semibold uppercase leading-relaxed tracking-wider ${presetDescClass(preset.id)}`}
-                >
+                <span className="block text-xs font-semibold uppercase leading-relaxed tracking-wider text-muted">
                   {preset.description}
                 </span>
               </button>
