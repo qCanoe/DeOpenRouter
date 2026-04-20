@@ -1,9 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { Address } from "viem";
+import { zeroAddress, type Address } from "viem";
 import { ProviderCard } from "@/components/user/ProviderCard";
 import type { ChainProviderRow } from "@/hooks/useMarketplaceProviders";
+import { DEMO_MARKETPLACE_ROWS } from "@/lib/providerDemoData";
 
 type SortKey = "price_asc" | "price_desc" | "model_asc";
 
@@ -17,6 +18,38 @@ type ProviderMarketplaceProps = {
 function matchesSearch(provider: ChainProviderRow, query: string): boolean {
   if (!query.trim()) return true;
   return provider.modelId.toLowerCase().includes(query.trim().toLowerCase());
+}
+
+function SimulatedProviderGrid({
+  marketplace,
+}: {
+  marketplace: Address;
+}) {
+  return (
+    <div className="mt-10 border-t-2 border-theme pt-10">
+      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h3 className="text-lg font-bold uppercase tracking-tight sm:text-xl">
+            Simulated_API_providers
+          </h3>
+          <p className="mt-2 max-w-2xl text-xs font-bold uppercase leading-relaxed tracking-widest text-muted">
+            Static examples of how a filled marketplace card looks. Register real providers above
+            for live invoke + settlement.
+          </p>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3">
+        {DEMO_MARKETPLACE_ROWS.map((row) => (
+          <ProviderCard
+            key={row.id}
+            marketplace={marketplace}
+            row={row}
+            isMock
+          />
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export function ProviderMarketplace({
@@ -65,6 +98,7 @@ export function ProviderMarketplace({
             (see repo README), then paste the contract address.
           </p>
         </div>
+        <SimulatedProviderGrid marketplace={zeroAddress} />
       </section>
     );
   }
@@ -121,6 +155,8 @@ export function ProviderMarketplace({
           ))}
         </div>
       )}
+
+      <SimulatedProviderGrid marketplace={marketplace} />
     </section>
   );
 }

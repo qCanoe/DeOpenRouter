@@ -5,6 +5,10 @@ import { useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import type { ChainProviderRow } from "@/hooks/useMarketplaceProviders";
 import type { CallLogRow } from "@/hooks/useMyCallLogs";
 import { shortenHex } from "@/lib/format";
+import {
+  DASHBOARD_METADATA_PRESETS,
+  DASHBOARD_PRICE_CHIPS,
+} from "@/lib/providerDemoData";
 import { marketplaceAbi } from "@/lib/marketplaceAbi";
 import {
   formatEther,
@@ -248,11 +252,51 @@ export function MyProviderCard({
                 [ ANNOUNCE_PRICE ]
               </button>
             </div>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <span className="w-full text-xs font-bold uppercase tracking-widest text-muted">
+                Quick price (ETH)
+              </span>
+              {DASHBOARD_PRICE_CHIPS.map((eth) => (
+                <button
+                  key={eth}
+                  type="button"
+                  className="border-2 border-theme bg-background px-2 py-1 text-xs font-bold uppercase tracking-widest hover:bg-foreground hover:text-background"
+                  disabled={working}
+                  onClick={() => setNextPrice(eth)}
+                >
+                  {eth}
+                </button>
+              ))}
+            </div>
           </label>
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-5 border-b-2 border-theme p-5">
+        <div className="border-2 border-dashed border-theme p-4">
+          <p className="section-eyebrow mb-3">Quick metadata presets</p>
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            {DASHBOARD_METADATA_PRESETS.map((preset) => (
+              <button
+                key={preset.id}
+                type="button"
+                className="btn-brutal border-theme bg-background text-left sm:min-w-[12rem]"
+                disabled={working}
+                onClick={() => {
+                  setActionError(null);
+                  setMetadataURI(preset.metadataURI);
+                  setIdentityHash(preset.identityHash);
+                }}
+              >
+                <span className="block font-bold uppercase tracking-tight">{preset.label}</span>
+                <span className="mt-1 block truncate font-mono text-[10px] font-bold uppercase leading-snug tracking-widest text-muted">
+                  {preset.metadataURI}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         <label className="flex flex-col gap-2">
           <span className="section-eyebrow">metadataURI</span>
           <input
