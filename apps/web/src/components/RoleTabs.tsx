@@ -7,13 +7,10 @@ type RoleTabsProps = {
   onRoleChange: (role: AppRole) => void;
 };
 
-const tabBtn =
-  "focus-ring transition-ui min-h-[44px] border-2 border-theme px-6 py-3 text-xs font-bold uppercase tracking-widest sm:text-sm";
-
 export function RoleTabs({ role, onRoleChange }: RoleTabsProps) {
   return (
     <div
-      className="flex flex-wrap gap-0"
+      className="inline-flex items-center rounded-lg bg-[var(--muted-bg)] p-1 shadow-inner border border-[var(--border)]"
       role="tablist"
       aria-label="Role"
     >
@@ -25,10 +22,10 @@ export function RoleTabs({ role, onRoleChange }: RoleTabsProps) {
         aria-controls="role-panel"
         tabIndex={0}
         onClick={() => onRoleChange("user")}
-        className={`${tabBtn} ${
+        className={`focus-ring transition-ui flex h-8 items-center justify-center rounded-md px-5 text-sm font-medium ${
           role === "user"
-            ? "bg-inverse text-inverse-fg"
-            : "bg-background text-foreground hover:bg-inverse hover:text-inverse-fg"
+            ? "bg-[var(--background)] text-[var(--foreground)] shadow-[0_1px_2px_rgba(0,0,0,0.05),0_0_0_1px_rgba(0,0,0,0.05)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.2),0_0_0_1px_rgba(255,255,255,0.05)]"
+            : "text-[var(--muted)] hover:text-[var(--foreground)]"
         }`}
       >
         User
@@ -41,10 +38,10 @@ export function RoleTabs({ role, onRoleChange }: RoleTabsProps) {
         aria-controls="role-panel"
         tabIndex={0}
         onClick={() => onRoleChange("provider")}
-        className={`${tabBtn} border-l-0 ${
+        className={`focus-ring transition-ui flex h-8 items-center justify-center rounded-md px-5 text-sm font-medium ${
           role === "provider"
-            ? "bg-inverse text-inverse-fg"
-            : "bg-background text-foreground hover:bg-inverse hover:text-inverse-fg"
+            ? "bg-[var(--background)] text-[var(--foreground)] shadow-[0_1px_2px_rgba(0,0,0,0.05),0_0_0_1px_rgba(0,0,0,0.05)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.2),0_0_0_1px_rgba(255,255,255,0.05)]"
+            : "text-[var(--muted)] hover:text-[var(--foreground)]"
         }`}
       >
         Provider

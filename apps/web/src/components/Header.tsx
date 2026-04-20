@@ -22,86 +22,82 @@ export function Header({ role, onRoleChange }: HeaderProps) {
   const { switchChain } = useSwitchChain();
 
   return (
-    <header className="border-b-2 border-theme">
-      <div className="mx-auto flex w-full max-w-[min(88rem,calc(100%-4rem))] flex-col gap-6 px-6 py-6 sm:px-8 sm:py-7 lg:px-12 lg:py-8">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+    <header className="border-b border-[var(--border)] bg-[var(--background)]">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8 md:px-8">
+        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-4xl font-bold uppercase leading-[0.95] tracking-tighter sm:text-6xl">
-              DeOpen
-              <br className="hidden md:block" />
-              Router
+            <h1 className="text-3xl font-semibold tracking-tight text-[var(--foreground)] sm:text-4xl md:text-5xl">
+              DeOpenRouter
             </h1>
-            <p className="mt-4 max-w-[42ch] text-sm font-bold uppercase leading-relaxed tracking-widest text-muted">
-              Decentralized AI routing · Transparent marketplace
+            <p className="mt-1 max-w-[42ch] text-sm text-[var(--muted)] sm:mt-2">
+              Decentralized AI routing &middot; Transparent marketplace
             </p>
           </div>
 
-          <div className="flex flex-col items-stretch md:items-end gap-4 w-full md:w-auto uppercase tracking-widest">
-            <div className="flex w-full flex-row justify-between gap-8 border-2 border-theme bg-background p-4 text-foreground md:w-auto md:justify-start">
-              <div>
-                <span className="mb-1 block text-xs font-bold uppercase tracking-widest text-muted">
-                  NETWORK
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <div className="flex flex-row items-center gap-4 rounded-xl border border-[var(--border)] bg-[var(--muted-bg)] px-4 py-2 sm:gap-6 shadow-sm">
+              <div className="flex flex-col">
+                <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--muted)]">
+                  Network
                 </span>
-                <span className="text-base font-bold tabular-nums">
-                  {chainId === 31337 ? "ANVIL_LOCAL" : chainId}
+                <span className="text-sm font-medium tabular-nums text-[var(--foreground)]">
+                  {chainId === 31337 ? "Anvil Local" : chainId}
                 </span>
               </div>
-              <div>
-                <span className="mb-1 block text-xs font-bold uppercase tracking-widest text-muted">
-                  STATUS
+              <div className="h-5 w-px bg-[var(--border)]" />
+              <div className="flex flex-col">
+                <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--muted)]">
+                  Status
                 </span>
-                <span className="text-base font-bold">
+                <span className="text-sm font-medium text-[var(--foreground)]">
                   {isConnected ? (
-                    <span className="flex items-center gap-2">
-                      <span className="h-3 w-3 bg-foreground" aria-hidden />
-                      ONLINE
+                    <span className="flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-green-500" aria-hidden />
+                      Online
                     </span>
                   ) : (
-                    <span className="flex items-center gap-2">
-                      <span
-                        className="h-3 w-3 border-2 border-foreground"
-                        aria-hidden
-                      />
-                      OFFLINE
+                    <span className="flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-[var(--muted)]" aria-hidden />
+                      Offline
                     </span>
                   )}
                 </span>
               </div>
             </div>
 
-            <div className="flex w-full flex-col gap-3 sm:flex-row md:w-auto">
+            <div className="flex flex-row gap-2.5">
               {!isConnected ? (
                 <button
                   type="button"
-                  className="btn-brutal flex-1 border-theme bg-background text-foreground hover:bg-inverse hover:text-inverse-fg sm:text-center"
+                  className="btn-primary flex-1 sm:flex-none"
                   onClick={() => connect({ connector: connectors[0] })}
                 >
-                  [ CONNECT_WALLET ]
+                  Connect Wallet
                 </button>
               ) : (
                 <button
                   type="button"
-                  className="btn-brutal flex-1 border-theme bg-background text-foreground hover:bg-inverse hover:text-inverse-fg sm:text-center"
+                  className="btn-secondary flex-1 sm:flex-none"
                   onClick={() => disconnect()}
                 >
-                  [ WALLET: {address ? `${address.slice(0, 6)}…${address.slice(-4)}` : "—"} ]
+                  {address ? `${address.slice(0, 6)}…${address.slice(-4)}` : "Disconnect"}
                 </button>
               )}
 
               {chainId !== 31337 && (
                 <button
                   type="button"
-                  className="btn-brutal flex-1 border-theme bg-background text-foreground hover:bg-inverse hover:text-inverse-fg"
-                  onClick={() => switchChain({ chainId: 31337 })}
+                  className="btn-secondary hidden sm:flex"
+                  onClick={() => switchChain?.({ chainId: 31337 })}
                 >
-                  [ SWITCH_TO_ANVIL ]
+                  Switch to Anvil
                 </button>
               )}
             </div>
           </div>
         </div>
 
-        <div className="border-t-2 border-theme pt-6">
+        <div className="mt-2 flex items-center justify-start border-t border-[var(--border)] pt-6">
           <RoleTabs role={role} onRoleChange={onRoleChange} />
         </div>
       </div>
