@@ -15,7 +15,7 @@ export function getMarketplaceAddress(): Address | null {
   return isAddress(raw) ? (raw as Address) : null;
 }
 
-/** 默认与 README 中 mock API 一致 */
+/** Default matches the mock API URL documented in README. */
 export function getMockApiBase(): string {
   return trimEnv(process.env.NEXT_PUBLIC_MOCK_API) ?? "http://127.0.0.1:8787";
 }

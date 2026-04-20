@@ -87,20 +87,20 @@ export const REGISTER_PRESETS: readonly RegisterPreset[] = [
 const DEMO_OWNER = "0xDe0000000000000000000000000000000000000001" as Address;
 
 function mockRow(partial: Omit<ChainProviderRow, "id"> & { id: number }): ChainProviderRow {
-  return partial;
+  return { ...partial, demoCatalog: true };
 }
 
 /**
- * UI-only rows for the marketplace demo — not on-chain; render with ProviderCard isMock.
+ * Sample catalog rows merged with on-chain providers in the user marketplace (demo UI).
  */
 export const DEMO_MARKETPLACE_ROWS: readonly ChainProviderRow[] = [
   mockRow({
     id: 900_001,
     owner: DEMO_OWNER,
-    modelId: "sim/openai-style",
+    modelId: "demo/openai-style",
     modelVersion: "1.0.0",
-    endpointCommitment: labelHash("endpoint:sim/openai-style"),
-    capabilityHash: labelHash("cap:sim-openai-chat"),
+    endpointCommitment: labelHash("endpoint:demo/openai-style"),
+    capabilityHash: labelHash("cap:demo-openai-chat"),
     pricePerCall: parseEther("0.001"),
     pendingPriceWei: 0n,
     pendingEffectiveBlock: 0n,
@@ -111,17 +111,28 @@ export const DEMO_MARKETPLACE_ROWS: readonly ChainProviderRow[] = [
     stake: parseEther("0.12"),
     stakeLockBlocks: 0n,
     active: true,
-    metadataURI: "https://example.com/meta/sim-openai.json",
-    metadataHash: labelHash("meta:sim-openai"),
-    identityHash: labelHash("id:sim-openai"),
+    metadataURI: "https://example.com/meta/demo-openai.json",
+    metadataHash: labelHash("meta:demo-openai"),
+    identityHash: labelHash("id:demo-openai"),
+    metrics: {
+      latencyP50Ms: 210,
+      latencyP99Ms: 890,
+      throughputRpm: 180,
+      uptimePct: 99.92,
+      requests24h: 42_300,
+      successRatePct: 99.4,
+      region: "us-east-1",
+      apiFormat: "OpenAI-compatible",
+      contextWindow: "128k",
+    },
   }),
   mockRow({
     id: 900_002,
     owner: DEMO_OWNER,
-    modelId: "sim/anthropic-style",
+    modelId: "demo/anthropic-style",
     modelVersion: "20240307",
-    endpointCommitment: labelHash("endpoint:sim/anthropic"),
-    capabilityHash: labelHash("cap:sim-anthropic-messages"),
+    endpointCommitment: labelHash("endpoint:demo/anthropic"),
+    capabilityHash: labelHash("cap:demo-anthropic-messages"),
     pricePerCall: parseEther("0.004"),
     pendingPriceWei: 0n,
     pendingEffectiveBlock: 0n,
@@ -132,17 +143,28 @@ export const DEMO_MARKETPLACE_ROWS: readonly ChainProviderRow[] = [
     stake: parseEther("0.2"),
     stakeLockBlocks: 50n,
     active: true,
-    metadataURI: "https://example.com/meta/sim-anthropic.json",
-    metadataHash: labelHash("meta:sim-anthropic"),
-    identityHash: labelHash("id:sim-anthropic"),
+    metadataURI: "https://example.com/meta/demo-anthropic.json",
+    metadataHash: labelHash("meta:demo-anthropic"),
+    identityHash: labelHash("id:demo-anthropic"),
+    metrics: {
+      latencyP50Ms: 340,
+      latencyP99Ms: 1200,
+      throughputRpm: 95,
+      uptimePct: 99.88,
+      requests24h: 18_900,
+      successRatePct: 99.1,
+      region: "eu-west-1",
+      apiFormat: "Anthropic Messages",
+      contextWindow: "200k",
+    },
   }),
   mockRow({
     id: 900_003,
     owner: DEMO_OWNER,
-    modelId: "sim/local-llm",
+    modelId: "demo/local-llm",
     modelVersion: "0.9.0",
-    endpointCommitment: labelHash("endpoint:sim/local-ollama"),
-    capabilityHash: labelHash("cap:sim-local-completion"),
+    endpointCommitment: labelHash("endpoint:demo/local-ollama"),
+    capabilityHash: labelHash("cap:demo-local-completion"),
     pricePerCall: parseEther("0.0002"),
     pendingPriceWei: 0n,
     pendingEffectiveBlock: 0n,
@@ -153,9 +175,20 @@ export const DEMO_MARKETPLACE_ROWS: readonly ChainProviderRow[] = [
     stake: parseEther("0.03"),
     stakeLockBlocks: 0n,
     active: true,
-    metadataURI: "https://example.com/meta/sim-local.json",
-    metadataHash: labelHash("meta:sim-local"),
-    identityHash: labelHash("id:sim-local"),
+    metadataURI: "https://example.com/meta/demo-local.json",
+    metadataHash: labelHash("meta:demo-local"),
+    identityHash: labelHash("id:demo-local"),
+    metrics: {
+      latencyP50Ms: 85,
+      latencyP99Ms: 410,
+      throughputRpm: 320,
+      uptimePct: 99.65,
+      requests24h: 128_000,
+      successRatePct: 98.8,
+      region: "ap-southeast-1",
+      apiFormat: "Custom JSON-RPC",
+      contextWindow: "32k",
+    },
   }),
 ];
 
