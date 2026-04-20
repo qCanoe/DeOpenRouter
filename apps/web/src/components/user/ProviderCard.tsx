@@ -18,6 +18,9 @@ import { getMockApiBase } from "@/lib/marketplaceEnv";
 import { requestHashV1, responseHashV1 } from "@/lib/hashMvp";
 import { shortenHex } from "@/lib/format";
 
+/** No user message UI — fixed preimage for request hash + mock /v1/chat body. */
+const DEFAULT_INVOKE_PROMPT = "";
+
 export type ProviderCardProps = {
   marketplace: Address;
   row: ChainProviderRow;
@@ -33,7 +36,6 @@ export function ProviderCard({
   onInvoked,
 }: ProviderCardProps) {
   const { isConnected } = useAccount();
-  const [prompt, setPrompt] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
   const [localErr, setLocalErr] = useState<string | null>(null);
 
@@ -51,7 +53,6 @@ export function ProviderCard({
   useEffect(() => {
     if (isSuccess) {
       onInvoked?.();
-      setPrompt("");
       reset();
       setLocalErr(null);
     }
@@ -61,10 +62,6 @@ export function ProviderCard({
     setLocalErr(null);
     if (isMock) {
       setLocalErr("Simulated provider — connect a deployed marketplace and use an on-chain row to invoke.");
-      return;
-    }
-    if (!prompt.trim()) {
-      setLocalErr("Enter a prompt.");
       return;
     }
     if (!isConnected) {
@@ -77,8 +74,11 @@ export function ProviderCard({
     }
     setChatLoading(true);
     try {
-      const { response, usageUnits } = await postChat(getMockApiBase(), prompt.trim());
-      const reqH = requestHashV1(prompt.trim());
+      const { response, usageUnits } = await postChat(
+        getMockApiBase(),
+        DEFAULT_INVOKE_PROMPT,
+      );
+      const reqH = requestHashV1(DEFAULT_INVOKE_PROMPT);
       const resH = responseHashV1(response);
       writeContract({
         address: marketplace,
@@ -177,19 +177,6 @@ export function ProviderCard({
         <p className="mt-1 text-xs font-bold uppercase tracking-widest text-muted">
           v{row.modelVersion}
         </p>
-      </div>
-
-      <div className="flex min-h-0 flex-1 flex-col border-b-2 border-theme p-4">
-        <div className="flex min-h-0 flex-1 flex-col">
-          <textarea
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            rows={4}
-            className="input-brutal min-h-[5.5rem] flex-1 resize-y font-mono text-sm"
-            placeholder="User message for /v1/chat"
-            aria-label="Prompt for mock API"
-          />
-        </div>
       </div>
 
       {localErr && (
