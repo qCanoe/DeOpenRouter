@@ -49,6 +49,30 @@ export const emptyRegisterValues: RegisterFormValues = {
 
 const MIN_STAKE_WEI = parseEther("0.01");
 
+/** Visual + layout for preset tiles (avoid btn-brutal’s centered inline-flex, which collapses multi-line labels). */
+const PRESET_BUTTON_CLASS: Record<string, string> = {
+  budget:
+    "border-teal-600 bg-teal-50 text-teal-950 hover:bg-teal-100/90 dark:border-teal-500 dark:bg-teal-950/45 dark:text-teal-50 dark:hover:bg-teal-950/65",
+  standard:
+    "border-blue-700 bg-blue-50 text-blue-950 hover:bg-blue-100/90 dark:border-blue-500 dark:bg-blue-950/45 dark:text-blue-50 dark:hover:bg-blue-950/65",
+  premium:
+    "border-violet-700 bg-violet-50 text-violet-950 hover:bg-violet-100/90 dark:border-violet-500 dark:bg-violet-950/45 dark:text-violet-50 dark:hover:bg-violet-950/65",
+};
+
+const PRESET_DESC_CLASS: Record<string, string> = {
+  budget: "text-teal-900/80 dark:text-teal-200/85",
+  standard: "text-blue-900/80 dark:text-blue-200/85",
+  premium: "text-violet-900/80 dark:text-violet-200/85",
+};
+
+function presetTileClass(id: string): string {
+  return PRESET_BUTTON_CLASS[id] ?? "border-theme bg-background hover:bg-zinc-100 dark:hover:bg-zinc-900/60";
+}
+
+function presetDescClass(id: string): string {
+  return PRESET_DESC_CLASS[id] ?? "text-muted";
+}
+
 function isEthDecimal(value: string): boolean {
   return /^\d+(\.\d+)?$/.test(value.trim());
 }
@@ -191,26 +215,30 @@ export const ProviderRegisterForm = forwardRef<
         className="grid gap-5 border-2 border-theme p-4 sm:p-6"
         noValidate
       >
-        <div className="border-2 border-dashed border-theme bg-background p-4">
-          <p className="section-eyebrow mb-3">Quick presets</p>
-          <p className="mb-4 text-xs font-bold uppercase leading-relaxed tracking-widest text-muted">
+        <div className="border-2 border-dashed border-theme bg-zinc-100/70 p-4 dark:bg-zinc-900/35">
+          <p className="mb-2 text-xs font-bold uppercase leading-snug tracking-widest text-zinc-600 dark:text-zinc-400">
+            Quick presets
+          </p>
+          <p className="mb-5 max-w-[65ch] text-sm font-medium leading-relaxed text-zinc-700 dark:text-zinc-300">
             Load a full valid example, then edit any field before registering.
           </p>
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap">
             {REGISTER_PRESETS.map((preset) => (
               <button
                 key={preset.id}
                 type="button"
-                className="btn-brutal border-theme bg-background text-left sm:min-w-[10rem]"
+                className={`focus-ring transition-ui flex h-auto min-h-0 w-full flex-col items-stretch gap-2.5 border-2 px-4 py-4 text-left sm:min-w-[12.5rem] sm:max-w-[20rem] ${presetTileClass(preset.id)}`}
                 onClick={() => {
                   setError(null);
                   setValues({ ...preset.values });
                 }}
               >
-                <span className="block font-bold uppercase tracking-tight">
+                <span className="text-sm font-bold uppercase leading-tight tracking-wide text-current">
                   {preset.label}
                 </span>
-                <span className="mt-1 block text-xs font-bold uppercase leading-snug tracking-widest text-muted">
+                <span
+                  className={`block text-xs font-semibold uppercase leading-relaxed tracking-wider ${presetDescClass(preset.id)}`}
+                >
                   {preset.description}
                 </span>
               </button>
