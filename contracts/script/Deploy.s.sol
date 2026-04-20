@@ -8,7 +8,8 @@ contract Deploy is Script {
     function run() external {
         uint256 pk = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(pk);
-        new DeOpenRouterMarketplace(100);
+        // priceDelayBlocks, slashChallengePeriodBlocks (e.g. ~100 blocks challenge window on Anvil)
+        new DeOpenRouterMarketplace(100, 100);
         vm.stopBroadcast();
     }
 }

@@ -2,6 +2,8 @@
 
 Python service that runs the **deopenrouter_audit** checks against a relay base URL and returns structured JSON (6D-style risk summary). See `THIRD_PARTY_NOTICES.md` for upstream reference credits.
 
+To verify the same **canonical JSON** hash as the relay (`apps/api`), use `from deopenrouter_audit.canonical import canonical_dumps` on the parsed audit response dict.
+
 ## Requirements
 
 - Python 3.11+

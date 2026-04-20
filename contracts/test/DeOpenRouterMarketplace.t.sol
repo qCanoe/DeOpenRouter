@@ -8,6 +8,7 @@ contract DeOpenRouterMarketplaceTest is Test {
     DeOpenRouterMarketplace public m;
 
     uint256 internal constant PRICE_DELAY = 5;
+    uint256 internal constant SLASH_CHALLENGE_BLOCKS = 5;
 
     receive() external payable {}
 
@@ -34,7 +35,7 @@ contract DeOpenRouterMarketplaceTest is Test {
     }
 
     function setUp() public {
-        m = new DeOpenRouterMarketplace(PRICE_DELAY);
+        m = new DeOpenRouterMarketplace(PRICE_DELAY, SLASH_CHALLENGE_BLOCKS);
     }
 
     function test_register_reverts_below_min_stake() public {
@@ -299,63 +300,54 @@ contract DeOpenRouterMarketplaceTest is Test {
         m.updateProviderMetadata(0, upd);
     }
 
-    function test_slash_reduces_stake_and_pays_operator() public {
+    function test_slash_reduces_stake_and_pays_treasury() public {
         address ownerBob = address(0xB0B);
         vm.deal(ownerBob, 20 ether);
         vm.startPrank(ownerBob);
         m.register{value: m.MIN_STAKE()}(_reg("m1", 1 ether, 0));
         vm.stopPrank();
-        address op = m.slashOperator();
-        uint256 opBefore = op.balance;
+        (,,,,, uint256 registeredAt,,,) = m.getProviderCore(0);
+        address treasury = m.slashTreasury();
+        uint256 treasuryBefore = treasury.balance;
         bytes32 reason = keccak256("fraud");
         assertEq(m.nextSlashId(), 0);
-        vm.expectEmit(true, true, true, true);
-        emit DeOpenRouterMarketplace.ProviderSlashed(0, 0, op, 0.005 ether, reason, m.MIN_STAKE() - 0.005 ether);
-        m.slash(0, 0.005 ether, reason);
-        assertEq(op.balance, opBefore + 0.005 ether);
+        uint256 proposalId = m.proposeSlash(0, 0.005 ether, reason, 1, keccak256("report"));
+        assertEq(proposalId, 0);
+        vm.roll(block.number + SLASH_CHALLENGE_BLOCKS);
+        m.finalizeSlashProposal(proposalId);
+        assertEq(treasury.balance, treasuryBefore + 0.005 ether);
         assertEq(m.nextSlashId(), 1);
         (uint256 pid, address sop, uint256 amt, bytes32 rh, uint256 bnum, uint256 ts) = m.slashRecords(0);
         assertEq(pid, 0);
-        assertEq(sop, op);
+        assertEq(sop, address(this));
         assertEq(amt, 0.005 ether);
         assertEq(rh, reason);
         assertEq(bnum, block.number);
         assertEq(ts, block.timestamp);
         (
             address bob,
-            ,
-            ,
             bytes32 ec,
-            ,
             uint256 pp,
-            uint256 pend,
-            uint256 pblk,
             uint256 stake,
-            uint256 slb,
             bool act,
-            string memory uri,
-            bytes32 mh,
-            bytes32 ih,
             uint256 c,
             uint256 u,
             uint256 slashedTot,
             uint256 lastSlash
-        ) = m.providers(0);
+        ) = m.getProviderCore(0);
         assertEq(bob, ownerBob);
         assertEq(ec, _ep());
         assertEq(pp, 1 ether);
-        assertEq(pend, 0);
-        assertEq(pblk, 0);
         assertEq(stake, m.MIN_STAKE() - 0.005 ether);
-        assertEq(slb, 0);
         assertTrue(act);
+        assertEq(c, registeredAt);
+        assertEq(u, registeredAt);
+        assertEq(slashedTot, 0.005 ether);
+        assertEq(lastSlash, block.number);
+        (,,,,,,,,,,, string memory uri, bytes32 mh, bytes32 ih,,,,) = m.providers(0);
         assertEq(keccak256(bytes(uri)), keccak256("ipfs://QmExample"));
         assertEq(mh, keccak256("metadata"));
         assertEq(ih, keccak256("identity"));
-        assertEq(c, block.number);
-        assertEq(u, block.number);
-        assertEq(slashedTot, 0.005 ether);
-        assertEq(lastSlash, block.number);
     }
 
     function test_slash_reverts_not_operator() public {
@@ -363,7 +355,7 @@ contract DeOpenRouterMarketplaceTest is Test {
         m.register{value: m.MIN_STAKE()}(_reg("m1", 1 ether, 0));
         vm.startPrank(address(0xDEAD));
         vm.expectRevert(DeOpenRouterMarketplace.NotSlashOperator.selector);
-        m.slash(0, 1, bytes32(0));
+        m.proposeSlash(0, 1, bytes32(0), 0, bytes32(0));
         vm.stopPrank();
     }
 
@@ -375,23 +367,40 @@ contract DeOpenRouterMarketplaceTest is Test {
         vm.stopPrank();
         uint256 tooMuch = m.MIN_STAKE() + 1;
         vm.expectRevert(DeOpenRouterMarketplace.SlashExceedsStake.selector);
-        m.slash(0, tooMuch, bytes32(0));
+        m.proposeSlash(0, tooMuch, bytes32(0), 0, bytes32(0));
     }
 
     function test_slash_reverts_invalid_provider() public {
         vm.expectRevert(DeOpenRouterMarketplace.InvalidProviderId.selector);
-        m.slash(0, 0, bytes32(0));
+        m.proposeSlash(0, 0, bytes32(0), 0, bytes32(0));
     }
 
-    function test_transfer_slash_operator() public {
+    function test_slash_proposal_challenge_blocks_finalize() public {
+        address ownerBob = address(0xB0B);
+        vm.deal(ownerBob, 20 ether);
+        vm.startPrank(ownerBob);
+        m.register{value: m.MIN_STAKE()}(_reg("m1", 1 ether, 0));
+        vm.stopPrank();
+        uint256 proposalId = m.proposeSlash(0, 0.001 ether, keccak256("r"), 0, bytes32(0));
+        vm.startPrank(ownerBob);
+        m.challengeSlashProposal(proposalId);
+        vm.stopPrank();
+        vm.roll(block.number + SLASH_CHALLENGE_BLOCKS);
+        vm.expectRevert(DeOpenRouterMarketplace.ProposalAlreadyChallenged.selector);
+        m.finalizeSlashProposal(proposalId);
+    }
+
+    function test_transfer_slash_operator_two_step() public {
         address newOp = address(0xCAFE);
-        m.transferSlashOperator(newOp);
+        m.proposeSlashOperator(newOp);
+        vm.prank(newOp);
+        m.acceptSlashOperator();
         assertEq(m.slashOperator(), newOp);
     }
 
     function test_transfer_slash_operator_reverts_zero_address() public {
         vm.expectRevert(DeOpenRouterMarketplace.ZeroAddress.selector);
-        m.transferSlashOperator(address(0));
+        m.proposeSlashOperator(address(0));
     }
 
     function test_record_audit_emits() public {
@@ -419,15 +428,52 @@ contract DeOpenRouterMarketplaceTest is Test {
         vm.stopPrank();
     }
 
-    function test_transfer_audit_recorder() public {
+    function test_transfer_audit_recorder_two_step() public {
         address newR = address(0xBEEF);
-        m.transferAuditRecorder(newR);
+        m.proposeAuditRecorder(newR);
+        vm.prank(newR);
+        m.acceptAuditRecorder();
         assertEq(m.auditRecorder(), newR);
     }
 
     function test_transfer_audit_recorder_reverts_zero_address() public {
         vm.expectRevert(DeOpenRouterMarketplace.ZeroAddress.selector);
-        m.transferAuditRecorder(address(0));
+        m.proposeAuditRecorder(address(0));
+    }
+
+    function test_attest_audit_allowlisted() public {
+        vm.deal(address(this), 10 ether);
+        m.register{value: m.MIN_STAKE()}(_reg("m1", 1 ether, 0));
+        address auditor = address(0xA11);
+        m.setAuditor(auditor, true);
+        uint256 roundId = m.beginAuditRound(0);
+        assertEq(roundId, 1);
+        vm.startPrank(auditor);
+        m.attestAudit(0, 1, keccak256("rep"), 1, "ipfs://bafy");
+        vm.stopPrank();
+    }
+
+    function test_attest_audit_reverts_not_auditor() public {
+        vm.deal(address(this), 10 ether);
+        m.register{value: m.MIN_STAKE()}(_reg("m1", 1 ether, 0));
+        m.beginAuditRound(0);
+        vm.startPrank(address(0xBEEF));
+        vm.expectRevert(DeOpenRouterMarketplace.NotAuditor.selector);
+        m.attestAudit(0, 1, bytes32(uint256(1)), 0, "");
+        vm.stopPrank();
+    }
+
+    function test_record_audit_with_uri_emits() public {
+        vm.deal(address(this), 10 ether);
+        m.register{value: m.MIN_STAKE()}(_reg("m1", 1 ether, 0));
+        bytes32 rh = keccak256("audit-report-json");
+        assertEq(m.nextAuditId(), 0);
+        vm.expectEmit(true, true, true, true);
+        emit DeOpenRouterMarketplace.AuditRecorded(0, 0, address(this), rh, 2);
+        vm.expectEmit(true, false, false, true);
+        emit DeOpenRouterMarketplace.AuditReportUri(0, "ipfs://QmX");
+        m.recordAuditWithUri(0, rh, 2, "ipfs://QmX");
+        assertEq(m.nextAuditId(), 1);
     }
 
     function test_price_announce_invoke_uses_old_price_until_effective() public {

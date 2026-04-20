@@ -1,20 +1,35 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+/// @title DeOpenRouterMarketplace
+/// @notice MVP marketplace with phased decentralization: two-step role transfers, multi-auditor attestations,
+///         challengeable slash proposals, and treasury-directed slashed funds.
 contract DeOpenRouterMarketplace {
     uint256 public constant MIN_STAKE = 0.01 ether;
 
     /// @notice Blocks after `announcePriceChange` before the new price applies.
     uint256 public immutable priceDelayBlocks;
 
+    /// @notice Blocks after a slash proposal before it can be finalized if unchallenged.
+    uint256 public slashChallengePeriodBlocks;
+
     /// @notice Instant payment path: call is finalized in the same transaction.
     uint8 public constant SETTLEMENT_SETTLED = 1;
 
-    /// @notice Executes slashing; set to `msg.sender` at deploy time.
+    /// @notice Executes slashing proposals after the challenge window; set to `msg.sender` at deploy time.
     address public slashOperator;
 
-    /// @notice May call `recordAudit` to anchor off-chain audit report hashes (demo / ops).
+    /// @notice Receives slashed ETH (treasury / insurance pool), not necessarily the same as slashOperator.
+    address public slashTreasury;
+
+    /// @notice Pending two-step transfer for slash operator (multisig-friendly).
+    address public pendingSlashOperator;
+
+    /// @notice May call `recordAudit`, manage auditors, and open audit rounds.
     address public auditRecorder;
+
+    /// @notice Pending two-step transfer for audit recorder.
+    address public pendingAuditRecorder;
 
     struct ProviderRegistration {
         string modelId;
@@ -76,13 +91,36 @@ contract DeOpenRouterMarketplace {
         uint256 timestamp;
     }
 
+    struct SlashProposal {
+        uint256 providerId;
+        uint256 amount;
+        bytes32 reasonHash;
+        uint256 relatedAuditRound;
+        bytes32 reportHash;
+        uint256 createdAtBlock;
+        address proposer;
+        bool challenged;
+        bool executed;
+    }
+
     uint256 public nextProviderId;
     uint256 public nextCallId;
     uint256 public nextAuditId;
     uint256 public nextSlashId;
+    uint256 public nextSlashProposalId;
+
     mapping(uint256 => Provider) public providers;
     mapping(uint256 => CallRecord) public calls;
     mapping(uint256 => SlashRecord) public slashRecords;
+    mapping(uint256 => SlashProposal) public slashProposals;
+
+    /// @dev Latest opened audit round id per provider (incremented by beginAuditRound).
+    mapping(uint256 => uint256) public latestAuditRound;
+    /// @dev Currently active round id per provider (must match for attestations).
+    mapping(uint256 => uint256) public activeAuditRound;
+
+    mapping(address => bool) public isAuditor;
+    mapping(bytes32 => bool) public auditAttestationSeen;
 
     event ProviderRegistered(
         uint256 indexed id,
@@ -155,6 +193,38 @@ contract DeOpenRouterMarketplace {
         uint8 riskLevel
     );
 
+    /// @notice Optional URI for the full report (IPFS, HTTPS, etc.), same `auditId` as paired `AuditRecorded`.
+    event AuditReportUri(uint256 indexed auditId, string reportUri);
+
+    event AuditRoundStarted(uint256 indexed providerId, uint256 indexed roundId);
+
+    event AuditAttested(
+        uint256 indexed providerId,
+        uint256 indexed roundId,
+        address indexed auditor,
+        bytes32 reportHash,
+        uint8 riskLevel,
+        string reportUri
+    );
+
+    event AuditorUpdated(address indexed auditor, bool allowed);
+
+    event SlashTreasuryUpdated(address indexed treasury);
+
+    event SlashProposalCreated(
+        uint256 indexed proposalId,
+        uint256 indexed providerId,
+        uint256 amount,
+        bytes32 reasonHash,
+        uint256 relatedAuditRound,
+        bytes32 reportHash,
+        uint256 challengeDeadline
+    );
+
+    event SlashProposalChallenged(uint256 indexed proposalId, uint256 indexed providerId, address indexed challenger);
+
+    event SlashProposalFinalized(uint256 indexed proposalId, uint256 indexed providerId, bool executed);
+
     error InvalidStake();
     error ProviderInactive();
     error PaymentTooLow();
@@ -166,37 +236,170 @@ contract DeOpenRouterMarketplace {
     error StakeLocked();
     error InvalidEndpointCommitment();
     error ZeroAddress();
+    error NotPendingSlashOperator();
+    error NotPendingAuditRecorder();
+    error NoPendingSlashOperator();
+    error NoPendingAuditRecorder();
+    error NotAuditor();
+    error AuditRoundMismatch();
+    error AlreadyAttested();
+    error NotSlashProposal();
+    error SlashProposalAlreadyExecuted();
+    error ProposalAlreadyChallenged();
+    error SlashChallengePeriodNotOver();
+    error SlashChallengeWindowOver();
 
     /// @param priceDelayBlocks_ Blocks to wait after announcing a price change before it applies (mainnet-style: 100+).
-    constructor(uint256 priceDelayBlocks_) {
+    /// @param slashChallengePeriodBlocks_ Blocks a provider may challenge a slash proposal before finalization.
+    constructor(uint256 priceDelayBlocks_, uint256 slashChallengePeriodBlocks_) {
         if (priceDelayBlocks_ == 0) revert InvalidStake();
+        if (slashChallengePeriodBlocks_ == 0) revert InvalidStake();
         priceDelayBlocks = priceDelayBlocks_;
+        slashChallengePeriodBlocks = slashChallengePeriodBlocks_;
         slashOperator = msg.sender;
+        slashTreasury = msg.sender;
         auditRecorder = msg.sender;
     }
 
-    function transferSlashOperator(address newOperator) external {
+    /// @notice Slashed funds are sent here (e.g. DAO treasury), not to the slash decision-maker.
+    function setSlashTreasury(address newTreasury) external {
         if (msg.sender != slashOperator) revert NotSlashOperator();
-        if (newOperator == address(0)) revert ZeroAddress();
-        slashOperator = newOperator;
+        if (newTreasury == address(0)) revert ZeroAddress();
+        slashTreasury = newTreasury;
+        emit SlashTreasuryUpdated(newTreasury);
     }
 
-    function transferAuditRecorder(address newRecorder) external {
+    function setSlashChallengePeriodBlocks(uint256 blocks_) external {
+        if (msg.sender != slashOperator) revert NotSlashOperator();
+        if (blocks_ == 0) revert InvalidStake();
+        slashChallengePeriodBlocks = blocks_;
+    }
+
+    function proposeSlashOperator(address newOperator) external {
+        if (msg.sender != slashOperator) revert NotSlashOperator();
+        if (newOperator == address(0)) revert ZeroAddress();
+        pendingSlashOperator = newOperator;
+    }
+
+    function acceptSlashOperator() external {
+        if (pendingSlashOperator == address(0)) revert NoPendingSlashOperator();
+        if (msg.sender != pendingSlashOperator) revert NotPendingSlashOperator();
+        slashOperator = pendingSlashOperator;
+        pendingSlashOperator = address(0);
+    }
+
+    function cancelSlashOperatorProposal() external {
+        if (msg.sender != slashOperator) revert NotSlashOperator();
+        pendingSlashOperator = address(0);
+    }
+
+    function proposeAuditRecorder(address newRecorder) external {
         if (msg.sender != auditRecorder) revert NotAuditRecorder();
         if (newRecorder == address(0)) revert ZeroAddress();
-        auditRecorder = newRecorder;
+        pendingAuditRecorder = newRecorder;
+    }
+
+    function acceptAuditRecorder() external {
+        if (pendingAuditRecorder == address(0)) revert NoPendingAuditRecorder();
+        if (msg.sender != pendingAuditRecorder) revert NotPendingAuditRecorder();
+        auditRecorder = pendingAuditRecorder;
+        pendingAuditRecorder = address(0);
+    }
+
+    function cancelAuditRecorderProposal() external {
+        if (msg.sender != auditRecorder) revert NotAuditRecorder();
+        pendingAuditRecorder = address(0);
+    }
+
+    function setAuditor(address auditor, bool allowed) external {
+        if (msg.sender != auditRecorder) revert NotAuditRecorder();
+        if (auditor == address(0)) revert ZeroAddress();
+        isAuditor[auditor] = allowed;
+        emit AuditorUpdated(auditor, allowed);
+    }
+
+    /// @notice Opens a new audit round for a provider; independent auditors attest against `roundId`.
+    function beginAuditRound(uint256 providerId) external returns (uint256 roundId) {
+        if (msg.sender != auditRecorder) revert NotAuditRecorder();
+        if (providerId >= nextProviderId) revert InvalidProviderId();
+        roundId = latestAuditRound[providerId] + 1;
+        latestAuditRound[providerId] = roundId;
+        activeAuditRound[providerId] = roundId;
+        emit AuditRoundStarted(providerId, roundId);
+    }
+
+    /// @notice Allowlisted auditor submits an attestation for an open round.
+    function attestAudit(
+        uint256 providerId,
+        uint256 roundId,
+        bytes32 reportHash,
+        uint8 riskLevel,
+        string calldata reportUri
+    ) external {
+        if (!isAuditor[msg.sender]) revert NotAuditor();
+        if (providerId >= nextProviderId) revert InvalidProviderId();
+        if (roundId == 0 || activeAuditRound[providerId] != roundId) revert AuditRoundMismatch();
+        bytes32 attKey = keccak256(abi.encodePacked(providerId, roundId, msg.sender));
+        if (auditAttestationSeen[attKey]) revert AlreadyAttested();
+        auditAttestationSeen[attKey] = true;
+        emit AuditAttested(providerId, roundId, msg.sender, reportHash, riskLevel, reportUri);
     }
 
     /// @param riskLevel LOW=0, MEDIUM=1, HIGH=2 (must match off-chain audit summary).
+    /// @dev Legacy single-recorder path; prefer `recordAuditWithUri` when publishing a report location.
     function recordAudit(uint256 providerId, bytes32 reportHash, uint8 riskLevel) external {
+        _recordAudit(providerId, reportHash, riskLevel, "");
+    }
+
+    /// @notice Same as `recordAudit` but emits `AuditReportUri` when `reportUri` is non-empty.
+    function recordAuditWithUri(uint256 providerId, bytes32 reportHash, uint8 riskLevel, string calldata reportUri)
+        external
+    {
+        _recordAudit(providerId, reportHash, riskLevel, reportUri);
+    }
+
+    function _recordAudit(uint256 providerId, bytes32 reportHash, uint8 riskLevel, string memory reportUri) internal {
         if (msg.sender != auditRecorder) revert NotAuditRecorder();
         if (providerId >= nextProviderId) revert InvalidProviderId();
         uint256 auditId = nextAuditId++;
         emit AuditRecorded(auditId, providerId, msg.sender, reportHash, riskLevel);
+        if (bytes(reportUri).length > 0) {
+            emit AuditReportUri(auditId, reportUri);
+        }
     }
 
     /// @notice Returns the price `invoke` must pay after applying any due pending price, and pending schedule if any.
-    /// @notice Mirrors what `invoke` will charge after applying any due pending price (without mutating state).
+    /// @notice Compact read for indexers / tests (avoids huge struct tuple stack in callers).
+    function getProviderCore(uint256 providerId)
+        external
+        view
+        returns (
+            address owner,
+            bytes32 endpointCommitment,
+            uint256 pricePerCall,
+            uint256 stake,
+            bool active,
+            uint256 createdAtBlock,
+            uint256 updatedAtBlock,
+            uint256 slashedTotal,
+            uint256 lastSlashedAtBlock
+        )
+    {
+        if (providerId >= nextProviderId) revert InvalidProviderId();
+        Provider storage p = providers[providerId];
+        return (
+            p.owner,
+            p.endpointCommitment,
+            p.pricePerCall,
+            p.stake,
+            p.active,
+            p.createdAtBlock,
+            p.updatedAtBlock,
+            p.slashedTotal,
+            p.lastSlashedAtBlock
+        );
+    }
+
     function getEffectivePrice(uint256 providerId)
         external
         view
@@ -268,7 +471,6 @@ contract DeOpenRouterMarketplace {
         emit ProviderMetadataUpdated(providerId, update.metadataURI, update.metadataHash, update.identityHash, blockNum);
     }
 
-    /// @notice Schedules a new price; it applies after `priceDelayBlocks` from this block (unless a prior pending exists — see `_applyPendingPrice`).
     function announcePriceChange(uint256 providerId, uint256 newPrice) external {
         if (providerId >= nextProviderId) revert InvalidProviderId();
         Provider storage p = providers[providerId];
@@ -349,9 +551,59 @@ contract DeOpenRouterMarketplace {
         );
     }
 
-    function slash(uint256 providerId, uint256 amount, bytes32 reasonHash) external {
+    /// @notice Create a slash proposal; funds move only after `slashChallengePeriodBlocks` if unchallenged.
+    function proposeSlash(
+        uint256 providerId,
+        uint256 amount,
+        bytes32 reasonHash,
+        uint256 relatedAuditRound,
+        bytes32 reportHash
+    ) external returns (uint256 proposalId) {
         if (msg.sender != slashOperator) revert NotSlashOperator();
         if (providerId >= nextProviderId) revert InvalidProviderId();
+        Provider storage p = providers[providerId];
+        if (amount > p.stake) revert SlashExceedsStake();
+        proposalId = nextSlashProposalId++;
+        uint256 deadline = block.number + slashChallengePeriodBlocks;
+        slashProposals[proposalId] = SlashProposal({
+            providerId: providerId,
+            amount: amount,
+            reasonHash: reasonHash,
+            relatedAuditRound: relatedAuditRound,
+            reportHash: reportHash,
+            createdAtBlock: block.number,
+            proposer: msg.sender,
+            challenged: false,
+            executed: false
+        });
+        emit SlashProposalCreated(proposalId, providerId, amount, reasonHash, relatedAuditRound, reportHash, deadline);
+    }
+
+    /// @notice Provider owner may challenge during the challenge window; prevents finalization.
+    function challengeSlashProposal(uint256 proposalId) external {
+        SlashProposal storage sp = slashProposals[proposalId];
+        if (sp.createdAtBlock == 0) revert NotSlashProposal();
+        if (sp.executed) revert SlashProposalAlreadyExecuted();
+        if (block.number >= sp.createdAtBlock + slashChallengePeriodBlocks) revert SlashChallengeWindowOver();
+        Provider storage p = providers[sp.providerId];
+        if (msg.sender != p.owner) revert NotOwner();
+        sp.challenged = true;
+        emit SlashProposalChallenged(proposalId, sp.providerId, msg.sender);
+    }
+
+    /// @notice After the challenge window, execute slash if not challenged. Sends ETH to `slashTreasury`.
+    function finalizeSlashProposal(uint256 proposalId) external {
+        SlashProposal storage sp = slashProposals[proposalId];
+        if (sp.createdAtBlock == 0) revert NotSlashProposal();
+        if (sp.executed) revert SlashProposalAlreadyExecuted();
+        if (sp.challenged) revert ProposalAlreadyChallenged();
+        if (block.number < sp.createdAtBlock + slashChallengePeriodBlocks) revert SlashChallengePeriodNotOver();
+        sp.executed = true;
+        _executeSlash(sp.providerId, sp.amount, sp.reasonHash, sp.proposer);
+        emit SlashProposalFinalized(proposalId, sp.providerId, true);
+    }
+
+    function _executeSlash(uint256 providerId, uint256 amount, bytes32 reasonHash, address attributedOperator) internal {
         Provider storage p = providers[providerId];
         if (amount > p.stake) revert SlashExceedsStake();
         p.stake -= amount;
@@ -360,15 +612,15 @@ contract DeOpenRouterMarketplace {
         uint256 slashId = nextSlashId++;
         slashRecords[slashId] = SlashRecord({
             providerId: providerId,
-            operator: msg.sender,
+            operator: attributedOperator,
             amount: amount,
             reasonHash: reasonHash,
             blockNumber: block.number,
             timestamp: block.timestamp
         });
-        (bool ok,) = slashOperator.call{value: amount}("");
-        require(ok, "slash pay");
-        emit ProviderSlashed(providerId, slashId, msg.sender, amount, reasonHash, p.stake);
+        (bool ok,) = slashTreasury.call{value: amount}("");
+        require(ok, "slash pay treasury");
+        emit ProviderSlashed(providerId, slashId, attributedOperator, amount, reasonHash, p.stake);
     }
 
     function withdrawStake(uint256 providerId) external {
@@ -383,4 +635,6 @@ contract DeOpenRouterMarketplace {
         (bool ok,) = msg.sender.call{value: s}("");
         require(ok, "withdraw");
     }
+
+    receive() external payable {}
 }

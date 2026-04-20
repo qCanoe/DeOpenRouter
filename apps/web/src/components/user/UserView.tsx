@@ -13,6 +13,7 @@ import { UserDashboard } from "@/components/user/UserDashboard";
 import { ProviderMarketplace } from "@/components/user/ProviderMarketplace";
 import { MyCallHistory } from "@/components/user/MyCallHistory";
 import { ApiRequestHistory } from "@/components/user/ApiRequestHistory";
+import { AuditTransparencyPanel } from "@/components/user/AuditTransparencyPanel";
 import { DEMO_API_REQUEST_HISTORY } from "@/lib/apiRequestHistoryDemo";
 
 function mergeCallHistory(chain: CallLogRow[], demo: readonly CallLogRow[]): CallLogRow[] {
@@ -78,6 +79,7 @@ export function UserView() {
         isLoading={loadingProviders}
         onInvoked={refresh}
       />
+      <AuditTransparencyPanel marketplace={marketplace} />
       <MyCallHistory
         calls={combinedCalls}
         resolveModelId={resolveModelId}

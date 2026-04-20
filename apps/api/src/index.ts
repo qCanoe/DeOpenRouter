@@ -154,6 +154,7 @@ const auditServerUrl = process.env.AUDIT_SERVER_URL ?? "";
 const auditRelayBaseUrl = process.env.AUDIT_RELAY_BASE_URL ?? `http://127.0.0.1:${port}`;
 const marketplaceAddress = (process.env.MARKETPLACE_ADDRESS ?? "") as Address;
 const rpcUrl = process.env.CHAIN_RPC_URL ?? "http://127.0.0.1:8545";
+const chainId = Number(process.env.CHAIN_ID ?? "31337");
 const auditPk = normalizePrivateKey(process.env.AUDIT_PRIVATE_KEY ?? "");
 const providerId = BigInt(process.env.AUDIT_PROVIDER_ID ?? "0");
 const auditTimeoutSec = Number(process.env.AUDIT_TIMEOUT_SEC ?? "120");
@@ -166,6 +167,7 @@ function getAuditHealth() {
       requested,
       scheduled: false,
       reason: "AUDIT_INTERVAL_MS not set.",
+      chainId,
     };
   }
 
@@ -174,6 +176,7 @@ function getAuditHealth() {
       requested,
       scheduled: false,
       reason: "AUDIT_SERVER_URL missing.",
+      chainId,
     };
   }
 
@@ -182,6 +185,7 @@ function getAuditHealth() {
       requested,
       scheduled: false,
       reason: "MARKETPLACE_ADDRESS missing or zero address.",
+      chainId,
     };
   }
 
@@ -190,6 +194,7 @@ function getAuditHealth() {
       requested,
       scheduled: false,
       reason: "AUDIT_PRIVATE_KEY missing or invalid.",
+      chainId,
     };
   }
 
@@ -198,6 +203,7 @@ function getAuditHealth() {
       requested,
       scheduled: false,
       reason: "OPENROUTER_API_KEY missing.",
+      chainId,
     };
   }
 
@@ -205,6 +211,7 @@ function getAuditHealth() {
     requested,
     scheduled: true,
     reason: null,
+    chainId,
   };
 }
 
@@ -320,6 +327,7 @@ if (auditHealth.scheduled) {
     providerId,
     marketplaceAddress,
     rpcUrl,
+    chainId,
     privateKey: auditPk!,
     intervalMs: auditInterval,
     auditTimeoutSec,
