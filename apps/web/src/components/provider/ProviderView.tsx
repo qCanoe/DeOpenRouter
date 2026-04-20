@@ -119,7 +119,7 @@ export function ProviderView({ showToast }: ProviderViewProps) {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
+          <div className="grid grid-cols-1 items-stretch gap-8 xl:grid-cols-2 [&>*]:min-h-0 [&>*]:h-full">
             {myProviders.map((provider) => (
               <MyProviderCard
                 key={provider.id}

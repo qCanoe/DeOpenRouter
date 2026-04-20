@@ -166,9 +166,11 @@ export function MyProviderCard({
     });
   }
 
+  const pendingSlotMinClass = "min-h-[2.875rem] pt-1";
+
   return (
-    <article className="flex flex-col border-2 border-theme">
-      <div className="flex flex-col gap-4 border-b-2 border-theme bg-zinc-50 p-6 dark:bg-zinc-900/30 sm:flex-row sm:items-start sm:justify-between">
+    <article className="flex h-full min-h-0 flex-col border-2 border-theme">
+      <div className="flex min-h-[6.5rem] shrink-0 flex-col gap-4 border-b-2 border-theme bg-zinc-50 p-6 dark:bg-zinc-900/30 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <p className="section-eyebrow">Provider #{provider.id}</p>
           <h3 className="mt-2 break-all text-2xl font-bold uppercase leading-tight tracking-tighter sm:text-3xl">
@@ -189,7 +191,7 @@ export function MyProviderCard({
         </span>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 border-b-2 border-theme p-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 items-stretch gap-4 border-b-2 border-theme p-4 sm:grid-cols-3">
         <div className="flex min-h-[6.5rem] flex-col justify-between border-2 border-theme bg-sky-50 p-4 dark:bg-sky-900/20">
           <p className="text-xs font-bold uppercase leading-snug tracking-widest text-sky-900/70 dark:text-sky-200/70 mb-1">Total calls</p>
           <p className="text-2xl font-bold tabular-nums leading-tight text-sky-950 dark:text-sky-100">{totalCalls}</p>
@@ -206,8 +208,8 @@ export function MyProviderCard({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 border-b-2 border-theme lg:grid-cols-2">
-        <div className="border-b-2 border-theme p-5 lg:border-b-0 lg:border-r-2">
+      <div className="grid grid-cols-1 items-stretch border-b-2 border-theme lg:grid-cols-2 lg:items-stretch">
+        <div className="flex min-h-0 flex-col border-b-2 border-theme p-5 lg:border-b-0 lg:border-r-2">
           <div className="section-eyebrow mb-2">Endpoint commitment</div>
           <div className="break-all font-mono text-sm font-bold leading-snug">
             {provider.endpointCommitment}
@@ -219,18 +221,20 @@ export function MyProviderCard({
           </div>
         </div>
 
-        <div className="grid gap-5 p-5">
-          <div>
+        <div className="grid min-h-0 gap-5 p-5 lg:flex lg:min-h-full lg:flex-col">
+          <div className="shrink-0">
             <div className="section-eyebrow mb-1">Current effective price</div>
             <div className="text-lg font-bold tabular-nums leading-tight">
               {formatEther(provider.effectivePriceWei)} ETH
             </div>
-            {provider.hasPendingPrice && (
-              <p className="mt-1 text-xs font-bold uppercase tracking-widest text-muted">
-                Pending {formatEther(provider.pendingPriceDisplay)} ETH @ block{" "}
-                {provider.pendingAppliesAtBlock.toString()}
-              </p>
-            )}
+            <div className={pendingSlotMinClass}>
+              {provider.hasPendingPrice ? (
+                <p className="text-xs font-bold uppercase tracking-widest text-muted">
+                  Pending {formatEther(provider.pendingPriceDisplay)} ETH @ block{" "}
+                  {provider.pendingAppliesAtBlock.toString()}
+                </p>
+              ) : null}
+            </div>
           </div>
 
           <label className="flex flex-col gap-2">

@@ -38,7 +38,7 @@ function SimulatedProviderGrid({
           </p>
         </div>
       </div>
-      <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 items-stretch gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3 [&>*]:min-h-0 [&>*]:h-full">
         {DEMO_MARKETPLACE_ROWS.map((row) => (
           <ProviderCard
             key={row.id}
@@ -144,7 +144,7 @@ export function ProviderMarketplace({
           &lt;NO_PROVIDERS_REGISTERED&gt;
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 items-stretch gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3 [&>*]:min-h-0 [&>*]:h-full">
           {filtered.map((provider) => (
             <ProviderCard
               key={provider.id}
