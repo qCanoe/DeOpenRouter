@@ -184,16 +184,16 @@ export function ProviderCard({
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col border-b-2 border-theme p-4">
-        <label className="flex min-h-0 flex-1 flex-col gap-2">
-          <span className="section-eyebrow shrink-0">Prompt (sent to mock API, then hashed)</span>
+        <div className="flex min-h-0 flex-1 flex-col">
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             rows={4}
             className="input-brutal min-h-[5.5rem] flex-1 resize-y font-mono text-sm"
             placeholder="User message for /v1/chat"
+            aria-label="Prompt for mock API"
           />
-        </label>
+        </div>
       </div>
 
       {localErr && (
