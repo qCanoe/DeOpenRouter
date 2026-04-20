@@ -4,6 +4,19 @@ import { useChainId, useReadContracts } from "wagmi";
 import { marketplaceAbi } from "@/lib/marketplaceAbi";
 import type { Address, Hex } from "viem";
 
+/** Display-only stats for marketplace cards (optional on chain rows; filled by resolver). */
+export type ProviderMarketplaceMetrics = {
+  latencyP50Ms: number;
+  latencyP99Ms: number;
+  throughputRpm: number;
+  uptimePct: number;
+  requests24h: number;
+  successRatePct: number;
+  region: string;
+  apiFormat: string;
+  contextWindow: string;
+};
+
 export type ChainProviderRow = {
   id: number;
   owner: Address;
@@ -26,6 +39,9 @@ export type ChainProviderRow = {
   metadataURI: string;
   metadataHash: Hex;
   identityHash: Hex;
+  /** When set, playground skips wallet and uses the demo invoke flow. */
+  demoCatalog?: boolean;
+  metrics?: ProviderMarketplaceMetrics;
 };
 
 type UseMarketplaceProvidersArgs = {

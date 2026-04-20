@@ -18,6 +18,21 @@ export type CallLogRow = {
   callId: bigint;
   blockNumber: bigint;
   txHash: Hex;
+  /** Set when row comes from `getLogs` (missing for demo rows). */
+  logIndex?: number;
+  /** Sample rows merged for UI only. */
+  isDemo?: boolean;
+  /** Token-like units reported with the call (from `CallRecorded`). */
+  usageUnits?: bigint;
+  /** Block time at settlement (from `CallRecorded.recordedAt`). */
+  recordedAt?: bigint;
+  requestFormat?: number;
+  responseFormat?: number;
+  settlementStatus?: number;
+  /** Demo-only: round-trip latency for display. */
+  latencyMs?: number;
+  /** Demo-only: short description of the user turn. */
+  promptSummary?: string;
 };
 
 const callRecordedEvent = parseAbiItem(
@@ -54,6 +69,12 @@ export function useMyCallLogs(marketplace: Address | null) {
         callId: log.args.callId!,
         blockNumber: log.blockNumber,
         txHash: log.transactionHash,
+        logIndex: log.logIndex,
+        usageUnits: log.args.usageUnits,
+        recordedAt: log.args.recordedAt,
+        requestFormat: log.args.requestFormat != null ? Number(log.args.requestFormat) : undefined,
+        responseFormat: log.args.responseFormat != null ? Number(log.args.responseFormat) : undefined,
+        settlementStatus: log.args.settlementStatus != null ? Number(log.args.settlementStatus) : undefined,
       }));
       setRows(mapped.slice().reverse());
     } finally {
@@ -106,6 +127,12 @@ export function useProviderCallLogs(
           callId: log.args.callId!,
           blockNumber: log.blockNumber,
           txHash: log.transactionHash,
+          logIndex: log.logIndex,
+          usageUnits: log.args.usageUnits,
+          recordedAt: log.args.recordedAt,
+          requestFormat: log.args.requestFormat != null ? Number(log.args.requestFormat) : undefined,
+          responseFormat: log.args.responseFormat != null ? Number(log.args.responseFormat) : undefined,
+          settlementStatus: log.args.settlementStatus != null ? Number(log.args.settlementStatus) : undefined,
         }));
       setRows(mapped.slice().reverse());
     } finally {
