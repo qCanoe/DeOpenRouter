@@ -21,6 +21,7 @@ import {
   type Hex,
 } from "viem";
 import { marketplaceAbi } from "@/lib/marketplaceAbi";
+import { REGISTER_PRESETS } from "@/lib/providerDemoData";
 
 export type RegisterFormValues = {
   modelId: string;
@@ -190,6 +191,33 @@ export const ProviderRegisterForm = forwardRef<
         className="grid gap-5 border-2 border-theme p-4 sm:p-6"
         noValidate
       >
+        <div className="border-2 border-dashed border-theme bg-background p-4">
+          <p className="section-eyebrow mb-3">Quick presets</p>
+          <p className="mb-4 text-xs font-bold uppercase leading-relaxed tracking-widest text-muted">
+            Load a full valid example, then edit any field before registering.
+          </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            {REGISTER_PRESETS.map((preset) => (
+              <button
+                key={preset.id}
+                type="button"
+                className="btn-brutal border-theme bg-background text-left sm:min-w-[10rem]"
+                onClick={() => {
+                  setError(null);
+                  setValues({ ...preset.values });
+                }}
+              >
+                <span className="block font-bold uppercase tracking-tight">
+                  {preset.label}
+                </span>
+                <span className="mt-1 block text-xs font-bold uppercase leading-snug tracking-widest text-muted">
+                  {preset.description}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         <p className="text-xs font-bold uppercase leading-relaxed tracking-widest text-muted">
           Endpoint commitment is keccak256(utf8(endpointId)) - store the real URL
           off-chain; only the short id is hashed.
