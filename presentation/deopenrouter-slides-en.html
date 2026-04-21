@@ -582,23 +582,6 @@
       </div>
     </section>
 
-    <!-- 6 -->
-    <section class="slide-frame" data-slide>
-      <div class="slide-inner">
-        <p class="kicker"><span class="dot" aria-hidden="true"></span>Solidity</p>
-        <h2><span class="mono">DeOpenRouterMarketplace.sol</span></h2>
-       
-        <ul class="clean">
-          <li><span class="mono">register</span> — stake and register a new provider</li>
-          <li><span class="mono">updateProviderMetadata</span> — <span class="mono">metadataURI</span>, <span class="mono">metadataHash</span>, <span class="mono">identityHash</span></li>
-          <li><span class="mono">announcePriceChange</span> / <span class="mono">getEffectivePrice</span> — delayed activation; pending price is lazily applied in state-changing paths</li>
-          <li><span class="mono">getProviderCore</span> — compact read of owner, price, stake, slash metadata</li>
-          <li><span class="mono">invoke</span> — collect payment, refund excess ETH, store hashes, emit <span class="mono">CallRecorded</span></li>
-          <li><span class="mono">deactivate</span> + <span class="mono">withdrawStake</span> — withdraw requires deactivation and stake lock expiry</li>
-        </ul>
-      </div>
-    </section>
-
     <!-- 7 -->
     <section class="slide-frame" data-slide>
       <div class="slide-inner">
