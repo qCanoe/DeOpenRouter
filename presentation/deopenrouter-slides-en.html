@@ -626,21 +626,21 @@
     <section class="slide-frame" data-slide>
       <div class="slide-inner">
         <p class="kicker"><span class="dot" aria-hidden="true"></span>Audit Capability</p>
-        <h2>How audit works in this project</h2>
+        <h2>6D Risk matrix and on-chain anchoring</h2>
         <div class="grid-2">
           <div class="card">
-            <h3>What is audited</h3>
-            <p>The audit server runs structured checks on the relay: injection/override behavior, tool-substitution risk, error leakage, stream integrity, and optional Web3 safety probes.</p>
+            <h3>Comprehensive 6D checks</h3>
+            <p><strong>D1-D2:</strong> Hidden injection and instruction overrides.<br><strong>D3-D4:</strong> Tool-call substitution (AC-1.a) and error leakage.<br><strong>D5-D6:</strong> Stream integrity (SSE anomalies) and Web3 injection.</p>
           </div>
           <div class="card">
-            <h3>Risk output model</h3>
-            <p>Results are aggregated into a 6D-style matrix with <span class="mono">LOW / MEDIUM / HIGH</span> overall level plus machine-readable reasons and per-dimension flags.</p>
+            <h3>Risk matrix output</h3>
+            <p>The <span class="mono">FastAPI</span> server evaluates probes and yields a definitive <strong>LOW, MEDIUM, or HIGH</strong> risk level, avoiding false positives via deterministic structural rules.</p>
           </div>
         </div>
         <ul class="clean" style="margin-top:1.2rem;">
           <li><strong>Execution API:</strong> <span class="mono">POST /v1/audit</span> on <span class="mono">apps/audit-server</span> returns structured JSON.</li>
-          <li><strong>Canonical evidence:</strong> report JSON is canonically serialized and hashed to produce deterministic audit evidence.</li>
-          <li><strong>On-chain anchoring:</strong> relay scheduler can call <span class="mono">recordAudit</span> / <span class="mono">recordAuditWithUri</span> with <span class="mono">reportHash</span> and risk level for public verification.</li>
+          <li><strong>Canonical evidence:</strong> Report JSON is canonically serialized and hashed to produce deterministic, reproducible audit evidence.</li>
+          <li><strong>On-chain anchoring:</strong> Relay scheduler calls <span class="mono">recordAudit</span> / <span class="mono">recordAuditWithUri</span> to write the <span class="mono">reportHash</span> and risk level on-chain.</li>
         </ul>
         <p class="footnote">Design intent: keep heavy audit computation off-chain, while making the final evidence and settlement-facing signal tamper-resistant on-chain.</p>
       </div>
