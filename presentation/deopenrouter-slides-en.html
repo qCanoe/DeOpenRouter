@@ -414,8 +414,8 @@
     <!-- 2 -->
     <section class="slide-frame" data-slide>
       <div class="slide-inner">
-        <p class="kicker"><span class="dot" aria-hidden="true"></span>Story</p>
-        <h2>The problem: centralized AI gateways are trust-heavy</h2>
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Problem</p>
+        <h2>Centralized AI gateways are trust-heavy</h2>
         <p class="lead">Typical routers consolidate pricing, routing, billing, and disputes under one operator. That is convenient, but users cannot easily verify quiet rule changes, whether a charge matched the published policy, or whether records could be rewritten after the fact.</p>
         <ul class="clean">
           <li><strong>Our narrative hook:</strong> which parts of the workflow belong on an EVM so rules and settlement are <strong>publicly observable and harder to tamper with</strong>?</li>
@@ -427,8 +427,8 @@
     <!-- 3 -->
     <section class="slide-frame" data-slide>
       <div class="slide-inner">
-        <p class="kicker"><span class="dot" aria-hidden="true"></span>Story · Goals</p>
-        <h2>What we move on-chain (README)</h2>
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Project Functions</p>
+        <h2>What we move on-chain </h2>
         <ul class="clean">
           <li>Provider identity commitments and metadata <strong>registered publicly</strong></li>
           <li>Price updates are <strong>not instantly effective</strong>; they have observable delay</li>
@@ -443,27 +443,8 @@
     <!-- 4 -->
     <section class="slide-frame" data-slide>
       <div class="slide-inner">
-        <p class="kicker"><span class="dot" aria-hidden="true"></span>Story · Scope</p>
-        <h2>MVP prototype, not a production inference network</h2>
-        <p class="lead">The README states this repository is an MVP focused on the <strong>trust and settlement model</strong>, not a production-grade decentralized inference network. Stating limits up front strengthens the story.</p>
-        <div class="grid-2" style="margin-top:1.75rem;">
-          <div class="card">
-            <h3>On-chain</h3>
-            <p>Coordination, pricing, payments, audit anchoring, slashing hooks, and governance parameters.</p>
-          </div>
-          <div class="card">
-            <h3>Off-chain</h3>
-            <p>Real inference; relay in mock mode or proxied to OpenRouter; audit probes and canonical JSON handling.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 5 -->
-    <section class="slide-frame" data-slide>
-      <div class="slide-inner">
-        <p class="kicker"><span class="dot" aria-hidden="true"></span>Implementation · System</p>
-        <h2>What the repository contains</h2>
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Project Contents</p>
+        <h2>Our System contains</h2>
         <ul class="clean">
           <li><strong>Smart contract marketplace:</strong> registration, stake, delayed price changes, per-call settlement, slashing, audit anchoring</li>
           <li><strong>Web app:</strong> separate user and provider flows; browse, register, invoke (some on-chain detail panels are MVP mock layouts)</li>
@@ -475,11 +456,11 @@
       </div>
     </section>
 
-    <!-- 6 -->
+    <!-- 5 -->
     <section class="slide-frame" data-slide>
       <div class="slide-inner">
-        <p class="kicker"><span class="dot" aria-hidden="true"></span>Flow</p>
-        <h2>End-to-end journey (five steps)</h2>
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Work Flow</p>
+        <h2>End-to-end journey</h2>
         <ol class="steps">
           <li>Provider registers on-chain: price, stake, metadata URI, identity and capability hashes, <span class="mono">endpointCommitment</span></li>
           <li>Web lists providers; users can simulate calls via the relay API</li>
@@ -490,12 +471,12 @@
       </div>
     </section>
 
-    <!-- 7 -->
+    <!-- 6 -->
     <section class="slide-frame" data-slide>
       <div class="slide-inner">
-        <p class="kicker"><span class="dot" aria-hidden="true"></span>Implementation · Solidity</p>
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Solidity</p>
         <h2><span class="mono">DeOpenRouterMarketplace.sol</span></h2>
-        <p class="lead">Primary contract under <span class="mono">contracts/src/</span>. Function names match the README for direct mapping to the codebase.</p>
+       
         <ul class="clean">
           <li><span class="mono">register</span> — stake and register a new provider</li>
           <li><span class="mono">updateProviderMetadata</span> — <span class="mono">metadataURI</span>, <span class="mono">metadataHash</span>, <span class="mono">identityHash</span></li>
@@ -507,10 +488,10 @@
       </div>
     </section>
 
-    <!-- 8 -->
+    <!-- 7 -->
     <section class="slide-frame" data-slide>
       <div class="slide-inner">
-        <p class="kicker"><span class="dot" aria-hidden="true"></span>Implementation · Governance</p>
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Governance</p>
         <h2>Governance, audit, and slashing</h2>
         <ul class="clean">
           <li><strong>Governance:</strong> critical role changes are two-step (<span class="mono">propose*</span> → <span class="mono">accept*</span>), with treasury/challenge-period parameters on-chain</li>
@@ -521,32 +502,18 @@
       </div>
     </section>
 
-    <!-- 9 -->
+    <!-- 8 -->
     <section class="slide-frame" data-slide>
       <div class="slide-inner">
-        <p class="kicker"><span class="dot" aria-hidden="true"></span>Story · Assumptions</p>
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Weakness and Future Development</p>
         <h2>README warning: economic security</h2>
         <p class="lead">Economic safety still depends on multisig and treasury configuration. The chain implements slashing <strong>delay + challenge</strong> and auditor <strong>allowlisted multisig</strong>, but there is no full arbitration market, escrow settlement, or cryptographic proof of correct inference.</p>
-        <p class="footnote">See <span class="mono">docs/AUDIT_GOVERNANCE.md</span> and <span class="mono">docs/TRUST_LAYERS.md</span>.</p>
+        
       </div>
     </section>
 
-    <!-- 10 -->
-    <section class="slide-frame" data-slide>
-      <div class="slide-inner">
-        <p class="kicker"><span class="dot" aria-hidden="true"></span>Story · Boundaries</p>
-        <h2>What the MVP does not claim (README)</h2>
-        <ul class="clean">
-          <li>On-chain <span class="mono">endpointId</span> commitment only; raw endpoint URLs are not published on-chain</li>
-          <li>Call records store request/response <strong>hashes</strong>, not full plaintext</li>
-          <li><strong>Instant per-call</strong> settlement; no escrow, streaming, or async settlement</li>
-          <li>Slash proposals originate from <span class="mono">slashOperator</span> with a challenge period; multi-auditor quorum aggregation is largely off-chain</li>
-          <li>No decentralized discovery, reputation, automated arbitration market, or inference execution proof network</li>
-        </ul>
-      </div>
-    </section>
 
-    <!-- 11 -->
+    <!-- 9 -->
     <section class="slide-frame" data-slide>
       <div class="slide-inner">
         <p class="kicker"><span class="dot" aria-hidden="true"></span>Implementation · Demo</p>
