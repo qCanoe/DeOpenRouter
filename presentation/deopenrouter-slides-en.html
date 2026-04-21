@@ -473,16 +473,113 @@
 
     <!-- 5 -->
     <section class="slide-frame" data-slide>
-      <div class="slide-inner">
+      <div class="slide-inner" style="max-width: 72rem;">
         <p class="kicker"><span class="dot" aria-hidden="true"></span>Work Flow</p>
         <h2>End-to-end journey</h2>
-        <ol class="steps">
-          <li>Provider registers on-chain: price, stake, metadata URI, identity and capability hashes, <span class="mono">endpointCommitment</span></li>
-          <li>Web lists providers; users can simulate calls via the relay API</li>
-          <li>Client hashes request and response, then calls on-chain <span class="mono">invoke(...)</span> with payment</li>
-          <li>Contract applies delayed price when due, transfers fees, refunds overpayment, stores call record, emits <span class="mono">CallRecorded</span></li>
-          <li>If auditing is enabled: probe relay off-chain → canonical JSON → optional off-chain publish → <span class="mono">recordAudit</span> / <span class="mono">recordAuditWithUri</span> anchors <span class="mono">keccak256(canonicalJson)</span></li>
-        </ol>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start;">
+          <div>
+            <ol class="steps">
+              <li>Provider registers on-chain: price, stake, metadata URI, identity and capability hashes, <span class="mono">endpointCommitment</span></li>
+              <li>Web lists providers; users can simulate calls via the relay API</li>
+              <li>Client hashes request and response, then calls on-chain <span class="mono">invoke(...)</span> with payment</li>
+              <li>Contract applies delayed price when due, transfers fees, refunds overpayment, stores call record, emits <span class="mono">CallRecorded</span></li>
+              <li>If auditing is enabled: probe relay off-chain → canonical JSON → optional off-chain publish → <span class="mono">recordAudit</span> / <span class="mono">recordAuditWithUri</span> anchors <span class="mono">keccak256(canonicalJson)</span></li>
+            </ol>
+          </div>
+          
+          <div style="background: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%); border: 1px solid var(--line); border-radius: 4px; padding: 1.5rem; font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem; color: var(--fg-soft);">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--line);">
+              <span style="color: var(--muted);">On-Chain (EVM)</span>
+              <span style="color: var(--muted);">Off-Chain</span>
+            </div>
+            
+            <div style="position: relative;">
+              <!-- Flow lines -->
+              <div style="position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: dashed 1px var(--line-strong); z-index: 0;"></div>
+              
+              <!-- Steps -->
+              <div style="display: flex; flex-direction: column; gap: 1.2rem; position: relative; z-index: 1;">
+                
+                <!-- Step 1 -->
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                  <div style="flex: 1; text-align: right;">
+                    <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line-strong); padding: 0.5rem; border-radius: 2px; display: inline-block;">
+                      <span style="color: #a78bfa;">register()</span> + Stake
+                    </div>
+                  </div>
+                  <div style="width: 2rem; text-align: center; color: var(--muted);">←</div>
+                  <div style="flex: 1;">
+                    <div style="color: var(--muted);">Provider</div>
+                  </div>
+                </div>
+                
+                <!-- Step 2 -->
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                  <div style="flex: 1; text-align: right;">
+                    <div style="color: var(--muted);">Read Providers</div>
+                  </div>
+                  <div style="width: 2rem; text-align: center; color: var(--muted);">←</div>
+                  <div style="flex: 1;">
+                    <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line-strong); padding: 0.5rem; border-radius: 2px; display: inline-block;">
+                      User Client / Web
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Step 2b (Inference) -->
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                  <div style="flex: 1;"></div>
+                  <div style="width: 2rem; text-align: center; color: #34d399;">↕</div>
+                  <div style="flex: 1;">
+                    <div style="background: rgba(52, 211, 153, 0.1); border: 1px solid rgba(52, 211, 153, 0.3); padding: 0.5rem; border-radius: 2px; display: inline-block; color: #34d399;">
+                      Relay API (Inference)
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Step 3 -->
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                  <div style="flex: 1; text-align: right;">
+                    <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line-strong); padding: 0.5rem; border-radius: 2px; display: inline-block;">
+                      <span style="color: #60a5fa;">invoke()</span> + ETH
+                    </div>
+                  </div>
+                  <div style="width: 2rem; text-align: center; color: var(--muted);">←</div>
+                  <div style="flex: 1;">
+                    <div style="color: var(--muted);">Hash(Req+Resp)</div>
+                  </div>
+                </div>
+                
+                <!-- Step 4 -->
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                  <div style="flex: 1; text-align: right;">
+                    <div style="color: var(--dim); font-size: 0.75rem;">Emit <span style="color: #9ca3af;">CallRecorded</span><br>Transfer Fee</div>
+                  </div>
+                  <div style="width: 2rem; text-align: center; color: var(--muted);">→</div>
+                  <div style="flex: 1;">
+                    <div style="color: var(--muted);">Provider Wallet</div>
+                  </div>
+                </div>
+                
+                <!-- Step 5 -->
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                  <div style="flex: 1; text-align: right;">
+                    <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line-strong); padding: 0.5rem; border-radius: 2px; display: inline-block;">
+                      <span style="color: #f472b6;">recordAudit()</span>
+                    </div>
+                  </div>
+                  <div style="width: 2rem; text-align: center; color: var(--muted);">←</div>
+                  <div style="flex: 1;">
+                    <div style="background: rgba(244, 114, 182, 0.1); border: 1px solid rgba(244, 114, 182, 0.3); padding: 0.5rem; border-radius: 2px; display: inline-block; color: #f472b6;">
+                      Audit Server
+                    </div>
+                  </div>
+                </div>
+                
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
