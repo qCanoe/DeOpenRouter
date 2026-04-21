@@ -293,20 +293,6 @@
       max-width: 42rem;
     }
 
-    .slide-meta {
-      margin-top: 2rem;
-      font-size: 0.625rem;
-      font-weight: 500;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: var(--dim);
-    }
-
-    .slide-meta em {
-      font-style: normal;
-      color: var(--muted);
-    }
-
     .top-bar {
       position: fixed;
       top: 0;
@@ -426,8 +412,7 @@
           <span><strong>Implementation</strong> 10%</span>
           <span><strong>Presentation</strong> 10%</span>
         </div>
-        <p class="footnote">Slide content follows the project README (Chinese/English). Target length ~12:00. Use this file fullscreen in the browser for class presentation.</p>
-        <p class="slide-meta"><em>~0:45</em> · Opening</p>
+        <p class="footnote">Slide content follows the project README (Chinese/English). Use this file fullscreen in the browser for class presentation.</p>
       </div>
     </section>
 
@@ -441,7 +426,6 @@
           <li><strong>Our narrative hook:</strong> which parts of the workflow belong on an EVM so rules and settlement are <strong>publicly observable and harder to tamper with</strong>?</li>
           <li>We do <strong>not</strong> claim fully on-chain inference; we trade realism for clearer settlement and auditability.</li>
         </ul>
-        <p class="slide-meta"><em>~1:35</em> · Story</p>
       </div>
     </section>
 
@@ -458,7 +442,6 @@
           <li>External audit outcomes can be <strong>anchored as report hashes</strong></li>
         </ul>
         <p class="lead" style="margin-top:1.35rem;">Inference stays off-chain for practicality; settlement and auditing become more transparent.</p>
-        <p class="slide-meta"><em>~1:20</em> · Story</p>
       </div>
     </section>
 
@@ -478,7 +461,6 @@
             <p>Real inference; relay in mock mode or proxied to OpenRouter; audit probes and canonical JSON handling.</p>
           </div>
         </div>
-        <p class="slide-meta"><em>~0:45</em> · Story</p>
       </div>
     </section>
 
@@ -494,7 +476,6 @@
           <li><strong>Audit server:</strong> structured checks on the relay; summaries can be written back on-chain</li>
         </ul>
         <p class="footnote">Paths: <span class="mono">contracts/</span> · <span class="mono">apps/web/</span> · <span class="mono">apps/api/</span> · <span class="mono">apps/audit-server/</span> · <span class="mono">docs/</span></p>
-        <p class="slide-meta"><em>~0:50</em> · Implementation</p>
       </div>
     </section>
 
@@ -510,7 +491,6 @@
           <li>Contract transfers fees, stores the call record, emits <span class="mono">CallRecorded</span></li>
           <li>If auditing is enabled: probe relay off-chain → canonical JSON → optional off-chain publish → <span class="mono">recordAudit</span> / <span class="mono">recordAuditWithUri</span> anchors <span class="mono">keccak256(canonicalJson)</span></li>
         </ol>
-        <p class="slide-meta"><em>~1:15</em> · Story + Implementation</p>
       </div>
     </section>
 
@@ -528,7 +508,6 @@
           <li><span class="mono">invoke</span> — collect payment, store hashes, emit <span class="mono">CallRecorded</span></li>
           <li><span class="mono">deactivate</span> + <span class="mono">withdrawStake</span> — deactivate and withdraw stake after lock</li>
         </ul>
-        <p class="slide-meta"><em>~1:15</em> · Implementation</p>
       </div>
     </section>
 
@@ -542,7 +521,6 @@
           <li><strong>Audit:</strong> <span class="mono">recordAudit</span>, <span class="mono">recordAuditWithUri</span>, <span class="mono">beginAuditRound</span>, <span class="mono">setAuditor</span>, multisig <span class="mono">attestAudit</span></li>
           <li><strong>Slashing:</strong> <span class="mono">proposeSlash</span> → <span class="mono">challengeSlashProposal</span> (challenge window) → <span class="mono">finalizeSlashProposal</span> (ETH to <span class="mono">slashTreasury</span>)</li>
         </ul>
-        <p class="slide-meta"><em>~0:55</em> · Implementation</p>
       </div>
     </section>
 
@@ -553,7 +531,6 @@
         <h2>README warning: economic security</h2>
         <p class="lead">Economic safety still depends on multisig and treasury configuration. The chain implements slashing <strong>delay + challenge</strong> and auditor <strong>allowlisted multisig</strong>, but there is no full arbitration market, escrow settlement, or cryptographic proof of correct inference.</p>
         <p class="footnote">See <span class="mono">docs/AUDIT_GOVERNANCE.md</span> and <span class="mono">docs/TRUST_LAYERS.md</span>.</p>
-        <p class="slide-meta"><em>~0:35</em> · Story</p>
       </div>
     </section>
 
@@ -569,7 +546,6 @@
           <li>Slash proposals originate from <span class="mono">slashOperator</span> with a challenge period; multi-auditor quorum aggregation is largely off-chain</li>
           <li>No decentralized discovery, reputation, automated arbitration market, or inference execution proof network</li>
         </ul>
-        <p class="slide-meta"><em>~0:45</em> · Story</p>
       </div>
     </section>
 
@@ -589,7 +565,6 @@
           </div>
         </div>
         <p class="footnote">CLI-only loop: <span class="mono">contracts/LOCAL_LOOP.md</span>. Tests: <span class="mono">forge test</span>, web/API tests, <span class="mono">pytest</span> for audit server — see README.</p>
-        <p class="slide-meta"><em>~0:55</em> · Implementation</p>
       </div>
     </section>
 
@@ -602,7 +577,6 @@
     </div>
     <div class="meta-block">
       <span id="progress">01 / 11</span>
-      <div class="row" id="clock">~0:45 / 10:55</div>
     </div>
   </div>
 
@@ -611,11 +585,6 @@
       var slides = Array.prototype.slice.call(document.querySelectorAll("[data-slide]"));
       var i = 0;
       var total = slides.length;
-
-      var cumulativeEnd = [
-        "0:45", "2:20", "3:40", "4:25", "5:15",
-        "6:30", "7:45", "8:40", "9:15", "10:00", "10:55"
-      ];
 
       var deck = document.getElementById("deck");
       var progressFill = document.getElementById("progressFill");
@@ -643,8 +612,6 @@
           i = target;
           document.getElementById("progress").textContent =
             String(i + 1).padStart(2, "0") + " / " + String(total).padStart(2, "0");
-          document.getElementById("clock").textContent =
-            "~" + (cumulativeEnd[i] || "—") + " / 10:55";
           applyProgress();
         }, forward ? 150 : 170);
       }
@@ -656,8 +623,6 @@
         });
         document.getElementById("progress").textContent =
           String(i + 1).padStart(2, "0") + " / " + String(total).padStart(2, "0");
-        document.getElementById("clock").textContent =
-          "~" + (cumulativeEnd[i] || "—") + " / 10:55";
         applyProgress();
       }
 
