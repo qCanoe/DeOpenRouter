@@ -262,7 +262,7 @@ export function AuditReportRichView({ report }: Props) {
           {showRaw ? "Hide" : "Show"} full JSON
         </button>
         {showRaw && (
-          <pre className="mt-2 max-h-[min(28rem,45vh)] overflow-auto rounded-xl border border-[var(--border)] bg-[var(--muted-bg)] p-4 text-left font-mono text-[11px] leading-relaxed text-[var(--foreground)]">
+          <pre className="mt-2 max-h-[min(40rem,60vh)] overflow-auto rounded-xl border border-[var(--border)] bg-[var(--muted-bg)] p-4 text-left font-mono text-[11px] leading-relaxed text-[var(--foreground)]">
             {JSON.stringify(report, null, 2)}
           </pre>
         )}

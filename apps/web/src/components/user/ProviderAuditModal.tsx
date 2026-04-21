@@ -168,7 +168,7 @@ export function ProviderAuditModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm sm:p-6">
       <div
-        className={`flex w-full flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--background)] shadow-2xl ${detail ? "max-h-[min(52rem,92vh)] max-w-4xl" : "max-h-[min(44rem,90vh)] max-w-3xl"}`}
+        className={`flex w-full flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--background)] shadow-2xl ${detail ? "h-[min(64rem,95vh)] max-w-6xl" : "max-h-[min(56rem,90vh)] max-w-5xl"}`}
       >
         <div className="flex shrink-0 items-center justify-between border-b border-[var(--border)] px-6 py-4">
           <div>
@@ -305,7 +305,7 @@ export function ProviderAuditModal({
                 {uriBody && (
                   <div>
                     <p className="mb-2 text-xs font-medium text-[var(--muted)]">Report body</p>
-                    <pre className="max-h-[min(24rem,50vh)] overflow-auto rounded-xl border border-[var(--border)] bg-[var(--muted-bg)] p-4 text-left font-mono text-[11px] leading-relaxed text-[var(--foreground)]">
+                    <pre className="max-h-[min(40rem,70vh)] overflow-auto rounded-xl border border-[var(--border)] bg-[var(--muted-bg)] p-4 text-left font-mono text-[11px] leading-relaxed text-[var(--foreground)]">
                       {uriBody}
                     </pre>
                   </div>
