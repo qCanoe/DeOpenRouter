@@ -593,20 +593,6 @@
       </div>
     </section>
 
-    <!-- 12 -->
-    <section class="slide-frame" data-slide>
-      <div class="slide-inner">
-        <p class="kicker"><span class="dot" aria-hidden="true"></span>Close</p>
-        <h2>Takeaway &amp; rubric alignment</h2>
-        <ul class="clean">
-          <li><strong>Story:</strong> centralized pain points → on-chain verifiable settlement and records → explicit MVP limits and README warnings.</li>
-          <li><strong>Implementation:</strong> Solidity marketplace, named functions, and the five-step flow map directly to the repository.</li>
-          <li><strong>Presentation:</strong> ~12 minutes; one idea per slide; this deck for fullscreen delivery.</li>
-        </ul>
-        <p class="lead" style="margin-top:1.5rem;">Thank you. Questions?</p>
-        <p class="slide-meta"><em>~1:05</em> · Presentation + Q&amp;A buffer</p>
-      </div>
-    </section>
   </div>
 
   <div class="controls">
@@ -615,8 +601,8 @@
       <button type="button" class="btn" id="next" aria-label="Next slide">→</button>
     </div>
     <div class="meta-block">
-      <span id="progress">01 / 12</span>
-      <div class="row" id="clock">~0:45 / 12:00</div>
+      <span id="progress">01 / 11</span>
+      <div class="row" id="clock">~0:45 / 10:55</div>
     </div>
   </div>
 
@@ -628,7 +614,7 @@
 
       var cumulativeEnd = [
         "0:45", "2:20", "3:40", "4:25", "5:15",
-        "6:30", "7:45", "8:40", "9:15", "10:00", "10:55", "12:00"
+        "6:30", "7:45", "8:40", "9:15", "10:00", "10:55"
       ];
 
       var deck = document.getElementById("deck");
@@ -658,7 +644,7 @@
           document.getElementById("progress").textContent =
             String(i + 1).padStart(2, "0") + " / " + String(total).padStart(2, "0");
           document.getElementById("clock").textContent =
-            "~" + (cumulativeEnd[i] || "—") + " / 12:00";
+            "~" + (cumulativeEnd[i] || "—") + " / 10:55";
           applyProgress();
         }, forward ? 150 : 170);
       }
@@ -671,7 +657,7 @@
         document.getElementById("progress").textContent =
           String(i + 1).padStart(2, "0") + " / " + String(total).padStart(2, "0");
         document.getElementById("clock").textContent =
-          "~" + (cumulativeEnd[i] || "—") + " / 12:00";
+          "~" + (cumulativeEnd[i] || "—") + " / 10:55";
         applyProgress();
       }
 
