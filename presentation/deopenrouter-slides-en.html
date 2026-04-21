@@ -607,25 +607,67 @@
 
     <!-- 8 -->
     <section class="slide-frame" data-slide>
-      <div class="slide-inner">
+      <div class="slide-inner" style="max-width: 72rem;">
         <p class="kicker"><span class="dot" aria-hidden="true"></span>Audit Capability</p>
-        <h2>6D Risk matrix and on-chain anchoring</h2>
-        <div class="grid-2">
-          <div class="card">
-            <h3>Comprehensive 6D checks</h3>
-            <p><strong>D1-D2:</strong> Hidden injection and instruction overrides.<br><strong>D3-D4:</strong> Tool-call substitution (AC-1.a) and error leakage.<br><strong>D5-D6:</strong> Stream integrity (SSE anomalies) and Web3 injection.</p>
+        <h2>6D Risk Matrix & On-Chain Anchoring</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; align-items: start; margin-top: 1.5rem;">
+          
+          <!-- Left: 6D Breakdown -->
+          <div>
+            <div style="background: linear-gradient(145deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.01) 100%); border: 1px solid var(--line); border-radius: 4px; padding: 1.5rem;">
+              <h3 style="font-size: 0.8rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 1.2rem; border-bottom: 1px solid var(--line); padding-bottom: 0.5rem;">Comprehensive 6D Checks</h3>
+              <ul style="list-style: none; padding: 0; margin: 0; color: var(--fg-soft); font-size: 1.05rem; line-height: 1.6;">
+                <li style="margin-bottom: 0.8rem;">
+                  <strong style="color: var(--fg); display: inline-block; width: 4.5rem;">D1-D2</strong> 
+                  <span style="color: var(--dim);">|</span> Hidden injection &amp; override
+                </li>
+                <li style="margin-bottom: 0.8rem;">
+                  <strong style="color: var(--fg); display: inline-block; width: 4.5rem;">D3-D4</strong> 
+                  <span style="color: var(--dim);">|</span> Tool substitution &amp; leak
+                </li>
+                <li>
+                  <strong style="color: var(--fg); display: inline-block; width: 4.5rem;">D5-D6</strong> 
+                  <span style="color: var(--dim);">|</span> Stream integrity &amp; Web3 risk
+                </li>
+              </ul>
+              <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px dashed var(--line-strong);">
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem; color: #34d399; background: rgba(52, 211, 153, 0.1); padding: 0.2rem 0.5rem; border-radius: 2px;">LOW</span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem; color: #fbbf24; background: rgba(251, 191, 36, 0.1); padding: 0.2rem 0.5rem; border-radius: 2px; margin: 0 0.5rem;">MEDIUM</span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem; color: #f87171; background: rgba(248, 113, 113, 0.1); padding: 0.2rem 0.5rem; border-radius: 2px;">HIGH</span>
+              </div>
+            </div>
           </div>
-          <div class="card">
-            <h3>Risk matrix output</h3>
-            <p>The <span class="mono">FastAPI</span> server evaluates probes and yields a definitive <strong>LOW, MEDIUM, or HIGH</strong> risk level, avoiding false positives via deterministic structural rules.</p>
+          
+          <!-- Right: Flow -->
+          <div>
+            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+              <div style="display: flex; gap: 1rem;">
+                <div style="font-family: 'IBM Plex Mono', monospace; color: var(--dim); font-size: 1.2rem; font-weight: 500;">01</div>
+                <div>
+                  <h4 style="font-size: 1.1rem; font-weight: 500; color: var(--fg); margin-bottom: 0.3rem;">Execute Audit</h4>
+                  <p style="font-size: 0.95rem; color: var(--muted); line-height: 1.5;"><span class="mono">POST /v1/audit</span> runs probes against Relay API and returns structured JSON.</p>
+                </div>
+              </div>
+              
+              <div style="display: flex; gap: 1rem;">
+                <div style="font-family: 'IBM Plex Mono', monospace; color: var(--dim); font-size: 1.2rem; font-weight: 500;">02</div>
+                <div>
+                  <h4 style="font-size: 1.1rem; font-weight: 500; color: var(--fg); margin-bottom: 0.3rem;">Canonical Hash</h4>
+                  <p style="font-size: 0.95rem; color: var(--muted); line-height: 1.5;">JSON is canonically serialized and hashed. Evidence becomes deterministic.</p>
+                </div>
+              </div>
+              
+              <div style="display: flex; gap: 1rem;">
+                <div style="font-family: 'IBM Plex Mono', monospace; color: var(--dim); font-size: 1.2rem; font-weight: 500;">03</div>
+                <div>
+                  <h4 style="font-size: 1.1rem; font-weight: 500; color: var(--fg); margin-bottom: 0.3rem;">On-Chain Anchoring</h4>
+                  <p style="font-size: 0.95rem; color: var(--muted); line-height: 1.5;">Scheduler writes <span class="mono">reportHash</span> and risk level via <span class="mono" style="color: #60a5fa;">recordAudit</span> for public verification.</p>
+                </div>
+              </div>
+            </div>
           </div>
+          
         </div>
-        <ul class="clean" style="margin-top:1.2rem;">
-          <li><strong>Execution API:</strong> <span class="mono">POST /v1/audit</span> on <span class="mono">apps/audit-server</span> returns structured JSON.</li>
-          <li><strong>Canonical evidence:</strong> Report JSON is canonically serialized and hashed to produce deterministic, reproducible audit evidence.</li>
-          <li><strong>On-chain anchoring:</strong> Relay scheduler calls <span class="mono">recordAudit</span> / <span class="mono">recordAuditWithUri</span> to write the <span class="mono">reportHash</span> and risk level on-chain.</li>
-        </ul>
-        <p class="footnote">Design intent: keep heavy audit computation off-chain, while making the final evidence and settlement-facing signal tamper-resistant on-chain.</p>
       </div>
     </section>
 
