@@ -37,7 +37,7 @@ export type ApiRequestHistoryRow = {
 };
 
 export const API_REQUEST_DISCLAIMER =
-  "For reference only; actual billing may differ. Estimates are illustrative for this demo.";
+  "Playground rows use token counts and ids from the relay/OpenRouter response when available; USD total uses usage.cost when OpenRouter includes it, otherwise the figure is illustrative only. Demo sample rows remain fictional.";
 
 export const DEMO_API_REQUEST_HISTORY: readonly ApiRequestHistoryRow[] = [
   {
@@ -103,7 +103,7 @@ export const DEMO_API_REQUEST_HISTORY: readonly ApiRequestHistoryRow[] = [
     requestId: "202604190845229998877665EEF3ZZ",
     route: "/v1/messages",
     recordedAtLabel: "Apr 19, 2026, 16:45:22",
-    modelId: "demo/local-llm",
+    modelId: "demo/openai-style",
     promptTokens: 2048,
     completionTokens: 512,
     cacheReadTokens: 12000,

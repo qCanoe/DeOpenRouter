@@ -49,10 +49,22 @@ export default function Page() {
 
       {toast && (
         <div
-          className="fixed bottom-6 left-1/2 z-50 w-[min(100%,24rem)] -translate-x-1/2 rounded-xl bg-[var(--inverse-bg)] px-5 py-3 text-center text-sm font-medium text-[var(--inverse-fg)] shadow-lg sm:bottom-8"
+          className="fixed bottom-6 left-1/2 z-50 flex min-w-[200px] max-w-[min(100%-3rem,24rem)] -translate-x-1/2 items-center justify-center gap-2.5 rounded-full border border-[var(--border)] bg-[var(--background)] px-6 py-3.5 text-sm font-semibold text-[var(--foreground)] shadow-[0_4px_12px_rgba(0,0,0,0.05)] sm:bottom-8 animate-toast-in"
           role="status"
           aria-live="polite"
         >
+          <svg
+            className="h-4 w-4 shrink-0 text-emerald-500"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <path d="M20 6 9 17l-5-5" />
+          </svg>
           {toast}
         </div>
       )}

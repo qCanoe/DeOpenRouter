@@ -21,6 +21,7 @@ import {
   type Hex,
 } from "viem";
 import { marketplaceAbi } from "@/lib/marketplaceAbi";
+import { getMockApiBase } from "@/lib/marketplaceEnv";
 import { REGISTER_PRESETS } from "@/lib/providerDemoData";
 
 export type RegisterFormValues = {
@@ -66,13 +67,15 @@ type ProviderRegisterFormProps = {
   initialValues: RegisterFormValues;
   marketplace: Address | null;
   onRegistered?: () => void;
+  /** Shown after register tx; reports whether on-demand audit ran, was skipped, or failed. */
+  onAuditTriggerNotify?: (message: string) => void;
 };
 
 export const ProviderRegisterForm = forwardRef<
   HTMLDivElement,
   ProviderRegisterFormProps
 >(function ProviderRegisterForm(
-  { seed, initialValues, marketplace, onRegistered },
+  { seed, initialValues, marketplace, onRegistered, onAuditTriggerNotify },
   ref,
 ) {
   const baseId = useId();
@@ -103,6 +106,55 @@ export const ProviderRegisterForm = forwardRef<
       setValues({ ...emptyRegisterValues });
     }
   }, [isSuccess, onRegistered]);
+
+  /** Ask relay API to run one audit for the new provider id (decoded from register receipt). */
+  useEffect(() => {
+    if (!isSuccess || !hash) return;
+    const base = getMockApiBase().replace(/\/$/, "");
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch(`${base}/v1/audit/trigger`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ transactionHash: hash }),
+        });
+        if (cancelled) return;
+        const j = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          detail?: string;
+          ok?: boolean;
+          duplicate?: boolean;
+        };
+        if (res.status === 503) {
+          onAuditTriggerNotify?.(
+            "Audit not configured on relay API: set AUDIT_SERVER_URL, MARKETPLACE_ADDRESS, AUDIT_PRIVATE_KEY in apps/api/.env (see docs/DEMO_RUN.zh-CN.md).",
+          );
+          return;
+        }
+        if (res.ok && j.ok) {
+          onAuditTriggerNotify?.(
+            j.duplicate
+              ? "Audit already ran for this registration tx."
+              : "Audit finished and anchored on-chain. Refresh audit history if needed.",
+          );
+          return;
+        }
+        onAuditTriggerNotify?.(
+          `Audit did not complete: ${j.detail ?? j.error ?? res.status}. Check relay API logs and audit-server.`,
+        );
+      } catch {
+        if (!cancelled) {
+          onAuditTriggerNotify?.(
+            "Could not reach relay API for audit (is apps/api running and NEXT_PUBLIC_MOCK_API correct?).",
+          );
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isSuccess, hash, onAuditTriggerNotify]);
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();

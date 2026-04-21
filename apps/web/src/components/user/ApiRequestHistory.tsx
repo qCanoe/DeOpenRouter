@@ -21,8 +21,8 @@ export function ApiRequestHistory({ rows }: ApiRequestHistoryProps) {
         <div>
           <h2 className="section-heading">API request history</h2>
           <p className="mt-1 max-w-2xl text-sm text-[var(--muted)]">
-            Upstream-style receipts: request id, route, cache-related token counts, price sheet, and estimated USD
-            (demo data).
+            Upstream-style receipts: request id, route, token counts, and illustrative USD. Playground relay calls
+            appear at the top for this session; sample rows below are demo fixtures.
           </p>
         </div>
         <span className="section-eyebrow tabular-nums">Rows: {rows.length}</span>

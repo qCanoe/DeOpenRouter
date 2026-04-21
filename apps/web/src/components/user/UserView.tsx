@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useAccount, useBalance } from "wagmi";
 import { formatEther } from "viem";
 import { getMarketplaceAddress } from "@/lib/marketplaceEnv";
@@ -13,8 +13,14 @@ import { UserDashboard } from "@/components/user/UserDashboard";
 import { ProviderMarketplace } from "@/components/user/ProviderMarketplace";
 import { MyCallHistory } from "@/components/user/MyCallHistory";
 import { ApiRequestHistory } from "@/components/user/ApiRequestHistory";
-import { AuditTransparencyPanel } from "@/components/user/AuditTransparencyPanel";
+import { useAuditLogs } from "@/hooks/useAuditLogs";
+import type { ApiRequestHistoryRow } from "@/lib/apiRequestHistoryDemo";
 import { DEMO_API_REQUEST_HISTORY } from "@/lib/apiRequestHistoryDemo";
+
+/** Compact ETH display (avoids long fractional strings from formatEther). */
+function formatEthBalanceUi(wei: bigint, fractionDigits = 5): string {
+  return Number(formatEther(wei)).toFixed(fractionDigits);
+}
 
 function mergeCallHistory(chain: CallLogRow[], demo: readonly CallLogRow[]): CallLogRow[] {
   const merged = [...demo, ...chain];
@@ -33,6 +39,16 @@ function mergeCallHistory(chain: CallLogRow[], demo: readonly CallLogRow[]): Cal
 export function UserView() {
   const marketplace = getMarketplaceAddress();
   const { address } = useAccount();
+  const [relayApiRows, setRelayApiRows] = useState<ApiRequestHistoryRow[]>([]);
+
+  const appendRelayApiRow = useCallback((entry: ApiRequestHistoryRow) => {
+    setRelayApiRows((prev) => [entry, ...prev]);
+  }, []);
+
+  const apiRequestRows = useMemo(
+    () => [...relayApiRows, ...DEMO_API_REQUEST_HISTORY],
+    [relayApiRows],
+  );
   const {
     rows: providerRows,
     isLoading: loadingProviders,
@@ -44,6 +60,12 @@ export function UserView() {
     refetch: refetchLogs,
   } = useMyCallLogs(marketplace);
   const { data: bal, isLoading: loadingBal } = useBalance({ address });
+  const {
+    rows: auditRows,
+    loading: auditLoading,
+    error: auditError,
+    refetch: refetchAudit,
+  } = useAuditLogs(marketplace);
 
   const combinedCalls = useMemo(() => mergeCallHistory(callRows, DEMO_CALL_HISTORY), [callRows]);
 
@@ -68,7 +90,7 @@ export function UserView() {
   return (
     <div className="flex flex-col gap-12 sm:gap-16">
       <UserDashboard
-        ethBalanceFormatted={bal ? formatEther(bal.value) : undefined}
+        ethBalanceFormatted={bal ? formatEthBalanceUi(bal.value) : undefined}
         totalSpentEth={totalSpent}
         callCount={combinedCalls.length}
         isLoadingBalance={loadingBal}
@@ -78,15 +100,19 @@ export function UserView() {
         rows={providerRows}
         isLoading={loadingProviders}
         onInvoked={refresh}
+        onRelayChatLogged={appendRelayApiRow}
+        auditRows={auditRows}
+        auditLoading={auditLoading}
+        auditError={auditError}
+        onAuditRefetch={() => void refetchAudit()}
       />
-      <AuditTransparencyPanel marketplace={marketplace} />
       <MyCallHistory
         calls={combinedCalls}
         resolveModelId={resolveModelId}
         isLoading={loadingLogs && !!marketplace && !!address}
         marketplace={marketplace}
       />
-      <ApiRequestHistory rows={DEMO_API_REQUEST_HISTORY} />
+      <ApiRequestHistory rows={apiRequestRows} />
     </div>
   );
 }

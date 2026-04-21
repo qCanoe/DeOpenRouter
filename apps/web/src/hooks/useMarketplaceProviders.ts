@@ -35,6 +35,8 @@ export type ChainProviderRow = {
   pendingAppliesAtBlock: bigint;
   stake: bigint;
   stakeLockBlocks: bigint;
+  /** Registration block; used with `stakeLockBlocks` for `withdrawStake` eligibility. */
+  createdAtBlock: bigint;
   active: boolean;
   metadataURI: string;
   metadataHash: Hex;
@@ -43,6 +45,96 @@ export type ChainProviderRow = {
   demoCatalog?: boolean;
   metrics?: ProviderMarketplaceMetrics;
 };
+
+/**
+ * The contract never deletes a provider; after deactivate + withdraw, stake is 0 and active is false.
+ * Hide those rows in the UI so finished providers "disappear" while staying on-chain for audit.
+ */
+export function isChainProviderVisibleInCatalog(row: ChainProviderRow): boolean {
+  if (row.demoCatalog) return true;
+  return row.active || row.stake > 0n;
+}
+
+type ProviderTuple = {
+  owner: Address;
+  modelId: string;
+  modelVersion: string;
+  endpointCommitment: Hex;
+  capabilityHash: Hex;
+  pricePerCall: bigint;
+  pendingPriceWei: bigint;
+  pendingEffectiveBlock: bigint;
+  stake: bigint;
+  stakeLockBlocks: bigint;
+  createdAtBlock: bigint;
+  active: boolean;
+  metadataURI: string;
+  metadataHash: Hex;
+  identityHash: Hex;
+};
+
+/** `readContract` / batched reads may return a struct as named object or positional tuple. */
+function parseProviderTuple(raw: unknown): ProviderTuple | null {
+  if (!raw) return null;
+  if (Array.isArray(raw) && raw.length >= 14) {
+    const [
+      owner,
+      modelId,
+      modelVersion,
+      endpointCommitment,
+      capabilityHash,
+      pricePerCall,
+      pendingPriceWei,
+      pendingEffectiveBlock,
+      stake,
+      stakeLockBlocks,
+      active,
+      metadataURI,
+      metadataHash,
+      identityHash,
+      createdAtBlock,
+    ] = raw;
+    return {
+      owner: owner as Address,
+      modelId: typeof modelId === "string" ? modelId : "",
+      modelVersion: typeof modelVersion === "string" ? modelVersion : "",
+      endpointCommitment: endpointCommitment as Hex,
+      capabilityHash: capabilityHash as Hex,
+      pricePerCall: pricePerCall as bigint,
+      pendingPriceWei: pendingPriceWei as bigint,
+      pendingEffectiveBlock: pendingEffectiveBlock as bigint,
+      stake: stake as bigint,
+      stakeLockBlocks: stakeLockBlocks as bigint,
+      createdAtBlock: raw.length >= 15 && typeof createdAtBlock === "bigint" ? createdAtBlock : 0n,
+      active: Boolean(active),
+      metadataURI: typeof metadataURI === "string" ? metadataURI : "",
+      metadataHash: metadataHash as Hex,
+      identityHash: identityHash as Hex,
+    };
+  }
+  if (typeof raw === "object") {
+    const o = raw as Record<string, unknown>;
+    if (typeof o.owner !== "string") return null;
+    return {
+      owner: o.owner as Address,
+      modelId: typeof o.modelId === "string" ? o.modelId : "",
+      modelVersion: typeof o.modelVersion === "string" ? o.modelVersion : "",
+      endpointCommitment: o.endpointCommitment as Hex,
+      capabilityHash: o.capabilityHash as Hex,
+      pricePerCall: o.pricePerCall as bigint,
+      pendingPriceWei: o.pendingPriceWei as bigint,
+      pendingEffectiveBlock: o.pendingEffectiveBlock as bigint,
+      stake: o.stake as bigint,
+      stakeLockBlocks: o.stakeLockBlocks as bigint,
+      createdAtBlock: typeof o.createdAtBlock === "bigint" ? o.createdAtBlock : 0n,
+      active: Boolean(o.active),
+      metadataURI: typeof o.metadataURI === "string" ? o.metadataURI : "",
+      metadataHash: o.metadataHash as Hex,
+      identityHash: o.identityHash as Hex,
+    };
+  }
+  return null;
+}
 
 type UseMarketplaceProvidersArgs = {
   marketplace: Address | null;
@@ -111,22 +203,8 @@ export function useMarketplaceProviders({
       const r = providersQuery.data[i];
       const pr = effectivePriceQuery.data[i];
       if (r?.status !== "success" || !r.result) continue;
-      const tuple = r.result as unknown as {
-        owner: Address;
-        modelId: string;
-        modelVersion: string;
-        endpointCommitment: Hex;
-        capabilityHash: Hex;
-        pricePerCall: bigint;
-        pendingPriceWei: bigint;
-        pendingEffectiveBlock: bigint;
-        stake: bigint;
-        stakeLockBlocks: bigint;
-        active: boolean;
-        metadataURI: string;
-        metadataHash: Hex;
-        identityHash: Hex;
-      };
+      const tuple = parseProviderTuple(r.result);
+      if (!tuple) continue;
 
       let effectivePriceWei = tuple.pricePerCall;
       let hasPendingPrice = false;
@@ -156,6 +234,7 @@ export function useMarketplaceProviders({
         pendingAppliesAtBlock,
         stake: tuple.stake,
         stakeLockBlocks: tuple.stakeLockBlocks,
+        createdAtBlock: tuple.createdAtBlock,
         active: tuple.active,
         metadataURI: tuple.metadataURI,
         metadataHash: tuple.metadataHash,

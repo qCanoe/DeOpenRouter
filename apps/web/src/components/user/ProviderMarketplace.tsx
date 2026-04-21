@@ -5,6 +5,8 @@ import { useChainId } from "wagmi";
 import { zeroAddress, type Address } from "viem";
 import { ProviderCard } from "@/components/user/ProviderCard";
 import type { ChainProviderRow } from "@/hooks/useMarketplaceProviders";
+import type { AuditLogRow } from "@/hooks/useAuditLogs";
+import type { ApiRequestHistoryRow } from "@/lib/apiRequestHistoryDemo";
 import { DEMO_MARKETPLACE_ROWS } from "@/lib/providerDemoData";
 import { resolveProviderMetrics } from "@/lib/providerMetrics";
 import { OnChainSheet } from "@/components/chain/OnChainSheet";
@@ -18,6 +20,11 @@ type ProviderMarketplaceProps = {
   rows: ChainProviderRow[];
   isLoading: boolean;
   onInvoked?: () => void;
+  onRelayChatLogged?: (entry: ApiRequestHistoryRow) => void;
+  auditRows: AuditLogRow[];
+  auditLoading: boolean;
+  auditError: string | null;
+  onAuditRefetch: () => void;
 };
 
 function matchesSearch(provider: ChainProviderRow, query: string): boolean {
@@ -119,6 +126,11 @@ export function ProviderMarketplace({
   rows,
   isLoading,
   onInvoked,
+  onRelayChatLogged,
+  auditRows,
+  auditLoading,
+  auditError,
+  onAuditRefetch,
 }: ProviderMarketplaceProps) {
   const chainId = useChainId();
   const [query, setQuery] = useState("");
@@ -225,8 +237,20 @@ export function ProviderMarketplace({
       )}
 
       {filtered.length === 0 ? (
-        <div className="card-modern border-dashed p-12 text-center text-sm font-medium text-[var(--muted)]">
-          No providers match your filters
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-[var(--border)] bg-[var(--background)] px-6 py-20 text-center shadow-sm">
+          <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-full border border-[var(--border)]/50 bg-[var(--muted-bg)] text-[var(--muted)]">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+          </div>
+          <h3 className="mb-2 text-lg font-semibold text-[var(--foreground)]">No providers found</h3>
+          <p className="mb-6 max-w-sm text-sm text-[var(--muted)]">
+            We couldn&apos;t find any providers matching your current search or sort. Try clearing the search.
+          </p>
+          <button type="button" className="btn-secondary px-5 py-2 text-sm font-semibold" onClick={() => setQuery("")}>
+            Clear search
+          </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-2 lg:grid-cols-3 [&>*]:min-h-0 [&>*]:h-full">
@@ -236,6 +260,11 @@ export function ProviderMarketplace({
               marketplace={resolvedMarketplace}
               row={provider}
               onInvoked={onInvoked}
+              onRelayChatLogged={onRelayChatLogged}
+              auditRows={auditRows}
+              auditLoading={auditLoading}
+              auditError={auditError}
+              onAuditRefetch={onAuditRefetch}
             />
           ))}
         </div>

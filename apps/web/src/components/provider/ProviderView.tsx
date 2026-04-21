@@ -4,7 +4,10 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { useAccount } from "wagmi";
 import { formatEther } from "viem";
 import { getMarketplaceAddress } from "@/lib/marketplaceEnv";
-import { useMarketplaceProviders } from "@/hooks/useMarketplaceProviders";
+import {
+  isChainProviderVisibleInCatalog,
+  useMarketplaceProviders,
+} from "@/hooks/useMarketplaceProviders";
 import { useProviderCallLogs } from "@/hooks/useMyCallLogs";
 import { MyProviderCard } from "@/components/provider/MyProviderCard";
 import {
@@ -25,7 +28,11 @@ export function ProviderView({ showToast }: ProviderViewProps) {
 
   const myProviders = useMemo(() => {
     if (!address) return null;
-    return rows.filter((row) => row.owner.toLowerCase() === address.toLowerCase());
+    return rows.filter(
+      (row) =>
+        row.owner.toLowerCase() === address.toLowerCase() &&
+        isChainProviderVisibleInCatalog(row),
+    );
   }, [rows, address]);
   const providerIds = useMemo(
     () => myProviders?.map((provider) => provider.id) ?? [],
@@ -127,7 +134,6 @@ export function ProviderView({ showToast }: ProviderViewProps) {
                 marketplace={marketplace}
                 provider={provider}
                 calls={callsByProvider.get(provider.id) ?? []}
-                onScrollToRegister={handleScrollToRegister}
                 onChanged={onProviderChanged}
               />
             ))}
@@ -138,9 +144,30 @@ export function ProviderView({ showToast }: ProviderViewProps) {
           <div className="mb-6 flex flex-wrap items-end justify-between gap-2 border-b border-[var(--border)] pb-4">
             <h2 className="section-heading">My Providers</h2>
           </div>
-          <div className="card-modern border-dashed p-12 text-center text-sm font-medium text-[var(--muted)]">
-            {isLoading ? "Loading..." : "No on-chain provider for this wallet. Register below."}
-          </div>
+          {isLoading ? (
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--background)] px-6 py-16 text-center text-sm font-medium text-[var(--muted)] shadow-sm">
+              Loading…
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center rounded-2xl border border-[var(--border)] bg-[var(--background)] px-6 py-16 text-center shadow-sm transition-ui hover:shadow-md">
+              <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-full border border-[var(--border)]/50 bg-[var(--muted-bg)] text-[var(--foreground)]">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <rect x="2" y="4" width="20" height="16" rx="2" ry="2" />
+                  <path d="M10 4v4" />
+                  <path d="M14 4v4" />
+                  <path d="M6 4v4" />
+                  <path d="M18 4v4" />
+                </svg>
+              </div>
+              <h3 className="mb-2 text-xl font-semibold tracking-tight text-[var(--foreground)]">Become a provider</h3>
+              <p className="mb-6 max-w-sm text-sm text-[var(--muted)]">
+                Register an on-chain provider to list a model, set pricing, and receive calls. Stake ETH and add metadata below.
+              </p>
+              <button type="button" className="btn-primary px-6 py-2.5 text-sm font-semibold shadow-sm" onClick={handleScrollToRegister}>
+                Register first provider
+              </button>
+            </div>
+          )}
         </section>
       )}
 

@@ -12,6 +12,8 @@ import type { ChainProviderRow } from "@/hooks/useMarketplaceProviders";
 import { postChat } from "@/lib/chatClient";
 import { getMockApiBase } from "@/lib/marketplaceEnv";
 import { requestHashV1, responseHashV1 } from "@/lib/hashMvp";
+import type { ApiRequestHistoryRow } from "@/lib/apiRequestHistoryDemo";
+import { apiRequestHistoryRowFromRelayChat } from "@/lib/relayApiRequestHistory";
 
 type Message = {
   role: "user" | "assistant";
@@ -25,6 +27,8 @@ type PlaygroundModalProps = {
   row: ChainProviderRow;
   isMock?: boolean;
   onInvoked?: () => void;
+  /** Called after a successful relay chat (before on-chain invoke in live mode). */
+  onRelayChatLogged?: (entry: ApiRequestHistoryRow) => void;
 };
 
 export function PlaygroundModal({
@@ -34,6 +38,7 @@ export function PlaygroundModal({
   row,
   isMock = false,
   onInvoked,
+  onRelayChatLogged,
 }: PlaygroundModalProps) {
   const { isConnected } = useAccount();
   const [prompt, setPrompt] = useState("");
@@ -55,7 +60,9 @@ export function PlaygroundModal({
   const working = isChatting || isActuallyPending || isConfirming;
 
   useEffect(() => {
-    if (error) setLocalErr(error.message);
+    if (!error) return;
+    setLocalErr(error.message);
+    setIsChatting(false);
   }, [error]);
 
   useEffect(() => {
@@ -110,9 +117,17 @@ export function PlaygroundModal({
       // Simulate chat network delay
       setTimeout(async () => {
         try {
-          const { response } = await postChat(getMockApiBase(), currentPrompt);
-          setMessages((prev) => [...prev, { role: "assistant", content: response }]);
+          const chatResult = await postChat(getMockApiBase(), currentPrompt);
+          setMessages((prev) => [...prev, { role: "assistant", content: chatResult.response }]);
           setIsChatting(false);
+          onRelayChatLogged?.(
+            apiRequestHistoryRowFromRelayChat({
+              providerId: row.id,
+              providerModelId: row.modelId,
+              prompt: currentPrompt,
+              result: chatResult,
+            }),
+          );
           setIsSimulatingChain(true);
           
           // Simulate blockchain transaction delay
@@ -131,12 +146,21 @@ export function PlaygroundModal({
     }
 
     try {
-      const { response, usageUnits } = await postChat(getMockApiBase(), currentPrompt);
-      setMessages((prev) => [...prev, { role: "assistant", content: response }]);
-      
+      const chatResult = await postChat(getMockApiBase(), currentPrompt);
+      setMessages((prev) => [...prev, { role: "assistant", content: chatResult.response }]);
+      setIsChatting(false);
+      onRelayChatLogged?.(
+        apiRequestHistoryRowFromRelayChat({
+          providerId: row.id,
+          providerModelId: row.modelId,
+          prompt: currentPrompt,
+          result: chatResult,
+        }),
+      );
+
       const reqH = requestHashV1(currentPrompt);
-      const resH = responseHashV1(response);
-      
+      const resH = responseHashV1(chatResult.response);
+
       writeContract({
         address: marketplace,
         abi: marketplaceAbi,
@@ -147,7 +171,7 @@ export function PlaygroundModal({
           resH,
           REQUEST_FORMAT_V1,
           RESPONSE_FORMAT_V1,
-          usageUnits,
+          chatResult.usageUnits,
         ],
         value: row.effectivePriceWei,
       });

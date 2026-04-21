@@ -11,9 +11,10 @@ const FORMATS = [
 ] as const;
 
 function hashSeed(row: ChainProviderRow): number {
+  const modelId = row.modelId ?? "";
   let h = row.id | 0;
-  for (let i = 0; i < row.modelId.length; i++) {
-    h = Math.imul(31, h) + row.modelId.charCodeAt(i);
+  for (let i = 0; i < modelId.length; i++) {
+    h = Math.imul(31, h) + modelId.charCodeAt(i);
     h |= 0;
   }
   return Math.abs(h);
