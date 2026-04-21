@@ -1,8 +1,20 @@
+import "dotenv/config";
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { type Address, type Hex, zeroAddress } from "viem";
-import { startAuditLoop } from "./auditLoop.js";
+import {
+  createPublicClient,
+  defineChain,
+  http,
+  isHex,
+  parseAbiItem,
+  parseEventLogs,
+  type Address,
+  type Hex,
+  zeroAddress,
+} from "viem";
+import { getCachedAuditReport } from "./auditReportCache.js";
+import { runAuditOnce, startAuditLoop } from "./auditLoop.js";
 
 const OPENROUTER_URL =
   process.env.OPENROUTER_BASE_URL ?? "https://openrouter.ai/api/v1/chat/completions";
@@ -10,6 +22,15 @@ const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL ?? "openai/gpt-4o-mini";
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY ?? "";
 const OPENROUTER_HTTP_REFERER = process.env.OPENROUTER_HTTP_REFERER ?? "";
 const OPENROUTER_TITLE = process.env.OPENROUTER_TITLE ?? "DeOpenRouter";
+
+type OpenRouterUsage = {
+  total_tokens?: number;
+  prompt_tokens?: number;
+  completion_tokens?: number;
+  /** USD charged (OpenRouter includes this on many models). */
+  cost?: number;
+  cost_details?: Record<string, unknown>;
+};
 
 type OpenRouterChatResponse = {
   id?: string;
@@ -22,7 +43,7 @@ type OpenRouterChatResponse = {
     message?: { role?: string; content?: string | null };
   }>;
   error?: { message?: string };
-  usage?: { total_tokens?: number; prompt_tokens?: number; completion_tokens?: number };
+  usage?: OpenRouterUsage;
 };
 
 type UpstreamFailure = {
@@ -75,6 +96,65 @@ async function parseOpenRouterJson(
   }
 }
 
+/** Normalize OpenRouter `usage` for `POST /v1/chat` (accurate when upstream sends token fields). */
+function usagePayloadForSimpleChat(
+  rawUsage: OpenRouterUsage | undefined,
+  prompt: string,
+  responseText: string,
+): {
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+  cost?: number;
+  cost_details?: Record<string, unknown>;
+} {
+  const approxPt = Math.max(0, Math.ceil(prompt.length / 4));
+  const approxCt = Math.max(0, Math.ceil(responseText.length / 4));
+
+  let pt = typeof rawUsage?.prompt_tokens === "number" ? rawUsage.prompt_tokens : undefined;
+  let ct = typeof rawUsage?.completion_tokens === "number" ? rawUsage.completion_tokens : undefined;
+  let tt = typeof rawUsage?.total_tokens === "number" ? rawUsage.total_tokens : undefined;
+
+  if (pt !== undefined && ct !== undefined) {
+    tt = tt ?? pt + ct;
+  } else if (tt !== undefined) {
+    if (pt !== undefined) ct = Math.max(0, tt - pt);
+    else if (ct !== undefined) pt = Math.max(0, tt - ct);
+    else {
+      pt = approxPt;
+      ct = Math.max(0, tt - pt);
+    }
+  } else if (pt !== undefined) {
+    ct = approxCt;
+    tt = pt + ct;
+  } else if (ct !== undefined) {
+    pt = approxPt;
+    tt = pt + ct;
+  } else {
+    pt = approxPt;
+    ct = approxCt;
+    tt = pt + ct;
+  }
+
+  const out: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+    cost?: number;
+    cost_details?: Record<string, unknown>;
+  } = {
+    prompt_tokens: pt,
+    completion_tokens: ct,
+    total_tokens: tt,
+  };
+
+  if (typeof rawUsage?.cost === "number") out.cost = rawUsage.cost;
+  if (rawUsage?.cost_details && typeof rawUsage.cost_details === "object") {
+    out.cost_details = rawUsage.cost_details as Record<string, unknown>;
+  }
+  return out;
+}
+
 async function handleChatCompletionJson(
   body: ChatCompletionBody,
 ): Promise<OpenRouterChatResponse | UpstreamFailure> {
@@ -86,7 +166,10 @@ async function handleChatCompletionJson(
   const max_tokens = typeof body.max_tokens === "number" ? body.max_tokens : 512;
 
   if (!OPENROUTER_API_KEY) {
-    const text = `echo:${lastUserText(messages)}`;
+    const userText = lastUserText(messages);
+    const text = `echo:${userText}`;
+    const pt = Math.max(0, Math.ceil(userText.length / 4));
+    const ct = Math.max(0, Math.ceil(text.length / 4));
     return {
       id: "chatcmpl-mock",
       object: "chat.completion",
@@ -99,6 +182,11 @@ async function handleChatCompletionJson(
           finish_reason: "stop" as const,
         },
       ],
+      usage: {
+        prompt_tokens: pt,
+        completion_tokens: ct,
+        total_tokens: pt + ct,
+      },
     };
   }
 
@@ -158,6 +246,45 @@ const chainId = Number(process.env.CHAIN_ID ?? "31337");
 const auditPk = normalizePrivateKey(process.env.AUDIT_PRIVATE_KEY ?? "");
 const providerId = BigInt(process.env.AUDIT_PROVIDER_ID ?? "0");
 const auditTimeoutSec = Number(process.env.AUDIT_TIMEOUT_SEC ?? "120");
+
+const providerRegisteredEvent = parseAbiItem(
+  "event ProviderRegistered(uint256 indexed id, address indexed owner, string modelId, string modelVersion, bytes32 endpointCommitment, bytes32 capabilityHash, uint256 pricePerCall, uint256 stakeLockBlocks, uint256 stake, string metadataURI, bytes32 metadataHash, bytes32 identityHash, uint256 createdAtBlock)",
+);
+
+/** Same env as scheduled audit, minus `AUDIT_INTERVAL_MS` — used for POST /v1/audit/trigger after register. */
+function getAuditRunBaseConfig():
+  | Parameters<typeof runAuditOnce>[0]
+  | null {
+  if (!auditServerUrl) return null;
+  if (!marketplaceAddress || marketplaceAddress === zeroAddress) return null;
+  if (!auditPk) return null;
+  return {
+    auditServerUrl,
+    auditRelayBaseUrl,
+    openrouterApiKey: OPENROUTER_API_KEY,
+    openrouterModel: OPENROUTER_MODEL,
+    marketplaceAddress,
+    rpcUrl,
+    chainId,
+    privateKey: auditPk,
+    auditTimeoutSec,
+    providerId: 0n,
+  };
+}
+
+const auditChain = defineChain({
+  id: chainId,
+  name: "deopenrouter",
+  nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+  rpcUrls: { default: { http: [rpcUrl] } },
+});
+
+const publicClient = createPublicClient({
+  chain: auditChain,
+  transport: http(rpcUrl),
+});
+
+const processedRegisterAuditTx = new Set<string>();
 
 function getAuditHealth() {
   const requested = auditInterval > 0;
@@ -231,9 +358,38 @@ app.get("/health", (c) =>
     ok: true,
     mode: OPENROUTER_API_KEY ? "openrouter" : "mock_echo",
     model: OPENROUTER_API_KEY ? OPENROUTER_MODEL : "mock-mvp",
-    audit: getAuditHealth(),
+    audit: {
+      ...getAuditHealth(),
+      onDemandReady: getAuditRunBaseConfig() !== null,
+    },
   }),
 );
+
+/** Full audit JSON keyed by report hash (in-memory, this relay process only). */
+app.get("/v1/audit/cached-report", (c) => {
+  const q = c.req.query("hash");
+  const raw = typeof q === "string" ? q.trim() : "";
+  if (!raw || !isHex(raw)) {
+    return c.json({ error: "invalid_hash" }, 400);
+  }
+  const canonical = getCachedAuditReport(raw as Hex);
+  if (!canonical) {
+    return c.json(
+      {
+        error: "not_found",
+        detail:
+          "No cached report for this hash on this relay (restart clears cache; audits from other relays are not available).",
+      },
+      404,
+    );
+  }
+  try {
+    const report = JSON.parse(canonical) as Record<string, unknown>;
+    return c.json({ ok: true, report });
+  } catch {
+    return c.json({ ok: true, reportRaw: canonical });
+  }
+});
 
 app.post("/v1/chat/completions", async (c) => {
   let body: ChatCompletionBody;
@@ -261,8 +417,13 @@ app.post("/v1/chat", async (c) => {
 
   if (!OPENROUTER_API_KEY) {
     const response = `echo:${prompt}`;
-    const usage = Math.max(1, prompt.length);
-    return c.json({ model: "mock-mvp", response, usage });
+    const usage = usagePayloadForSimpleChat(undefined, prompt, response);
+    return c.json({
+      id: `mock-echo-${Date.now()}`,
+      model: "mock-mvp",
+      response,
+      usage,
+    });
   }
 
   let upstream: Response;
@@ -298,15 +459,95 @@ app.post("/v1/chat", async (c) => {
     typeof raw.model === "string" && raw.model.length > 0
       ? raw.model
       : OPENROUTER_MODEL;
-  const usage =
-    typeof raw.usage?.total_tokens === "number"
-      ? raw.usage.total_tokens
-      : typeof raw.usage?.prompt_tokens === "number" &&
-          typeof raw.usage?.completion_tokens === "number"
-        ? raw.usage.prompt_tokens + raw.usage.completion_tokens
-        : undefined;
+  const usage = usagePayloadForSimpleChat(raw.usage, prompt, text);
+  const upstreamId = typeof raw.id === "string" && raw.id.length > 0 ? raw.id : undefined;
 
-  return c.json({ model, response: text, ...(usage !== undefined ? { usage } : {}) });
+  return c.json({
+    ...(upstreamId ? { id: upstreamId } : {}),
+    model,
+    response: text,
+    usage,
+  });
+});
+
+/**
+ * After a successful `register` tx, the web UI POSTs the tx hash. We decode `ProviderRegistered`
+ * and run one audit for that provider id (same pipeline as the scheduled loop).
+ */
+app.post("/v1/audit/trigger", async (c) => {
+  const base = getAuditRunBaseConfig();
+  if (!base) {
+    return c.json(
+      {
+        error: "audit_unavailable",
+        detail:
+          "Set AUDIT_SERVER_URL, MARKETPLACE_ADDRESS, and AUDIT_PRIVATE_KEY (same as contract deployer / auditRecorder). OPENROUTER_API_KEY is optional when the relay runs in echo mode.",
+      },
+      503,
+    );
+  }
+
+  let body: { transactionHash?: string };
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "invalid_json" }, 400);
+  }
+
+  const txHash = typeof body.transactionHash === "string" ? body.transactionHash.trim() : "";
+  if (!txHash || !isHex(txHash)) {
+    return c.json({ error: "invalid_transaction_hash" }, 400);
+  }
+
+  if (processedRegisterAuditTx.has(txHash.toLowerCase())) {
+    return c.json({ ok: true, duplicate: true, transactionHash: txHash as Hex });
+  }
+
+  const receipt = await publicClient.getTransactionReceipt({ hash: txHash as Hex });
+  if (receipt.status !== "success") {
+    return c.json({ error: "transaction_reverted" }, 400);
+  }
+
+  const marketplaceLogs = receipt.logs.filter(
+    (log) => log.address.toLowerCase() === marketplaceAddress.toLowerCase(),
+  );
+
+  let parsed;
+  try {
+    parsed = parseEventLogs({
+      abi: [providerRegisteredEvent],
+      logs: marketplaceLogs,
+      eventName: "ProviderRegistered",
+    });
+  } catch {
+    return c.json({ error: "decode_logs_failed" }, 400);
+  }
+
+  if (parsed.length === 0) {
+    return c.json({ error: "provider_registered_event_not_found" }, 400);
+  }
+
+  const newProviderId = parsed[0].args.id as bigint;
+  processedRegisterAuditTx.add(txHash.toLowerCase());
+
+  const result = await runAuditOnce({ ...base, providerId: newProviderId });
+  if (!result.ok) {
+    return c.json(
+      {
+        error: "audit_failed",
+        detail: result.error,
+        providerId: newProviderId.toString(),
+      },
+      502,
+    );
+  }
+
+  return c.json({
+    ok: true,
+    providerId: newProviderId.toString(),
+    recordTxHash: result.recordTxHash,
+    registrationTxHash: txHash,
+  });
 });
 
 serve({ fetch: app.fetch, port });

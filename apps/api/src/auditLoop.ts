@@ -8,6 +8,7 @@ import {
   type Hex,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
+import { cacheAuditReport } from "./auditReportCache.js";
 import { canonicalStringify } from "./canonicalJson.js";
 
 const marketplaceAbi = [
@@ -91,7 +92,7 @@ async function publishCanonicalReport(canonicalBody: string): Promise<string | n
   }
 }
 
-export type AuditLoopConfig = {
+export type AuditRunConfig = {
   auditServerUrl: string;
   auditRelayBaseUrl: string;
   openrouterApiKey: string;
@@ -101,13 +102,15 @@ export type AuditLoopConfig = {
   rpcUrl: string;
   chainId: number;
   privateKey: Hex;
-  intervalMs: number;
   auditTimeoutSec: number;
 };
 
-export function startAuditLoop(cfg: AuditLoopConfig): void {
-  let running = false;
+export type AuditRunResult =
+  | { ok: true; recordTxHash: Hex; providerId: bigint }
+  | { ok: false; error: string; providerId: bigint };
 
+/** Single audit run: call audit-server, anchor report on-chain for `providerId`. */
+export async function runAuditOnce(cfg: AuditRunConfig): Promise<AuditRunResult> {
   const account = privateKeyToAccount(cfg.privateKey);
   const client = createWalletClient({
     account,
@@ -115,73 +118,92 @@ export function startAuditLoop(cfg: AuditLoopConfig): void {
     transport: http(cfg.rpcUrl),
   });
 
+  const body: Record<string, unknown> = {
+    base_url: cfg.auditRelayBaseUrl,
+    api_key: cfg.openrouterApiKey,
+    model: cfg.openrouterModel,
+    timeout: cfg.auditTimeoutSec,
+    warmup: 0,
+    profile: "general",
+    skip_infra: true,
+  };
+
+  let res: Response;
+  try {
+    res = await fetch(`${cfg.auditServerUrl.replace(/\/$/, "")}/v1/audit`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "fetch_failed";
+    console.error("[audit] fetch audit server failed:", e);
+    return { ok: false, error: msg, providerId: cfg.providerId };
+  }
+
+  const text = await res.text();
+  let json: AuditResponseJson;
+  try {
+    json = JSON.parse(text) as AuditResponseJson;
+  } catch {
+    console.error("[audit] invalid JSON from audit server:", text.slice(0, 200));
+    return { ok: false, error: "audit_server_invalid_json", providerId: cfg.providerId };
+  }
+
+  if (!res.ok) {
+    console.error("[audit] audit HTTP", res.status, text.slice(0, 300));
+    return { ok: false, error: `audit_http_${res.status}`, providerId: cfg.providerId };
+  }
+
+  const canonical = canonicalStringify(json);
+  const reportHash = keccak256(stringToHex(canonical)) as Hex;
+  const riskU8 = riskLevelToUint8(json.overall?.level);
+
+  cacheAuditReport(reportHash, canonical);
+
+  const reportUri = (await publishCanonicalReport(canonical)) ?? "";
+
+  try {
+    const recordTxHash =
+      reportUri.length > 0
+        ? await client.writeContract({
+            address: cfg.marketplaceAddress,
+            abi: marketplaceAbi,
+            functionName: "recordAuditWithUri",
+            args: [cfg.providerId, reportHash, riskU8, reportUri],
+          })
+        : await client.writeContract({
+            address: cfg.marketplaceAddress,
+            abi: marketplaceAbi,
+            functionName: "recordAudit",
+            args: [cfg.providerId, reportHash, riskU8],
+          });
+    console.log(
+      `[audit] anchored tx=${recordTxHash} risk=${riskU8} (${json.overall?.level ?? "?"}) hash=${reportHash}${reportUri ? ` uri=${reportUri}` : ""}`,
+    );
+    return { ok: true, recordTxHash, providerId: cfg.providerId };
+  } catch (e) {
+    console.error("[audit] recordAudit failed:", e);
+    const msg = e instanceof Error ? e.message : "record_audit_failed";
+    return { ok: false, error: msg, providerId: cfg.providerId };
+  }
+}
+
+export type AuditLoopConfig = AuditRunConfig & {
+  intervalMs: number;
+};
+
+export function startAuditLoop(cfg: AuditLoopConfig): void {
+  let running = false;
+
+  const { intervalMs, ...runCfg } = cfg;
+
   async function runOnce(): Promise<void> {
-    const body: Record<string, unknown> = {
-      base_url: cfg.auditRelayBaseUrl,
-      api_key: cfg.openrouterApiKey,
-      model: cfg.openrouterModel,
-      timeout: cfg.auditTimeoutSec,
-      warmup: 0,
-      profile: "general",
-      skip_infra: true,
-    };
-
-    let res: Response;
-    try {
-      res = await fetch(`${cfg.auditServerUrl.replace(/\/$/, "")}/v1/audit`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(body),
-      });
-    } catch (e) {
-      console.error("[audit] fetch audit server failed:", e);
-      return;
-    }
-
-    const text = await res.text();
-    let json: AuditResponseJson;
-    try {
-      json = JSON.parse(text) as AuditResponseJson;
-    } catch {
-      console.error("[audit] invalid JSON from audit server:", text.slice(0, 200));
-      return;
-    }
-
-    if (!res.ok) {
-      console.error("[audit] audit HTTP", res.status, text.slice(0, 300));
-      return;
-    }
-
-    const canonical = canonicalStringify(json);
-    const reportHash = keccak256(stringToHex(canonical)) as Hex;
-    const riskU8 = riskLevelToUint8(json.overall?.level);
-    const reportUri = (await publishCanonicalReport(canonical)) ?? "";
-
-    try {
-      const hash =
-        reportUri.length > 0
-          ? await client.writeContract({
-              address: cfg.marketplaceAddress,
-              abi: marketplaceAbi,
-              functionName: "recordAuditWithUri",
-              args: [cfg.providerId, reportHash, riskU8, reportUri],
-            })
-          : await client.writeContract({
-              address: cfg.marketplaceAddress,
-              abi: marketplaceAbi,
-              functionName: "recordAudit",
-              args: [cfg.providerId, reportHash, riskU8],
-            });
-      console.log(
-        `[audit] anchored tx=${hash} risk=${riskU8} (${json.overall?.level ?? "?"}) hash=${reportHash}${reportUri ? ` uri=${reportUri}` : ""}`,
-      );
-    } catch (e) {
-      console.error("[audit] recordAudit failed:", e);
-    }
+    await runAuditOnce(runCfg);
   }
 
   console.log(
-    `[audit] scheduler every ${cfg.intervalMs}ms → ${cfg.auditServerUrl} → provider ${cfg.providerId} on ${cfg.marketplaceAddress} (chain ${cfg.chainId})`,
+    `[audit] scheduler every ${intervalMs}ms → ${cfg.auditServerUrl} → provider ${cfg.providerId} on ${cfg.marketplaceAddress} (chain ${cfg.chainId})`,
   );
 
   void runOnce();
@@ -194,5 +216,5 @@ export function startAuditLoop(cfg: AuditLoopConfig): void {
     void runOnce().finally(() => {
       running = false;
     });
-  }, cfg.intervalMs);
+  }, intervalMs);
 }
