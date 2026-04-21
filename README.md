@@ -119,6 +119,7 @@ Default base URL: `http://127.0.0.1:8787`
 Available endpoints:
 
 - `GET /health`
+- `GET /v1/audit/cached-report?hash=0x...`
 - `POST /v1/chat`
 - `POST /v1/chat/completions`
 - `POST /v1/audit/trigger`
@@ -127,7 +128,8 @@ Behavior:
 
 - without `OPENROUTER_API_KEY`, the API returns a local `echo:<prompt>` response for offline development, plus a synthetic `id` and structured `usage`
 - with `OPENROUTER_API_KEY`, the API proxies to OpenRouter and forwards `id`, token usage, and `usage.cost` when OpenRouter includes them
-- `GET /health` reports relay mode plus audit scheduler state and `audit.onDemandReady`
+- `GET /health` reports relay mode plus audit scheduler state as `requested`, `scheduled`, `reason`, `chainId`, and `audit.onDemandReady`
+- `GET /v1/audit/cached-report?hash=0x...` returns the relay-local cached canonical audit report for a report hash when available
 - `POST /v1/audit/trigger` accepts `{ "transactionHash": "0x..." }`, decodes a successful `register` transaction, and runs one audit for the newly registered provider
 
 Response shape highlights:
@@ -151,8 +153,10 @@ Response shape highlights:
   "ok": true,
   "mode": "openrouter",
   "audit": {
-    "enabled": true,
-    "configured": true,
+    "requested": true,
+    "scheduled": true,
+    "reason": null,
+    "chainId": 31337,
     "onDemandReady": true
   }
 }
@@ -198,6 +202,79 @@ Available endpoints:
 
 For request examples and audit-specific options, see `apps/audit-server/README.md`.
 
+### 6. Recommended full-system bring-up
+
+If you want to run the whole local demo stack with the fewest surprises, use separate terminals in this order:
+
+1. **Terminal A: local chain**
+
+```bash
+anvil
+```
+
+2. **Terminal B: deploy contracts once**
+
+```bash
+cd contracts
+forge script script/Deploy.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
+```
+
+3. **Terminal C: audit server** (optional, but required for on-demand / scheduled audit flows)
+
+```bash
+cd apps/audit-server
+python -m venv .venv
+# Windows: .venv\Scripts\activate
+# Unix: source .venv/bin/activate
+pip install -e ".[dev]"
+uvicorn main:app --app-dir src --host 0.0.0.0 --port 8765
+```
+
+4. **Terminal D: relay API**
+
+```bash
+cd apps/api
+npm install
+npm run dev
+```
+
+5. **Terminal E: web app**
+
+```bash
+cd apps/web
+npm install
+npm run dev
+```
+
+Use this as the minimum environment checklist before opening the browser:
+
+- `contracts/broadcast/Deploy.s.sol/<chainId>/run-latest.json` exists and contains the deployed contract address
+- `apps/web/.env.local` has `NEXT_PUBLIC_MARKETPLACE_ADDRESS=<deployed address>`
+- `apps/api/.env` is optional for mock mode, but required if you want audit automation or a live OpenRouter-backed relay
+- if you want audit triggering from the web UI, `apps/api/.env` should include `AUDIT_SERVER_URL`, `MARKETPLACE_ADDRESS`, and `AUDIT_PRIVATE_KEY`
+
+### 7. Smoke test checklist
+
+Before doing a full demo, verify that each service is actually reachable:
+
+1. Check the relay API:
+
+```bash
+curl -s http://127.0.0.1:8787/health
+```
+
+2. If the audit server is running, check it too:
+
+```bash
+curl -s http://127.0.0.1:8765/health
+```
+
+3. Open the web app at [http://localhost:3020](http://localhost:3020).
+4. Connect a MetaMask account funded by Anvil and switch to chain `31337`.
+5. Register a provider in the **Provider** tab.
+6. Switch to the **User** tab and invoke that provider from the playground.
+7. If audit integration is configured, confirm that the provider receives an audit anchor and that audit history is visible in the UI.
+
 ## Environment Variables
 
 ### `contracts/.env`
@@ -236,7 +313,7 @@ For request examples and audit-specific options, see `apps/audit-server/README.m
 | `AUDIT_PRIVATE_KEY` | No | Signer for audit anchoring; typically the deployer in this MVP |
 | `AUDIT_REPORT_PUBLISH_URL` | No | `POST` canonical JSON; response is a plain URI or JSON `{ uri, url, cid }` |
 
-For `POST /v1/audit/trigger`, the relay must have `AUDIT_SERVER_URL`, `MARKETPLACE_ADDRESS`, `AUDIT_PRIVATE_KEY`, and `OPENROUTER_API_KEY` configured; otherwise `/health` reports `audit.onDemandReady: false` and the trigger endpoint returns `503`.
+For `POST /v1/audit/trigger`, the relay must have `AUDIT_SERVER_URL`, `MARKETPLACE_ADDRESS`, and `AUDIT_PRIVATE_KEY` configured. `OPENROUTER_API_KEY` is optional for local demos because the relay can still run in echo mode; when the required audit settings are present, `/health` reports `audit.onDemandReady: true`.
 
 ## Local Demo Flow
 

@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DeOpenRouter Web
 
-## Getting Started
+Next.js 14 frontend for the DeOpenRouter MVP. This app sits on top of the `DeOpenRouterMarketplace` contract and the relay API in `apps/api/`, giving you separate user and provider workflows in one interface.
 
-First, run the development server:
+## What This App Includes
+
+- **User view** for browsing providers, opening a per-provider playground, invoking calls, and reviewing anchored audit history
+- **Provider view** for registering providers, updating metadata, managing lifecycle actions, and inspecting incoming activity
+- **Audit UX** for viewing on-chain audit anchors, loading relay-cached reports, and opening published `reportUri` payloads
+- **API helper modal** for quick local relay access details during demos
+
+## Requirements
+
+- Node.js 20+
+- npm
+- A deployed `DeOpenRouterMarketplace` contract
+- A running relay API from `apps/api/`
+- A browser wallet such as MetaMask
+
+## Local Development
+
+1. Deploy the marketplace contract first (see the root `README.md` or `../../contracts/README.md`).
+2. Copy `.env.local.example` to `.env.local`.
+3. Set `NEXT_PUBLIC_MARKETPLACE_ADDRESS` to your deployed contract address.
+4. Install dependencies and start the dev server:
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3020](http://localhost:3020).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `npm run dev` - start Next.js in development mode on port `3020`
+- `npm run build` - production build
+- `npm run start` - start the production server on port `3020`
+- `npm run lint` - run the Next.js ESLint checks
+- `npm run test` - watch-mode Vitest
+- `npm run test:run` - one-shot Vitest run
 
-## Learn More
+## Environment Variables
 
-To learn more about Next.js, take a look at the following resources:
+Copy `.env.local.example` to `.env.local` and configure:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Variable | Required | Description |
+| --- | --- | --- |
+| `NEXT_PUBLIC_MARKETPLACE_ADDRESS` | Yes | Deployed `DeOpenRouterMarketplace` address |
+| `NEXT_PUBLIC_ANVIL_RPC` | No | Defaults to `http://127.0.0.1:8545` |
+| `NEXT_PUBLIC_MOCK_API` | No | Defaults to `http://127.0.0.1:8787` |
+| `NEXT_PUBLIC_AUDIT_LOGS_FROM_BLOCK` | No | First block to scan for audit events; defaults to `0` |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Typical Local Flow
 
-## Deploy on Vercel
+1. Start `anvil`.
+2. Deploy the contract from `contracts/`.
+3. Start the relay API from `apps/api/`.
+4. Start this web app with `npm run dev`.
+5. Connect an Anvil-funded wallet and switch to chain `31337`.
+6. Register a provider in the **Provider** tab, then exercise it from the **User** tab.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+If the relay has on-demand audit settings configured, the frontend automatically POSTs the provider registration transaction hash to `POST /v1/audit/trigger` after a successful registration.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Related Docs
+
+- `../../README.md` - full project overview and end-to-end quick start
+- `../../README.zh-CN.md` - Chinese root README
+- `../../docs/DEMO_RUN.zh-CN.md` - step-by-step local demo runbook

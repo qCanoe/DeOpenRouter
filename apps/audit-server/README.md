@@ -1,8 +1,8 @@
 # DeOpenRouter Audit Server
 
-Python service that runs the **deopenrouter_audit** checks against a relay base URL and returns structured JSON (6D-style risk summary). See `THIRD_PARTY_NOTICES.md` for upstream reference credits.
+Python FastAPI service that runs the **deopenrouter_audit** checks against a relay base URL and returns structured JSON (6D-style risk summary). The relay in `apps/api/` can call this service during periodic or on-demand audit flows. See `THIRD_PARTY_NOTICES.md` for upstream reference credits.
 
-To verify the same **canonical JSON** hash as the relay (`apps/api`), use `from deopenrouter_audit.canonical import canonical_dumps` on the parsed audit response dict.
+To verify the same **canonical JSON** hash as the relay (`apps/api`), use `from deopenrouter_audit.canonical import canonical_dumps` on the parsed audit response object.
 
 ## Requirements
 
@@ -19,14 +19,22 @@ python -m venv .venv
 pip install -e ".[dev]"
 ```
 
+On Unix shells, activate the environment with `source .venv/bin/activate`.
+
 ## Run
 
 ```bash
 uvicorn main:app --app-dir src --host 0.0.0.0 --port 8765
 ```
 
-- `GET /health` — liveness
-- `POST /v1/audit` — run full audit (may take up to several minutes depending on `timeout` and steps)
+Default base URL: `http://127.0.0.1:8765`
+
+## Endpoints
+
+- `GET /health` - returns `{"status":"ok"}`
+- `POST /v1/audit` - runs the full audit and returns a structured response
+
+`POST /v1/audit` may take up to several minutes depending on `timeout`, enabled steps, and relay responsiveness.
 
 ### Example: health
 
@@ -46,10 +54,21 @@ curl -s -X POST http://127.0.0.1:8765/v1/audit ^
 
 On Unix shells, use single quotes around the JSON or escape quotes as usual.
 
-**Timeouts:** `timeout` is passed to HTTP probes (seconds, default 120, max 600). Large values slow failure detection; small values may mark inconclusive dimensions.
+## Request Notes
+
+- `base_url` should point at the relay base URL to probe
+- the relay is expected to expose `/v1/chat/completions`
+- `timeout` is passed to HTTP probes in seconds (default `120`, max `600`)
+- large timeout values slow failure detection; smaller ones may produce more inconclusive checks
 
 ## Tests
 
 ```bash
 pytest
 ```
+
+## Related Docs
+
+- `../../README.md` - repository overview and local demo flow
+- `../../README.zh-CN.md` - Chinese root README
+- `../../docs/DEMO_RUN.zh-CN.md` - step-by-step demo walkthrough

@@ -1,72 +1,75 @@
-## Foundry
+# DeOpenRouter Contracts
 
-See [`LOCAL_LOOP.md`](./LOCAL_LOOP.md) for a **cast-only** local loop (Anvil: deploy → register → invoke → logs).
+Foundry project for the DeOpenRouter marketplace contract, deployment script, and Solidity test suite.
 
-`DeOpenRouterMarketplace` stores provider fields (`endpointCommitment`, `capabilityHash`, `stakeLockBlocks`, delayed pricing, etc.), per-call `CallRecorded` + `calls` mapping, **challengeable slash proposals** paying `slashTreasury`, and audit anchoring via `recordAudit` / multi-attestor `attestAudit`. Details: root [`README.md`](../README.md) **Core Contract Surface** and [`docs/AUDIT_GOVERNANCE.md`](../docs/AUDIT_GOVERNANCE.md).
+## What Is Here
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+- `src/DeOpenRouterMarketplace.sol` - the main marketplace contract
+- `script/Deploy.s.sol` - local deployment script used by the demo flow
+- `test/DeOpenRouterMarketplace.t.sol` - contract test coverage
+- `LOCAL_LOOP.md` - cast-only walkthrough for a terminal-driven local demo
 
-Foundry consists of:
+The contract covers provider registration, delayed price changes, per-call settlement, provider deactivation and stake withdrawal, challengeable slash proposals, and audit anchoring with optional report URIs.
 
-- **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
-- **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
-- **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
-- **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+## Requirements
 
-## Documentation
+- [Foundry](https://book.getfoundry.sh/) (`forge`, `cast`, `anvil`)
+- A local or remote EVM RPC
 
-https://book.getfoundry.sh/
+## Setup
 
-## Usage
+Copy `.env.example` to `.env` in this directory. For local Anvil demos, the example uses account `#0` and is intended for development only.
+
+## Common Commands
 
 ### Build
 
-```shell
-$ forge build
+```bash
+forge build
 ```
 
 ### Test
 
-```shell
-$ forge test
+```bash
+forge test
 ```
 
 ### Format
 
-```shell
-$ forge fmt
+```bash
+forge fmt
 ```
 
-### Gas Snapshots
+### Gas snapshot
 
-```shell
-$ forge snapshot
+```bash
+forge snapshot
 ```
 
-### Anvil
+### Start a local chain
 
-```shell
-$ anvil
+```bash
+anvil
 ```
 
-### Deploy
+### Deploy to local Anvil
 
-```shell
-$ forge script script/Deploy.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
+```bash
+forge script script/Deploy.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
 ```
 
-Set `PRIVATE_KEY` in the environment (see `script/Deploy.s.sol`).
+The default local deployment creates `DeOpenRouterMarketplace(100, 100)`, which means:
 
-### Cast
+- price changes become effective after `100` blocks
+- slash proposals remain challengeable for `100` blocks before finalization
 
-```shell
-$ cast <subcommand>
-```
+After deployment, the latest address is available in:
 
-### Help
+`broadcast/Deploy.s.sol/<chainId>/run-latest.json`
 
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
+## Related Docs
+
+- `../README.md` - repository overview and end-to-end quick start
+- `../README.zh-CN.md` - Chinese root README
+- `./LOCAL_LOOP.md` - cast-only local walkthrough
+- `../docs/AUDIT_GOVERNANCE.md` - audit rounds, auditors, and slash governance

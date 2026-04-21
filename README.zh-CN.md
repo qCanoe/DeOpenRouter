@@ -119,6 +119,7 @@ npm run dev
 可用接口：
 
 - `GET /health`
+- `GET /v1/audit/cached-report?hash=0x...`
 - `POST /v1/chat`
 - `POST /v1/chat/completions`
 - `POST /v1/audit/trigger`
@@ -127,7 +128,8 @@ npm run dev
 
 - 未设置 `OPENROUTER_API_KEY` 时，API 返回本地 `echo:<prompt>`，并附带合成的 `id` 与结构化 `usage`，方便离线开发
 - 设置 `OPENROUTER_API_KEY` 后，API 会代理到 OpenRouter，并在上游提供时透传 `id`、token 用量与 `usage.cost`
-- `GET /health` 会返回 relay 模式、审计调度器状态，以及 `audit.onDemandReady`
+- `GET /health` 会返回 relay 模式、审计调度器状态字段 `requested`、`scheduled`、`reason`、`chainId`，以及 `audit.onDemandReady`
+- `GET /v1/audit/cached-report?hash=0x...` 会在本 relay 进程仍保留缓存时，按报告哈希返回 canonical audit report
 - `POST /v1/audit/trigger` 接收 `{ "transactionHash": "0x..." }`，解码成功的 `register` 交易，并为新注册的 provider 执行一次单次审计
 
 返回结构重点：
@@ -151,8 +153,10 @@ npm run dev
   "ok": true,
   "mode": "openrouter",
   "audit": {
-    "enabled": true,
-    "configured": true,
+    "requested": true,
+    "scheduled": true,
+    "reason": null,
+    "chainId": 31337,
     "onDemandReady": true
   }
 }
@@ -198,6 +202,79 @@ uvicorn main:app --app-dir src --host 0.0.0.0 --port 8765
 
 请求示例和更多参数说明见 `apps/audit-server/README.md`。
 
+### 6. 推荐的整套系统启动顺序
+
+如果你想把本地整套 demo 栈按最稳妥的方式拉起来，建议分多个终端按下面顺序启动：
+
+1. **终端 A：本地链**
+
+```bash
+anvil
+```
+
+2. **终端 B：部署合约（一次即可）**
+
+```bash
+cd contracts
+forge script script/Deploy.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
+```
+
+3. **终端 C：审计服务**（可选，但单次审计 / 定时审计流程需要它）
+
+```bash
+cd apps/audit-server
+python -m venv .venv
+# Windows: .venv\Scripts\activate
+# Unix: source .venv/bin/activate
+pip install -e ".[dev]"
+uvicorn main:app --app-dir src --host 0.0.0.0 --port 8765
+```
+
+4. **终端 D：relay API**
+
+```bash
+cd apps/api
+npm install
+npm run dev
+```
+
+5. **终端 E：Web 前端**
+
+```bash
+cd apps/web
+npm install
+npm run dev
+```
+
+在打开浏览器之前，建议先确认下面这些最小条件都满足：
+
+- `contracts/broadcast/Deploy.s.sol/<chainId>/run-latest.json` 已生成，并且里面有已部署合约地址
+- `apps/web/.env.local` 里已经设置 `NEXT_PUBLIC_MARKETPLACE_ADDRESS=<已部署地址>`
+- `apps/api/.env` 在 mock 模式下不是必需的，但如果你要跑审计自动化或接 OpenRouter，就需要配置
+- 如果你希望从 Web 页面触发审计，`apps/api/.env` 里至少要有 `AUDIT_SERVER_URL`、`MARKETPLACE_ADDRESS` 和 `AUDIT_PRIVATE_KEY`
+
+### 7. 启动后的快速自检
+
+在正式演示之前，建议先做一轮最小 smoke test，确认每个服务都真的能访问：
+
+1. 检查 relay API：
+
+```bash
+curl -s http://127.0.0.1:8787/health
+```
+
+2. 如果启用了审计服务，也检查它：
+
+```bash
+curl -s http://127.0.0.1:8765/health
+```
+
+3. 打开前端 [http://localhost:3020](http://localhost:3020)。
+4. 连接一个带有 Anvil 测试币的 MetaMask 账户，并切换到链 `31337`。
+5. 在 **Provider** 页签注册一个 provider。
+6. 切换到 **User** 页签，在 playground 中调用这个 provider。
+7. 如果审计集成已配置完成，确认该 provider 能看到审计锚定记录，并且前端里能查看 audit history。
+
 ## 环境变量
 
 ### `contracts/.env`
@@ -236,7 +313,7 @@ uvicorn main:app --app-dir src --host 0.0.0.0 --port 8765
 | `AUDIT_PRIVATE_KEY` | 否 | 审计锚定签名私钥；当前 MVP 通常使用部署者账户 |
 | `AUDIT_REPORT_PUBLISH_URL` | 否 | `POST` 规范 JSON；响应为纯文本 URI 或 JSON `{ uri, url, cid }` |
 
-如果要使用 `POST /v1/audit/trigger`，relay 需要配置 `AUDIT_SERVER_URL`、`MARKETPLACE_ADDRESS`、`AUDIT_PRIVATE_KEY` 和 `OPENROUTER_API_KEY`；否则 `/health` 会显示 `audit.onDemandReady: false`，触发接口会返回 `503`。
+如果要使用 `POST /v1/audit/trigger`，relay 需要配置 `AUDIT_SERVER_URL`、`MARKETPLACE_ADDRESS` 和 `AUDIT_PRIVATE_KEY`。`OPENROUTER_API_KEY` 对本地演示不是必需项，因为 relay 仍可运行在 echo 模式；当审计所需配置齐全时，`/health` 会显示 `audit.onDemandReady: true`。
 
 ## 本地演示路径
 
