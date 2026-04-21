@@ -603,12 +603,21 @@
     <section class="slide-frame" data-slide>
       <div class="slide-inner">
         <p class="kicker"><span class="dot" aria-hidden="true"></span>Governance</p>
-        <h2>Governance, audit, and slashing</h2>
-        <ul class="clean">
-          <li><strong>Governance:</strong> critical role changes are two-step (<span class="mono">propose*</span> → <span class="mono">accept*</span>), with treasury/challenge-period parameters on-chain</li>
-          <li><strong>Audit:</strong> <span class="mono">recordAudit</span>/<span class="mono">recordAuditWithUri</span> for direct anchoring; round flow is <span class="mono">beginAuditRound</span> + allowlisted <span class="mono">attestAudit</span> (deduped per auditor/round)</li>
-          <li><strong>Important boundary:</strong> auditor quorum aggregation is mostly off-chain in this MVP; chain stores attestations and anchors</li>
-          <li><strong>Slashing:</strong> <span class="mono">proposeSlash</span> → <span class="mono">challengeSlashProposal</span> → <span class="mono">finalizeSlashProposal</span> (ETH to <span class="mono">slashTreasury</span>)</li>
+        <h2>Who governs, how audits work, how slashing executes</h2>
+        <div class="grid-2">
+          <div class="card">
+            <h3>Role model</h3>
+            <p><span class="mono">slashOperator</span>, <span class="mono">auditRecorder</span>, and <span class="mono">slashTreasury</span> are explicit on-chain roles. Critical role rotation is two-step: <span class="mono">propose*</span> → <span class="mono">accept*</span>.</p>
+          </div>
+          <div class="card">
+            <h3>Audit flow</h3>
+            <p>Direct anchoring via <span class="mono">recordAudit*</span>, or round-based flow via <span class="mono">beginAuditRound</span> + allowlisted <span class="mono">attestAudit</span>. MVP quorum aggregation remains mostly off-chain.</p>
+          </div>
+        </div>
+        <ul class="clean" style="margin-top:1.2rem;">
+          <li><strong>Slashing lifecycle:</strong> <span class="mono">proposeSlash</span> → provider may <span class="mono">challengeSlashProposal</span> during challenge window → <span class="mono">finalizeSlashProposal</span>.</li>
+          <li><strong>Fund destination:</strong> slashed ETH goes to configurable <span class="mono">slashTreasury</span> rather than defaulting to the operator.</li>
+          <li><strong>Governance parameterization:</strong> challenge-period and treasury settings stay transparent and queryable on-chain.</li>
         </ul>
       </div>
     </section>
@@ -616,24 +625,9 @@
     <!-- 8 -->
     <section class="slide-frame" data-slide>
       <div class="slide-inner">
-        <p class="kicker"><span class="dot" aria-hidden="true"></span>Trust Boundary · Risks · Roadmap</p>
-        <h2>What is secured now, and what is next</h2>
-        <div class="grid-2">
-          <div class="card">
-            <h3>Already in place</h3>
-            <p>On-chain <span class="mono">delay + challenge</span> for slashing, role rotation with two-step acceptance, and auditable hash anchoring via <span class="mono">recordAudit*</span>.</p>
-          </div>
-          <div class="card">
-            <h3>Current gap (MVP boundary)</h3>
-            <p>Security still depends on multisig/treasury operations. Quorum logic is mostly off-chain; there is no full arbitration market, escrow settlement, or proof of correct inference.</p>
-          </div>
-        </div>
-        <ul class="clean" style="margin-top: 1.2rem;">
-          <li><strong>Governance hardening first:</strong> move <span class="mono">auditRecorder</span> and <span class="mono">slashTreasury</span> to independent multisig control.</li>
-          <li><strong>Evidence quality next:</strong> public canonical audit reports with stable URI + reproducible hash verification.</li>
-          <li><strong>Crypto guarantees later:</strong> selectively add TEE / ZK / AVS only for high-value claims.</li>
-        </ul>
-        <p class="footnote">Key message: this project is a pragmatic trust-minimization MVP, not a fully trustless inference network yet.</p>
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Weakness and Future Development</p>
+        <h2>Economic security</h2>
+        <p class="lead">Economic safety still depends on multisig and treasury configuration. The chain implements slashing <strong>delay + challenge</strong> and auditor <strong>allowlisted multisig</strong>, but there is no full arbitration market, escrow settlement, or cryptographic proof of correct inference.</p>
       </div>
     </section>
 
