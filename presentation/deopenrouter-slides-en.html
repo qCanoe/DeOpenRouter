@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="DeOpenRouter — course presentation deck" />
+  <title>DeOpenRouter — Presentation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg0: #030303;
+      --bg1: #0a0a0c;
+      --fg: #fafaf9;
+      --fg-soft: #e7e5e4;
+      --muted: #a8a29e;
+      --dim: #57534e;
+      --line: rgba(255, 255, 255, 0.06);
+      --line-strong: rgba(255, 255, 255, 0.12);
+      --accent: #f5f5f4;
+      --pad: clamp(1.75rem, 4.5vw, 3.5rem);
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { font-size: 16px; }
+
+    html, body {
+      height: 100%;
+      background: var(--bg0);
+      color: var(--fg);
+      font-family: "Outfit", system-ui, sans-serif;
+      font-weight: 400;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 120% 80% at 50% -20%, rgba(255, 255, 255, 0.06), transparent 50%),
+        radial-gradient(ellipse 80% 60% at 100% 100%, rgba(255, 255, 255, 0.03), transparent 45%),
+        linear-gradient(180deg, var(--bg1) 0%, var(--bg0) 100%);
+      z-index: 0;
+    }
+
+    .deck {
+      position: relative;
+      z-index: 1;
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    .slide-frame {
+      position: absolute;
+      inset: 0;
+      padding: var(--pad);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transform: translateY(14px);
+      z-index: 0;
+      transition:
+        opacity 0.48s var(--ease),
+        transform 0.55s var(--ease);
+    }
+
+    .slide-frame.active {
+      display: flex;
+      opacity: 1;
+      transform: translateY(0);
+      z-index: 2;
+    }
+
+    .slide-frame.active.entering {
+      z-index: 3;
+    }
+
+    .slide-frame.exiting {
+      display: flex;
+      opacity: 0;
+      transform: translateY(-12px);
+      z-index: 1;
+      transition-duration: 0.36s;
+      pointer-events: none;
+    }
+
+    .slide-inner {
+      position: relative;
+      width: 100%;
+      max-width: 58rem;
+      padding-left: 1.25rem;
+      border-left: 2px solid var(--line-strong);
+    }
+
+    .slide-inner::before {
+      content: "";
+      position: absolute;
+      left: -2px;
+      top: 0;
+      width: 2px;
+      height: 2.5rem;
+      background: linear-gradient(180deg, var(--fg) 0%, transparent 100%);
+      opacity: 0.85;
+    }
+
+    .kicker {
+      font-size: 0.6875rem;
+      font-weight: 500;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    .kicker .dot {
+      display: inline-block;
+      width: 4px;
+      height: 4px;
+      background: var(--fg);
+      opacity: 0.35;
+      margin-right: 0.65rem;
+      vertical-align: middle;
+      border-radius: 1px;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 5vw, 3.15rem);
+      font-weight: 500;
+      letter-spacing: -0.03em;
+      line-height: 1.08;
+      margin-bottom: 1.25rem;
+      color: var(--fg);
+    }
+
+    h2 {
+      font-size: clamp(1.4rem, 3.2vw, 2.125rem);
+      font-weight: 500;
+      letter-spacing: -0.025em;
+      line-height: 1.18;
+      margin-bottom: 1.35rem;
+      color: var(--fg-soft);
+    }
+
+    .subtitle {
+      font-size: clamp(0.95rem, 1.8vw, 1.125rem);
+      font-weight: 300;
+      color: var(--muted);
+      line-height: 1.6;
+      max-width: 38rem;
+    }
+
+    .lead {
+      font-size: clamp(1rem, 1.85vw, 1.15rem);
+      font-weight: 300;
+      color: var(--muted);
+      line-height: 1.68;
+      max-width: 44rem;
+    }
+
+    ul.clean {
+      list-style: none;
+      margin-top: 1.5rem;
+    }
+
+    ul.clean li {
+      position: relative;
+      padding-left: 1.2rem;
+      margin-bottom: 0.75rem;
+      font-size: clamp(0.95rem, 1.55vw, 1.0625rem);
+      font-weight: 300;
+      line-height: 1.55;
+      color: var(--fg-soft);
+    }
+
+    ul.clean li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.62em;
+      width: 4px;
+      height: 4px;
+      background: var(--fg);
+      opacity: 0.45;
+      border-radius: 1px;
+    }
+
+    .mono {
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 0.9em;
+      font-weight: 400;
+      color: var(--accent);
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.25rem 2rem;
+      margin-top: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.01) 100%);
+      padding: 1.25rem 1.35rem;
+      border-radius: 2px;
+    }
+
+    .card h3 {
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.55rem;
+    }
+
+    .card p {
+      font-size: 0.9375rem;
+      font-weight: 300;
+      line-height: 1.55;
+      color: var(--fg-soft);
+    }
+
+    .rubric {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem 0.85rem;
+      margin-top: 1.75rem;
+    }
+
+    .rubric span {
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      padding: 0.4rem 0.85rem;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .rubric strong {
+      color: var(--fg);
+      font-weight: 600;
+    }
+
+    .steps {
+      counter-reset: step;
+      margin-top: 1.35rem;
+    }
+
+    .steps li {
+      counter-increment: step;
+      list-style: none;
+      margin-bottom: 0.8rem;
+      padding-left: 2.1rem;
+      position: relative;
+      font-size: clamp(0.9rem, 1.45vw, 1.02rem);
+      font-weight: 300;
+      line-height: 1.55;
+      color: var(--fg-soft);
+    }
+
+    .steps li::before {
+      content: counter(step, decimal-leading-zero);
+      position: absolute;
+      left: 0;
+      top: 0.08em;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: var(--dim);
+      letter-spacing: 0.06em;
+    }
+
+    .footnote {
+      margin-top: 1.75rem;
+      font-size: 0.8125rem;
+      font-weight: 300;
+      line-height: 1.55;
+      color: var(--dim);
+      max-width: 42rem;
+    }
+
+    .slide-meta {
+      margin-top: 2rem;
+      font-size: 0.625rem;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+
+    .slide-meta em {
+      font-style: normal;
+      color: var(--muted);
+    }
+
+    .top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      z-index: 20;
+      background: var(--line);
+    }
+
+    .top-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--fg) 0%, rgba(250, 250, 249, 0.35) 100%);
+      transition: width 0.4s var(--ease);
+    }
+
+    .corner-brand {
+      position: fixed;
+      top: var(--pad);
+      right: var(--pad);
+      z-index: 15;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.625rem;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+
+    .controls {
+      position: fixed;
+      bottom: var(--pad);
+      left: var(--pad);
+      right: var(--pad);
+      z-index: 15;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      pointer-events: none;
+    }
+
+    .controls > * { pointer-events: auto; }
+
+    .btn-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn {
+      appearance: none;
+      border: 1px solid var(--line-strong);
+      background: rgba(0, 0, 0, 0.35);
+      color: var(--fg);
+      width: 2.75rem;
+      height: 2.75rem;
+      border-radius: 2px;
+      cursor: pointer;
+      font-size: 1rem;
+      line-height: 1;
+      transition: border-color 0.2s, background 0.2s, color 0.2s;
+    }
+
+    .btn:hover {
+      border-color: rgba(255, 255, 255, 0.28);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .btn:focus-visible {
+      outline: 1px solid var(--fg);
+      outline-offset: 3px;
+    }
+
+    .meta-block {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.625rem;
+      letter-spacing: 0.12em;
+      color: var(--dim);
+      text-align: right;
+    }
+
+    .meta-block .row { margin-top: 0.2rem; color: var(--muted); }
+
+    .hint {
+      position: fixed;
+      bottom: calc(var(--pad) + 3.25rem);
+      left: var(--pad);
+      font-size: 0.625rem;
+      letter-spacing: 0.08em;
+      color: var(--dim);
+      z-index: 12;
+      max-width: 20rem;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 600px) {
+      .hint { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="top-bar" aria-hidden="true"><div class="top-bar-fill" id="progressFill"></div></div>
+  <div class="corner-brand">DeOpenRouter</div>
+  <p class="hint">← → Space · Home End · <kbd style="font-family:inherit;opacity:.7">F</kbd> fullscreen</p>
+
+  <div class="deck" id="deck" aria-live="polite">
+    <!-- 1 -->
+    <section class="slide-frame active" data-slide>
+      <div class="slide-inner">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Decentralization &amp; Cryptocurrency</p>
+        <h1>DeOpenRouter</h1>
+        <p class="subtitle">A transparent, low-trust-assumption AI API marketplace prototype: Solidity, Next.js, Hono, and FastAPI. Trust coordination, pricing, payments, and audit anchoring on-chain; model inference off-chain.</p>
+        <div class="rubric">
+          <span><strong>Story</strong> 15%</span>
+          <span><strong>Implementation</strong> 10%</span>
+          <span><strong>Presentation</strong> 10%</span>
+        </div>
+        <p class="footnote">Slide content follows the project README (Chinese/English). Target length ~12:00. Use this file fullscreen in the browser for class presentation.</p>
+        <p class="slide-meta"><em>~0:45</em> · Opening</p>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide-frame" data-slide>
+      <div class="slide-inner">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Story</p>
+        <h2>The problem: centralized AI gateways are trust-heavy</h2>
+        <p class="lead">Typical routers consolidate pricing, routing, billing, and disputes under one operator. That is convenient, but users cannot easily verify quiet rule changes, whether a charge matched the published policy, or whether records could be rewritten after the fact.</p>
+        <ul class="clean">
+          <li><strong>Our narrative hook:</strong> which parts of the workflow belong on an EVM so rules and settlement are <strong>publicly observable and harder to tamper with</strong>?</li>
+          <li>We do <strong>not</strong> claim fully on-chain inference; we trade realism for clearer settlement and auditability.</li>
+        </ul>
+        <p class="slide-meta"><em>~1:35</em> · Story</p>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide-frame" data-slide>
+      <div class="slide-inner">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Story · Goals</p>
+        <h2>What we move on-chain (README)</h2>
+        <ul class="clean">
+          <li>Provider identity commitments and metadata <strong>registered publicly</strong></li>
+          <li>Price updates are <strong>not instantly effective</strong>; they have observable delay</li>
+          <li>Each paid call leaves an <strong>auditable on-chain record</strong></li>
+          <li>Stake can be reduced via an on-chain <strong>slashing proposal with a challenge window</strong>; proceeds go to configurable <span class="mono">slashTreasury</span></li>
+          <li>External audit outcomes can be <strong>anchored as report hashes</strong></li>
+        </ul>
+        <p class="lead" style="margin-top:1.35rem;">Inference stays off-chain for practicality; settlement and auditing become more transparent.</p>
+        <p class="slide-meta"><em>~1:20</em> · Story</p>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide-frame" data-slide>
+      <div class="slide-inner">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Story · Scope</p>
+        <h2>MVP prototype, not a production inference network</h2>
+        <p class="lead">The README states this repository is an MVP focused on the <strong>trust and settlement model</strong>, not a production-grade decentralized inference network. Stating limits up front strengthens the story.</p>
+        <div class="grid-2" style="margin-top:1.75rem;">
+          <div class="card">
+            <h3>On-chain</h3>
+            <p>Coordination, pricing, payments, audit anchoring, slashing hooks, and governance parameters.</p>
+          </div>
+          <div class="card">
+            <h3>Off-chain</h3>
+            <p>Real inference; relay in mock mode or proxied to OpenRouter; audit probes and canonical JSON handling.</p>
+          </div>
+        </div>
+        <p class="slide-meta"><em>~0:45</em> · Story</p>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide-frame" data-slide>
+      <div class="slide-inner">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Implementation · System</p>
+        <h2>What the repository contains</h2>
+        <ul class="clean">
+          <li><strong>Smart contract marketplace:</strong> registration, stake, delayed price changes, per-call settlement, slashing, audit anchoring</li>
+          <li><strong>Web app:</strong> separate user and provider flows; browse, register, invoke</li>
+          <li><strong>Relay API:</strong> local mock or upstream OpenRouter proxy</li>
+          <li><strong>Audit server:</strong> structured checks on the relay; summaries can be written back on-chain</li>
+        </ul>
+        <p class="footnote">Paths: <span class="mono">contracts/</span> · <span class="mono">apps/web/</span> · <span class="mono">apps/api/</span> · <span class="mono">apps/audit-server/</span> · <span class="mono">docs/</span></p>
+        <p class="slide-meta"><em>~0:50</em> · Implementation</p>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide-frame" data-slide>
+      <div class="slide-inner">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Flow</p>
+        <h2>End-to-end journey (five steps)</h2>
+        <ol class="steps">
+          <li>Provider registers on-chain: price, stake, metadata URI, identity and capability hashes, <span class="mono">endpointCommitment</span></li>
+          <li>Web lists providers; users can simulate calls via the relay API</li>
+          <li>Client hashes request and response, then calls on-chain <span class="mono">invoke(...)</span> with payment</li>
+          <li>Contract transfers fees, stores the call record, emits <span class="mono">CallRecorded</span></li>
+          <li>If auditing is enabled: probe relay off-chain → canonical JSON → optional off-chain publish → <span class="mono">recordAudit</span> / <span class="mono">recordAuditWithUri</span> anchors <span class="mono">keccak256(canonicalJson)</span></li>
+        </ol>
+        <p class="slide-meta"><em>~1:15</em> · Story + Implementation</p>
+      </div>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide-frame" data-slide>
+      <div class="slide-inner">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Implementation · Solidity</p>
+        <h2><span class="mono">DeOpenRouterMarketplace.sol</span></h2>
+        <p class="lead">Primary contract under <span class="mono">contracts/src/</span>. Function names match the README for direct mapping to the codebase.</p>
+        <ul class="clean">
+          <li><span class="mono">register</span> — stake and register a new provider</li>
+          <li><span class="mono">updateProviderMetadata</span> — <span class="mono">metadataURI</span>, <span class="mono">metadataHash</span>, <span class="mono">identityHash</span></li>
+          <li><span class="mono">announcePriceChange</span> / <span class="mono">getEffectivePrice</span> — delayed activation; read-only effective price</li>
+          <li><span class="mono">getProviderCore</span> — compact read of owner, price, stake, slash metadata</li>
+          <li><span class="mono">invoke</span> — collect payment, store hashes, emit <span class="mono">CallRecorded</span></li>
+          <li><span class="mono">deactivate</span> + <span class="mono">withdrawStake</span> — deactivate and withdraw stake after lock</li>
+        </ul>
+        <p class="slide-meta"><em>~1:15</em> · Implementation</p>
+      </div>
+    </section>
+
+    <!-- 8 -->
+    <section class="slide-frame" data-slide>
+      <div class="slide-inner">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Implementation · Governance</p>
+        <h2>Governance, audit, and slashing</h2>
+        <ul class="clean">
+          <li><strong>Governance:</strong> <span class="mono">proposeSlashOperator</span> / <span class="mono">acceptSlashOperator</span>; <span class="mono">proposeAuditRecorder</span> / <span class="mono">acceptAuditRecorder</span>; <span class="mono">setSlashTreasury</span>; <span class="mono">setSlashChallengePeriodBlocks</span></li>
+          <li><strong>Audit:</strong> <span class="mono">recordAudit</span>, <span class="mono">recordAuditWithUri</span>, <span class="mono">beginAuditRound</span>, <span class="mono">setAuditor</span>, multisig <span class="mono">attestAudit</span></li>
+          <li><strong>Slashing:</strong> <span class="mono">proposeSlash</span> → <span class="mono">challengeSlashProposal</span> (challenge window) → <span class="mono">finalizeSlashProposal</span> (ETH to <span class="mono">slashTreasury</span>)</li>
+        </ul>
+        <p class="slide-meta"><em>~0:55</em> · Implementation</p>
+      </div>
+    </section>
+
+    <!-- 9 -->
+    <section class="slide-frame" data-slide>
+      <div class="slide-inner">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Story · Assumptions</p>
+        <h2>README warning: economic security</h2>
+        <p class="lead">Economic safety still depends on multisig and treasury configuration. The chain implements slashing <strong>delay + challenge</strong> and auditor <strong>allowlisted multisig</strong>, but there is no full arbitration market, escrow settlement, or cryptographic proof of correct inference.</p>
+        <p class="footnote">See <span class="mono">docs/AUDIT_GOVERNANCE.md</span> and <span class="mono">docs/TRUST_LAYERS.md</span>.</p>
+        <p class="slide-meta"><em>~0:35</em> · Story</p>
+      </div>
+    </section>
+
+    <!-- 10 -->
+    <section class="slide-frame" data-slide>
+      <div class="slide-inner">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Story · Boundaries</p>
+        <h2>What the MVP does not claim (README)</h2>
+        <ul class="clean">
+          <li>On-chain <span class="mono">endpointId</span> commitment only; raw endpoint URLs are not published on-chain</li>
+          <li>Call records store request/response <strong>hashes</strong>, not full plaintext</li>
+          <li><strong>Instant per-call</strong> settlement; no escrow, streaming, or async settlement</li>
+          <li>Slash proposals originate from <span class="mono">slashOperator</span> with a challenge period; multi-auditor quorum aggregation is largely off-chain</li>
+          <li>No decentralized discovery, reputation, automated arbitration market, or inference execution proof network</li>
+        </ul>
+        <p class="slide-meta"><em>~0:45</em> · Story</p>
+      </div>
+    </section>
+
+    <!-- 11 -->
+    <section class="slide-frame" data-slide>
+      <div class="slide-inner">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Implementation · Demo</p>
+        <h2>Stack and local demo path</h2>
+        <div class="grid-2">
+          <div class="card">
+            <h3>Stack</h3>
+            <p>Solidity 0.8.24, Foundry · Next.js 14, wagmi, viem · Hono · Python 3.11+, FastAPI</p>
+          </div>
+          <div class="card">
+            <h3>Demo sketch</h3>
+            <p>Anvil (chain id 31337) → deploy <span class="mono">DeOpenRouterMarketplace(100,100)</span> → relay + web → wallet → Provider tab → User tab → optional audit scheduler in relay env</p>
+          </div>
+        </div>
+        <p class="footnote">CLI-only loop: <span class="mono">contracts/LOCAL_LOOP.md</span>. Tests: <span class="mono">forge test</span>, web/API tests, <span class="mono">pytest</span> for audit server — see README.</p>
+        <p class="slide-meta"><em>~0:55</em> · Implementation</p>
+      </div>
+    </section>
+
+    <!-- 12 -->
+    <section class="slide-frame" data-slide>
+      <div class="slide-inner">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Close</p>
+        <h2>Takeaway &amp; rubric alignment</h2>
+        <ul class="clean">
+          <li><strong>Story:</strong> centralized pain points → on-chain verifiable settlement and records → explicit MVP limits and README warnings.</li>
+          <li><strong>Implementation:</strong> Solidity marketplace, named functions, and the five-step flow map directly to the repository.</li>
+          <li><strong>Presentation:</strong> ~12 minutes; one idea per slide; this deck for fullscreen delivery.</li>
+        </ul>
+        <p class="lead" style="margin-top:1.5rem;">Thank you. Questions?</p>
+        <p class="slide-meta"><em>~1:05</em> · Presentation + Q&amp;A buffer</p>
+      </div>
+    </section>
+  </div>
+
+  <div class="controls">
+    <div class="btn-group">
+      <button type="button" class="btn" id="prev" aria-label="Previous slide">←</button>
+      <button type="button" class="btn" id="next" aria-label="Next slide">→</button>
+    </div>
+    <div class="meta-block">
+      <span id="progress">01 / 12</span>
+      <div class="row" id="clock">~0:45 / 12:00</div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var slides = Array.prototype.slice.call(document.querySelectorAll("[data-slide]"));
+      var i = 0;
+      var total = slides.length;
+
+      var cumulativeEnd = [
+        "0:45", "2:20", "3:40", "4:25", "5:15",
+        "6:30", "7:45", "8:40", "9:15", "10:00", "10:55", "12:00"
+      ];
+
+      var deck = document.getElementById("deck");
+      var progressFill = document.getElementById("progressFill");
+
+      function applyProgress() {
+        var pct = total > 1 ? (i / (total - 1)) * 100 : 100;
+        progressFill.style.width = pct + "%";
+      }
+
+      function show(nextIndex) {
+        var target = Math.max(0, Math.min(nextIndex, total - 1));
+        if (target === i) return;
+
+        var current = slides[i];
+        var next = slides[target];
+        var forward = target > i;
+
+        next.classList.add("active", "entering");
+        current.classList.add("exiting");
+        window.requestAnimationFrame(function () {
+          next.classList.remove("entering");
+        });
+        window.setTimeout(function () {
+          current.classList.remove("active", "exiting");
+          i = target;
+          document.getElementById("progress").textContent =
+            String(i + 1).padStart(2, "0") + " / " + String(total).padStart(2, "0");
+          document.getElementById("clock").textContent =
+            "~" + (cumulativeEnd[i] || "—") + " / 12:00";
+          applyProgress();
+        }, forward ? 150 : 170);
+      }
+
+      function showImmediate(nextIndex) {
+        i = Math.max(0, Math.min(nextIndex, total - 1));
+        slides.forEach(function (s, idx) {
+          s.classList.toggle("active", idx === i);
+        });
+        document.getElementById("progress").textContent =
+          String(i + 1).padStart(2, "0") + " / " + String(total).padStart(2, "0");
+        document.getElementById("clock").textContent =
+          "~" + (cumulativeEnd[i] || "—") + " / 12:00";
+        applyProgress();
+      }
+
+      document.getElementById("prev").addEventListener("click", function () { show(i - 1); });
+      document.getElementById("next").addEventListener("click", function () { show(i + 1); });
+
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "f" || e.key === "F") {
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(function () {});
+          } else {
+            document.exitFullscreen();
+          }
+          e.preventDefault();
+          return;
+        }
+        if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") {
+          e.preventDefault();
+          show(i + 1);
+        } else if (e.key === "ArrowLeft" || e.key === "PageUp") {
+          e.preventDefault();
+          show(i - 1);
+        } else if (e.key === "Home") {
+          e.preventDefault();
+          showImmediate(0);
+        } else if (e.key === "End") {
+          e.preventDefault();
+          showImmediate(total - 1);
+        }
+      });
+
+      deck.addEventListener("click", function (e) {
+        if (e.target.closest(".btn") || e.target.closest("button")) return;
+        var w = window.innerWidth;
+        if (e.clientX > w * 0.55) show(i + 1);
+        else show(i - 1);
+      });
+
+      showImmediate(0);
+    })();
+  </script>
+</body>
+</html>
