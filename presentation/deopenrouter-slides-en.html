@@ -616,10 +616,24 @@
     <!-- 8 -->
     <section class="slide-frame" data-slide>
       <div class="slide-inner">
-        <p class="kicker"><span class="dot" aria-hidden="true"></span>Weakness and Future Development</p>
-        <h2>Economic security</h2>
-        <p class="lead">Economic safety still depends on multisig and treasury configuration. The chain implements slashing <strong>delay + challenge</strong> and auditor <strong>allowlisted multisig</strong>, but there is no full arbitration market, escrow settlement, or cryptographic proof of correct inference.</p>
-        
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Trust Boundary · Risks · Roadmap</p>
+        <h2>What is secured now, and what is next</h2>
+        <div class="grid-2">
+          <div class="card">
+            <h3>Already in place</h3>
+            <p>On-chain <span class="mono">delay + challenge</span> for slashing, role rotation with two-step acceptance, and auditable hash anchoring via <span class="mono">recordAudit*</span>.</p>
+          </div>
+          <div class="card">
+            <h3>Current gap (MVP boundary)</h3>
+            <p>Security still depends on multisig/treasury operations. Quorum logic is mostly off-chain; there is no full arbitration market, escrow settlement, or proof of correct inference.</p>
+          </div>
+        </div>
+        <ul class="clean" style="margin-top: 1.2rem;">
+          <li><strong>Governance hardening first:</strong> move <span class="mono">auditRecorder</span> and <span class="mono">slashTreasury</span> to independent multisig control.</li>
+          <li><strong>Evidence quality next:</strong> public canonical audit reports with stable URI + reproducible hash verification.</li>
+          <li><strong>Crypto guarantees later:</strong> selectively add TEE / ZK / AVS only for high-value claims.</li>
+        </ul>
+        <p class="footnote">Key message: this project is a pragmatic trust-minimization MVP, not a fully trustless inference network yet.</p>
       </div>
     </section>
 
