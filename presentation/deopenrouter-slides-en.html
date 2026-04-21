@@ -471,9 +471,10 @@
         <h2>What the repository contains</h2>
         <ul class="clean">
           <li><strong>Smart contract marketplace:</strong> registration, stake, delayed price changes, per-call settlement, slashing, audit anchoring</li>
-          <li><strong>Web app:</strong> separate user and provider flows; browse, register, invoke</li>
+          <li><strong>Web app:</strong> separate user and provider flows; browse, register, invoke (some on-chain detail panels are MVP mock layouts)</li>
           <li><strong>Relay API:</strong> local mock or upstream OpenRouter proxy</li>
           <li><strong>Audit server:</strong> structured checks on the relay; summaries can be written back on-chain</li>
+          <li><strong>MVP UI data model:</strong> certain marketplace/history views intentionally merge demo rows with live chain-backed rows</li>
         </ul>
         <p class="footnote">Paths: <span class="mono">contracts/</span> · <span class="mono">apps/web/</span> · <span class="mono">apps/api/</span> · <span class="mono">apps/audit-server/</span> · <span class="mono">docs/</span></p>
       </div>
@@ -488,7 +489,7 @@
           <li>Provider registers on-chain: price, stake, metadata URI, identity and capability hashes, <span class="mono">endpointCommitment</span></li>
           <li>Web lists providers; users can simulate calls via the relay API</li>
           <li>Client hashes request and response, then calls on-chain <span class="mono">invoke(...)</span> with payment</li>
-          <li>Contract transfers fees, stores the call record, emits <span class="mono">CallRecorded</span></li>
+          <li>Contract applies delayed price when due, transfers fees, refunds overpayment, stores call record, emits <span class="mono">CallRecorded</span></li>
           <li>If auditing is enabled: probe relay off-chain → canonical JSON → optional off-chain publish → <span class="mono">recordAudit</span> / <span class="mono">recordAuditWithUri</span> anchors <span class="mono">keccak256(canonicalJson)</span></li>
         </ol>
       </div>
@@ -503,10 +504,10 @@
         <ul class="clean">
           <li><span class="mono">register</span> — stake and register a new provider</li>
           <li><span class="mono">updateProviderMetadata</span> — <span class="mono">metadataURI</span>, <span class="mono">metadataHash</span>, <span class="mono">identityHash</span></li>
-          <li><span class="mono">announcePriceChange</span> / <span class="mono">getEffectivePrice</span> — delayed activation; read-only effective price</li>
+          <li><span class="mono">announcePriceChange</span> / <span class="mono">getEffectivePrice</span> — delayed activation; pending price is lazily applied in state-changing paths</li>
           <li><span class="mono">getProviderCore</span> — compact read of owner, price, stake, slash metadata</li>
-          <li><span class="mono">invoke</span> — collect payment, store hashes, emit <span class="mono">CallRecorded</span></li>
-          <li><span class="mono">deactivate</span> + <span class="mono">withdrawStake</span> — deactivate and withdraw stake after lock</li>
+          <li><span class="mono">invoke</span> — collect payment, refund excess ETH, store hashes, emit <span class="mono">CallRecorded</span></li>
+          <li><span class="mono">deactivate</span> + <span class="mono">withdrawStake</span> — withdraw requires deactivation and stake lock expiry</li>
         </ul>
       </div>
     </section>
@@ -517,9 +518,10 @@
         <p class="kicker"><span class="dot" aria-hidden="true"></span>Implementation · Governance</p>
         <h2>Governance, audit, and slashing</h2>
         <ul class="clean">
-          <li><strong>Governance:</strong> <span class="mono">proposeSlashOperator</span> / <span class="mono">acceptSlashOperator</span>; <span class="mono">proposeAuditRecorder</span> / <span class="mono">acceptAuditRecorder</span>; <span class="mono">setSlashTreasury</span>; <span class="mono">setSlashChallengePeriodBlocks</span></li>
-          <li><strong>Audit:</strong> <span class="mono">recordAudit</span>, <span class="mono">recordAuditWithUri</span>, <span class="mono">beginAuditRound</span>, <span class="mono">setAuditor</span>, multisig <span class="mono">attestAudit</span></li>
-          <li><strong>Slashing:</strong> <span class="mono">proposeSlash</span> → <span class="mono">challengeSlashProposal</span> (challenge window) → <span class="mono">finalizeSlashProposal</span> (ETH to <span class="mono">slashTreasury</span>)</li>
+          <li><strong>Governance:</strong> critical role changes are two-step (<span class="mono">propose*</span> → <span class="mono">accept*</span>), with treasury/challenge-period parameters on-chain</li>
+          <li><strong>Audit:</strong> <span class="mono">recordAudit</span>/<span class="mono">recordAuditWithUri</span> for direct anchoring; round flow is <span class="mono">beginAuditRound</span> + allowlisted <span class="mono">attestAudit</span> (deduped per auditor/round)</li>
+          <li><strong>Important boundary:</strong> auditor quorum aggregation is mostly off-chain in this MVP; chain stores attestations and anchors</li>
+          <li><strong>Slashing:</strong> <span class="mono">proposeSlash</span> → <span class="mono">challengeSlashProposal</span> → <span class="mono">finalizeSlashProposal</span> (ETH to <span class="mono">slashTreasury</span>)</li>
         </ul>
       </div>
     </section>
@@ -553,18 +555,18 @@
     <section class="slide-frame" data-slide>
       <div class="slide-inner">
         <p class="kicker"><span class="dot" aria-hidden="true"></span>Implementation · Demo</p>
-        <h2>Stack and local demo path</h2>
+        <h2>Demo runbook and engineering reality</h2>
         <div class="grid-2">
           <div class="card">
-            <h3>Stack</h3>
-            <p>Solidity 0.8.24, Foundry · Next.js 14, wagmi, viem · Hono · Python 3.11+, FastAPI</p>
+            <h3>Live setup</h3>
+            <p>Anvil 31337 + marketplace deploy; web on 3020, relay on 8787, audit server on 8765. Relay falls back to deterministic <span class="mono">echo:</span> mode without OpenRouter key.</p>
           </div>
           <div class="card">
-            <h3>Demo sketch</h3>
-            <p>Anvil (chain id 31337) → deploy <span class="mono">DeOpenRouterMarketplace(100,100)</span> → relay + web → wallet → Provider tab → User tab → optional audit scheduler in relay env</p>
+            <h3>Operational details</h3>
+            <p><span class="mono">/v1/chat</span> and <span class="mono">/v1/chat/completions</span> are intentionally different. <span class="mono">/health</span> reports why audit scheduler is disabled when env requirements are missing.</p>
           </div>
         </div>
-        <p class="footnote">CLI-only loop: <span class="mono">contracts/LOCAL_LOOP.md</span>. Tests: <span class="mono">forge test</span>, web/API tests, <span class="mono">pytest</span> for audit server — see README.</p>
+        <p class="footnote">Reality check: contracts have the strongest CI path today; app-layer CI is lighter and a clear next hardening step. CLI-only loop: <span class="mono">contracts/LOCAL_LOOP.md</span>.</p>
       </div>
     </section>
 
