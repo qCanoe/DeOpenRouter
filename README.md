@@ -121,11 +121,42 @@ Available endpoints:
 - `GET /health`
 - `POST /v1/chat`
 - `POST /v1/chat/completions`
+- `POST /v1/audit/trigger`
 
 Behavior:
 
-- without `OPENROUTER_API_KEY`, the API returns a local `echo:<prompt>` response for offline development
-- with `OPENROUTER_API_KEY`, the API proxies to OpenRouter
+- without `OPENROUTER_API_KEY`, the API returns a local `echo:<prompt>` response for offline development, plus a synthetic `id` and structured `usage`
+- with `OPENROUTER_API_KEY`, the API proxies to OpenRouter and forwards `id`, token usage, and `usage.cost` when OpenRouter includes them
+- `GET /health` reports relay mode plus audit scheduler state and `audit.onDemandReady`
+- `POST /v1/audit/trigger` accepts `{ "transactionHash": "0x..." }`, decodes a successful `register` transaction, and runs one audit for the newly registered provider
+
+Response shape highlights:
+
+```json
+{
+  "id": "chatcmpl-or-mock-id",
+  "model": "openai/gpt-4o-mini",
+  "response": "hello",
+  "usage": {
+    "prompt_tokens": 12,
+    "completion_tokens": 34,
+    "total_tokens": 46,
+    "cost": 0.0000123
+  }
+}
+```
+
+```json
+{
+  "ok": true,
+  "mode": "openrouter",
+  "audit": {
+    "enabled": true,
+    "configured": true,
+    "onDemandReady": true
+  }
+}
+```
 
 ### 4. Start the web app
 
@@ -141,8 +172,10 @@ Open [http://localhost:3020](http://localhost:3020) (see `apps/web/package.json`
 
 The web app has two main modes:
 
-- **User view:** inspect providers, simulate a prompt, submit an on-chain `invoke`, and browse anchored `AuditRecorded` events
-- **Provider view:** register providers, review your providers, and inspect incoming call activity
+- **User view:** inspect providers, open a per-provider playground, review anchored audit history, open an API access helper modal, and see session-local relay request receipts alongside demo rows
+- **Provider view:** register providers, review your providers, update metadata, manage lifecycle actions, and inspect incoming call activity
+
+When the audit relay is configured, the web app also POSTs the registration transaction hash to `POST /v1/audit/trigger` after a successful provider registration so the new provider can receive an immediate audit anchor.
 
 ### 5. Optional: start the audit server
 
@@ -195,7 +228,7 @@ For request examples and audit-specific options, see `apps/audit-server/README.m
 | `AUDIT_INTERVAL_MS` | No | Enables periodic audit scheduling when greater than `0` |
 | `AUDIT_SERVER_URL` | No | Audit server base URL, usually `http://127.0.0.1:8765` |
 | `AUDIT_RELAY_BASE_URL` | No | Relay base URL to probe; defaults to the local API |
-| `AUDIT_PROVIDER_ID` | No | Provider ID used when anchoring `recordAudit(...)` |
+| `AUDIT_PROVIDER_ID` | No | Provider ID used by the periodic scheduler when anchoring `recordAudit(...)`; on-demand audit derives the provider ID from the registration tx receipt |
 | `AUDIT_TIMEOUT_SEC` | No | Audit request timeout passed through to the audit server |
 | `CHAIN_RPC_URL` | No | EVM RPC URL for `recordAudit(...)` transactions |
 | `CHAIN_ID` | No | Defaults to `31337` (Anvil); set to match your RPC network |
@@ -203,15 +236,20 @@ For request examples and audit-specific options, see `apps/audit-server/README.m
 | `AUDIT_PRIVATE_KEY` | No | Signer for audit anchoring; typically the deployer in this MVP |
 | `AUDIT_REPORT_PUBLISH_URL` | No | `POST` canonical JSON; response is a plain URI or JSON `{ uri, url, cid }` |
 
+For `POST /v1/audit/trigger`, the relay must have `AUDIT_SERVER_URL`, `MARKETPLACE_ADDRESS`, `AUDIT_PRIVATE_KEY`, and `OPENROUTER_API_KEY` configured; otherwise `/health` reports `audit.onDemandReady: false` and the trigger endpoint returns `503`.
+
 ## Local Demo Flow
+
+**Step-by-step runbook (Chinese):** [`docs/DEMO_RUN.zh-CN.md`](docs/DEMO_RUN.zh-CN.md).
 
 Once the stack is running:
 
 1. Open the web app and connect an Anvil-funded wallet.
 2. Switch to the **Provider** tab and register a provider.
-3. Switch to the **User** tab and invoke that provider.
-4. Inspect emitted records in the UI or on-chain logs.
-5. Optionally enable the audit scheduler in `apps/api/.env` to anchor audit reports periodically.
+3. If the audit relay is configured, the frontend automatically calls `POST /v1/audit/trigger` after the register transaction confirms, anchoring an initial audit for that provider.
+4. Switch to the **User** tab and invoke that provider from the playground.
+5. Inspect emitted call records, per-provider audit history, and relay request receipts in the UI or on-chain logs.
+6. Optionally enable the audit scheduler in `apps/api/.env` to anchor audit reports periodically after the first on-demand audit.
 
 For a terminal-only walkthrough without the frontend, see `contracts/LOCAL_LOOP.md`.
 

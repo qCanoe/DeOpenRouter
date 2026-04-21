@@ -121,11 +121,42 @@ npm run dev
 - `GET /health`
 - `POST /v1/chat`
 - `POST /v1/chat/completions`
+- `POST /v1/audit/trigger`
 
 行为说明：
 
-- 未设置 `OPENROUTER_API_KEY` 时，API 返回本地 `echo:<prompt>`，方便离线开发
-- 设置 `OPENROUTER_API_KEY` 后，API 会代理到 OpenRouter
+- 未设置 `OPENROUTER_API_KEY` 时，API 返回本地 `echo:<prompt>`，并附带合成的 `id` 与结构化 `usage`，方便离线开发
+- 设置 `OPENROUTER_API_KEY` 后，API 会代理到 OpenRouter，并在上游提供时透传 `id`、token 用量与 `usage.cost`
+- `GET /health` 会返回 relay 模式、审计调度器状态，以及 `audit.onDemandReady`
+- `POST /v1/audit/trigger` 接收 `{ "transactionHash": "0x..." }`，解码成功的 `register` 交易，并为新注册的 provider 执行一次单次审计
+
+返回结构重点：
+
+```json
+{
+  "id": "chatcmpl-or-mock-id",
+  "model": "openai/gpt-4o-mini",
+  "response": "hello",
+  "usage": {
+    "prompt_tokens": 12,
+    "completion_tokens": 34,
+    "total_tokens": 46,
+    "cost": 0.0000123
+  }
+}
+```
+
+```json
+{
+  "ok": true,
+  "mode": "openrouter",
+  "audit": {
+    "enabled": true,
+    "configured": true,
+    "onDemandReady": true
+  }
+}
+```
 
 ### 4. 启动 Web 前端
 
@@ -141,8 +172,10 @@ npm run dev
 
 前端包含两个主要模式：
 
-- **用户视角**：查看提供方、模拟 prompt、提交链上 `invoke`、浏览已锚定的 `AuditRecorded` 事件
-- **提供方视角**：注册提供方、查看自己的提供方、检查来电记录
+- **用户视角**：查看提供方、打开单个 provider 的 playground、查看审计历史、打开 API access 辅助弹窗，并在 demo 行之上看到当前会话内的 relay 请求回执
+- **提供方视角**：注册提供方、查看自己的提供方、更新元数据、管理生命周期操作，并检查来电记录
+
+当审计 relay 配置完整后，Web 前端会在 provider 注册成功后自动把交易哈希 POST 到 `POST /v1/audit/trigger`，为新 provider 补上一条即时审计锚定。
 
 ### 5. 可选：启动审计服务
 
@@ -195,7 +228,7 @@ uvicorn main:app --app-dir src --host 0.0.0.0 --port 8765
 | `AUDIT_INTERVAL_MS` | 否 | 大于 `0` 时启用定时审计调度 |
 | `AUDIT_SERVER_URL` | 否 | 审计服务地址，通常是 `http://127.0.0.1:8765` |
 | `AUDIT_RELAY_BASE_URL` | 否 | 要被探测的 relay 地址，默认就是本地 API |
-| `AUDIT_PROVIDER_ID` | 否 | 调用 `recordAudit(...)` 时使用的 provider ID |
+| `AUDIT_PROVIDER_ID` | 否 | 定时审计调度调用 `recordAudit(...)` 时使用的 provider ID；单次触发审计会从注册交易回执里自动解出 provider ID |
 | `AUDIT_TIMEOUT_SEC` | 否 | 透传给审计服务的超时秒数 |
 | `CHAIN_RPC_URL` | 否 | 审计锚定交易使用的 EVM RPC |
 | `CHAIN_ID` | 否 | 默认 `31337`（Anvil）；需与 RPC 网络一致 |
@@ -203,15 +236,20 @@ uvicorn main:app --app-dir src --host 0.0.0.0 --port 8765
 | `AUDIT_PRIVATE_KEY` | 否 | 审计锚定签名私钥；当前 MVP 通常使用部署者账户 |
 | `AUDIT_REPORT_PUBLISH_URL` | 否 | `POST` 规范 JSON；响应为纯文本 URI 或 JSON `{ uri, url, cid }` |
 
+如果要使用 `POST /v1/audit/trigger`，relay 需要配置 `AUDIT_SERVER_URL`、`MARKETPLACE_ADDRESS`、`AUDIT_PRIVATE_KEY` 和 `OPENROUTER_API_KEY`；否则 `/health` 会显示 `audit.onDemandReady: false`，触发接口会返回 `503`。
+
 ## 本地演示路径
+
+**分步骤启动服务与配置说明：** 见 [`docs/DEMO_RUN.zh-CN.md`](docs/DEMO_RUN.zh-CN.md)。
 
 把整套服务跑起来后，推荐这样体验：
 
 1. 打开 Web 并连接一个带测试币的 Anvil 钱包。
 2. 进入 **Provider** 页签，注册一个提供方。
-3. 切到 **User** 页签，对这个提供方发起一次调用。
-4. 在前端或链上日志里查看调用记录。
-5. 如需演示审计锚定，可在 `apps/api/.env` 中开启审计调度。
+3. 如果审计 relay 已配置好，前端会在注册交易确认后自动调用 `POST /v1/audit/trigger`，为该 provider 立即锚定第一条审计记录。
+4. 切到 **User** 页签，在 playground 里对这个提供方发起一次调用。
+5. 在前端或链上日志里查看调用记录、provider 级审计历史，以及 relay 请求回执。
+6. 如需持续演示审计锚定，可在 `apps/api/.env` 中开启定时审计调度，在首次单次审计之后继续周期性写链。
 
 如果你只想走命令行流程、不使用前端，请查看 `contracts/LOCAL_LOOP.md`。
 
