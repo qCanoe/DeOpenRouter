@@ -584,24 +584,58 @@
 
     <!-- 7 -->
     <section class="slide-frame" data-slide>
-      <div class="slide-inner">
+      <div class="slide-inner" style="max-width: 72rem;">
         <p class="kicker"><span class="dot" aria-hidden="true"></span>Governance</p>
-        <h2>Who governs, how audits work, how slashing executes</h2>
-        <div class="grid-2">
-          <div class="card">
-            <h3>Role model</h3>
-            <p><span class="mono">slashOperator</span>, <span class="mono">auditRecorder</span>, and <span class="mono">slashTreasury</span> are explicit on-chain roles. Critical role rotation is two-step: <span class="mono">propose*</span> → <span class="mono">accept*</span>.</p>
+        <h2>Governance, Roles &amp; Slashing</h2>
+        <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 2.5rem; margin-top: 2rem; align-items: stretch;">
+          
+          <!-- Left side: Slashing Lifecycle -->
+          <div style="background: linear-gradient(145deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.01) 100%); border: 1px solid var(--line); border-radius: 4px; padding: 2rem;">
+            <h3 style="font-size: 0.85rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 1.5rem; border-bottom: 1px solid var(--line); padding-bottom: 0.8rem;">The Slashing Lifecycle</h3>
+            
+            <div style="display: flex; flex-direction: column; gap: 1.6rem; position: relative;">
+              <div style="position: absolute; left: 0.7rem; top: 1.5rem; bottom: 1.5rem; width: 1px; background: dashed 1px var(--line-strong); z-index: 0;"></div>
+              
+              <div style="display: flex; gap: 1.2rem; position: relative; z-index: 1;">
+                <div style="width: 1.5rem; height: 1.5rem; border-radius: 50%; background: var(--bg0); border: 2px solid #f87171; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 0.1rem;"></div>
+                <div>
+                  <div style="font-family: 'IBM Plex Mono', monospace; font-size: 1.05rem; color: #f87171; margin-bottom: 0.3rem;">proposeSlash()</div>
+                  <p style="font-size: 1rem; color: var(--fg-soft); line-height: 1.5;">Initiated by <span class="mono">slashOperator</span>. Marks the provider as penalized.</p>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 1.2rem; position: relative; z-index: 1;">
+                <div style="width: 1.5rem; height: 1.5rem; border-radius: 50%; background: var(--bg0); border: 2px solid #fbbf24; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 0.1rem;"></div>
+                <div>
+                  <div style="font-family: 'IBM Plex Mono', monospace; font-size: 1.05rem; color: #fbbf24; margin-bottom: 0.3rem;">challengeSlashProposal()</div>
+                  <p style="font-size: 1rem; color: var(--fg-soft); line-height: 1.5;">Provider disputes within the challenge window to block execution.</p>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 1.2rem; position: relative; z-index: 1;">
+                <div style="width: 1.5rem; height: 1.5rem; border-radius: 50%; background: var(--bg0); border: 2px solid #60a5fa; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 0.1rem;"></div>
+                <div>
+                  <div style="font-family: 'IBM Plex Mono', monospace; font-size: 1.05rem; color: #60a5fa; margin-bottom: 0.3rem;">finalizeSlashProposal()</div>
+                  <p style="font-size: 1rem; color: var(--fg-soft); line-height: 1.5;">ETH is seized and routed to the <span class="mono">slashTreasury</span> multisig.</p>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="card">
-            <h3>Audit flow</h3>
-            <p>Direct anchoring via <span class="mono">recordAudit*</span>, or round-based flow via <span class="mono">beginAuditRound</span> + allowlisted <span class="mono">attestAudit</span>. MVP quorum aggregation remains mostly off-chain.</p>
+          
+          <!-- Right side: Roles and Audits -->
+          <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--line); border-radius: 4px; padding: 1.5rem;">
+              <h3 style="font-size: 0.85rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.8rem;">Role Rotation Safety</h3>
+              <p style="font-size: 1.05rem; color: var(--fg-soft); line-height: 1.6;">Critical roles (<span class="mono">slashOperator</span>, <span class="mono">auditRecorder</span>, <span class="mono">slashTreasury</span>) require a two-step <span class="mono" style="color: #a78bfa;">propose* → accept*</span> handshake to prevent accidental loss of control.</p>
+            </div>
+            
+            <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--line); border-radius: 4px; padding: 1.5rem;">
+              <h3 style="font-size: 0.85rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.8rem;">Multi-Auditor Flow</h3>
+              <p style="font-size: 1.05rem; color: var(--fg-soft); line-height: 1.6;">Beyond direct anchoring, a round-based flow (<span class="mono" style="color: #34d399;">beginAuditRound</span> + <span class="mono" style="color: #34d399;">attestAudit</span>) allows an allowlisted quorum of auditors to submit findings.</p>
+            </div>
           </div>
+          
         </div>
-        <ul class="clean" style="margin-top:1.2rem;">
-          <li><strong>Slashing lifecycle:</strong> <span class="mono">proposeSlash</span> → provider may <span class="mono">challengeSlashProposal</span> during challenge window → <span class="mono">finalizeSlashProposal</span>.</li>
-          <li><strong>Fund destination:</strong> slashed ETH goes to configurable <span class="mono">slashTreasury</span> rather than defaulting to the operator.</li>
-          <li><strong>Governance parameterization:</strong> challenge-period and treasury settings stay transparent and queryable on-chain.</li>
-        </ul>
       </div>
     </section>
 
@@ -610,59 +644,59 @@
       <div class="slide-inner" style="max-width: 72rem;">
         <p class="kicker"><span class="dot" aria-hidden="true"></span>Audit Capability</p>
         <h2>6D Risk Matrix & On-Chain Anchoring</h2>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; align-items: start; margin-top: 1.5rem;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3.5rem; align-items: center; margin-top: 2rem;">
           
-          <!-- Left: 6D Breakdown -->
+          <!-- Left: Flow -->
           <div>
-            <div style="background: linear-gradient(145deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.01) 100%); border: 1px solid var(--line); border-radius: 4px; padding: 1.5rem;">
-              <h3 style="font-size: 0.8rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 1.2rem; border-bottom: 1px solid var(--line); padding-bottom: 0.5rem;">Comprehensive 6D Checks</h3>
-              <ul style="list-style: none; padding: 0; margin: 0; color: var(--fg-soft); font-size: 1.05rem; line-height: 1.6;">
-                <li style="margin-bottom: 0.8rem;">
-                  <strong style="color: var(--fg); display: inline-block; width: 4.5rem;">D1-D2</strong> 
-                  <span style="color: var(--dim);">|</span> Hidden injection &amp; override
-                </li>
-                <li style="margin-bottom: 0.8rem;">
-                  <strong style="color: var(--fg); display: inline-block; width: 4.5rem;">D3-D4</strong> 
-                  <span style="color: var(--dim);">|</span> Tool substitution &amp; leak
-                </li>
-                <li>
-                  <strong style="color: var(--fg); display: inline-block; width: 4.5rem;">D5-D6</strong> 
-                  <span style="color: var(--dim);">|</span> Stream integrity &amp; Web3 risk
-                </li>
-              </ul>
-              <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px dashed var(--line-strong);">
-                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem; color: #34d399; background: rgba(52, 211, 153, 0.1); padding: 0.2rem 0.5rem; border-radius: 2px;">LOW</span>
-                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem; color: #fbbf24; background: rgba(251, 191, 36, 0.1); padding: 0.2rem 0.5rem; border-radius: 2px; margin: 0 0.5rem;">MEDIUM</span>
-                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem; color: #f87171; background: rgba(248, 113, 113, 0.1); padding: 0.2rem 0.5rem; border-radius: 2px;">HIGH</span>
+            <div style="display: flex; flex-direction: column; gap: 2rem;">
+              <div style="display: flex; gap: 1.5rem; align-items: flex-start;">
+                <div style="font-family: 'IBM Plex Mono', monospace; color: var(--dim); font-size: 1.5rem; font-weight: 500; line-height: 1;">01</div>
+                <div>
+                  <h4 style="font-size: 1.25rem; font-weight: 500; color: var(--fg); margin-bottom: 0.4rem;">Execute Audit</h4>
+                  <p style="font-size: 1.05rem; color: var(--muted); line-height: 1.5;"><span class="mono">POST /v1/audit</span> on the <span class="mono">FastAPI</span> server runs structural probes against Relay API.</p>
+                </div>
+              </div>
+              
+              <div style="display: flex; gap: 1.5rem; align-items: flex-start;">
+                <div style="font-family: 'IBM Plex Mono', monospace; color: var(--dim); font-size: 1.5rem; font-weight: 500; line-height: 1;">02</div>
+                <div>
+                  <h4 style="font-size: 1.25rem; font-weight: 500; color: var(--fg); margin-bottom: 0.4rem;">Canonical Hash</h4>
+                  <p style="font-size: 1.05rem; color: var(--muted); line-height: 1.5;">Report JSON is canonically serialized and hashed to produce deterministic evidence.</p>
+                </div>
+              </div>
+              
+              <div style="display: flex; gap: 1.5rem; align-items: flex-start;">
+                <div style="font-family: 'IBM Plex Mono', monospace; color: var(--dim); font-size: 1.5rem; font-weight: 500; line-height: 1;">03</div>
+                <div>
+                  <h4 style="font-size: 1.25rem; font-weight: 500; color: var(--fg); margin-bottom: 0.4rem;">On-Chain Anchoring</h4>
+                  <p style="font-size: 1.05rem; color: var(--muted); line-height: 1.5;">Scheduler writes <span class="mono">reportHash</span> via <span class="mono" style="color: #60a5fa;">recordAudit</span> for public verification.</p>
+                </div>
               </div>
             </div>
           </div>
-          
-          <!-- Right: Flow -->
+
+          <!-- Right: 6D Breakdown -->
           <div>
-            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-              <div style="display: flex; gap: 1rem;">
-                <div style="font-family: 'IBM Plex Mono', monospace; color: var(--dim); font-size: 1.2rem; font-weight: 500;">01</div>
-                <div>
-                  <h4 style="font-size: 1.1rem; font-weight: 500; color: var(--fg); margin-bottom: 0.3rem;">Execute Audit</h4>
-                  <p style="font-size: 0.95rem; color: var(--muted); line-height: 1.5;"><span class="mono">POST /v1/audit</span> runs probes against Relay API and returns structured JSON.</p>
-                </div>
-              </div>
-              
-              <div style="display: flex; gap: 1rem;">
-                <div style="font-family: 'IBM Plex Mono', monospace; color: var(--dim); font-size: 1.2rem; font-weight: 500;">02</div>
-                <div>
-                  <h4 style="font-size: 1.1rem; font-weight: 500; color: var(--fg); margin-bottom: 0.3rem;">Canonical Hash</h4>
-                  <p style="font-size: 0.95rem; color: var(--muted); line-height: 1.5;">JSON is canonically serialized and hashed. Evidence becomes deterministic.</p>
-                </div>
-              </div>
-              
-              <div style="display: flex; gap: 1rem;">
-                <div style="font-family: 'IBM Plex Mono', monospace; color: var(--dim); font-size: 1.2rem; font-weight: 500;">03</div>
-                <div>
-                  <h4 style="font-size: 1.1rem; font-weight: 500; color: var(--fg); margin-bottom: 0.3rem;">On-Chain Anchoring</h4>
-                  <p style="font-size: 0.95rem; color: var(--muted); line-height: 1.5;">Scheduler writes <span class="mono">reportHash</span> and risk level via <span class="mono" style="color: #60a5fa;">recordAudit</span> for public verification.</p>
-                </div>
+            <div style="background: linear-gradient(145deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.01) 100%); border: 1px solid var(--line); border-radius: 4px; padding: 2rem;">
+              <h3 style="font-size: 0.85rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 1.5rem; border-bottom: 1px solid var(--line); padding-bottom: 0.8rem;">Comprehensive 6D Checks</h3>
+              <ul style="list-style: none; padding: 0; margin: 0; color: var(--fg-soft); font-size: 1.15rem; line-height: 1.8;">
+                <li style="margin-bottom: 1rem;">
+                  <strong style="color: var(--fg); display: inline-block; width: 5.5rem;">D1-D2</strong> 
+                  <span style="color: var(--dim);">|</span> Hidden injection &amp; override
+                </li>
+                <li style="margin-bottom: 1rem;">
+                  <strong style="color: var(--fg); display: inline-block; width: 5.5rem;">D3-D4</strong> 
+                  <span style="color: var(--dim);">|</span> Tool substitution &amp; leak
+                </li>
+                <li>
+                  <strong style="color: var(--fg); display: inline-block; width: 5.5rem;">D5-D6</strong> 
+                  <span style="color: var(--dim);">|</span> Stream integrity &amp; Web3 risk
+                </li>
+              </ul>
+              <div style="margin-top: 2rem; padding-top: 1.2rem; border-top: 1px dashed var(--line-strong); display: flex; justify-content: space-between;">
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 0.95rem; color: #34d399; background: rgba(52, 211, 153, 0.1); padding: 0.3rem 0.8rem; border-radius: 2px;">LOW</span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 0.95rem; color: #fbbf24; background: rgba(251, 191, 36, 0.1); padding: 0.3rem 0.8rem; border-radius: 2px;">MEDIUM</span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 0.95rem; color: #f87171; background: rgba(248, 113, 113, 0.1); padding: 0.3rem 0.8rem; border-radius: 2px;">HIGH</span>
               </div>
             </div>
           </div>
