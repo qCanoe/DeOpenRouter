@@ -625,6 +625,30 @@
     <!-- 8 -->
     <section class="slide-frame" data-slide>
       <div class="slide-inner">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Audit Capability</p>
+        <h2>How audit works in this project</h2>
+        <div class="grid-2">
+          <div class="card">
+            <h3>What is audited</h3>
+            <p>The audit server runs structured checks on the relay: injection/override behavior, tool-substitution risk, error leakage, stream integrity, and optional Web3 safety probes.</p>
+          </div>
+          <div class="card">
+            <h3>Risk output model</h3>
+            <p>Results are aggregated into a 6D-style matrix with <span class="mono">LOW / MEDIUM / HIGH</span> overall level plus machine-readable reasons and per-dimension flags.</p>
+          </div>
+        </div>
+        <ul class="clean" style="margin-top:1.2rem;">
+          <li><strong>Execution API:</strong> <span class="mono">POST /v1/audit</span> on <span class="mono">apps/audit-server</span> returns structured JSON.</li>
+          <li><strong>Canonical evidence:</strong> report JSON is canonically serialized and hashed to produce deterministic audit evidence.</li>
+          <li><strong>On-chain anchoring:</strong> relay scheduler can call <span class="mono">recordAudit</span> / <span class="mono">recordAuditWithUri</span> with <span class="mono">reportHash</span> and risk level for public verification.</li>
+        </ul>
+        <p class="footnote">Design intent: keep heavy audit computation off-chain, while making the final evidence and settlement-facing signal tamper-resistant on-chain.</p>
+      </div>
+    </section>
+
+    <!-- 9 -->
+    <section class="slide-frame" data-slide>
+      <div class="slide-inner">
         <p class="kicker"><span class="dot" aria-hidden="true"></span>Weakness and Future Development</p>
         <h2>Economic security</h2>
         <p class="lead">Economic safety still depends on multisig and treasury configuration. The chain implements slashing <strong>delay + challenge</strong> and auditor <strong>allowlisted multisig</strong>, but there is no full arbitration market, escrow settlement, or cryptographic proof of correct inference.</p>
@@ -632,7 +656,7 @@
     </section>
 
 
-    <!-- 9 -->
+    <!-- 10 -->
     <section class="slide-frame" data-slide>
       <div class="slide-inner">
         <p class="kicker"><span class="dot" aria-hidden="true"></span>Implementation · Demo</p>
@@ -659,7 +683,7 @@
       <button type="button" class="btn" id="next" aria-label="Next slide">→</button>
     </div>
     <div class="meta-block">
-      <span id="progress">01 / 11</span>
+      <span id="progress">01 / 12</span>
     </div>
   </div>
 
