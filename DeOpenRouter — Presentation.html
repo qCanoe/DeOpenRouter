@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="DeOpenRouter — course presentation deck" />
+  <title>DeOpenRouter — Presentation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg0: #030303;
+      --bg1: #0a0a0c;
+      --fg: #fafaf9;
+      --fg-soft: #e7e5e4;
+      --muted: #a8a29e;
+      --dim: #57534e;
+      --line: rgba(255, 255, 255, 0.06);
+      --line-strong: rgba(255, 255, 255, 0.12);
+      --accent: #f5f5f4;
+      --pad: clamp(2.2rem, 5.4vw, 4.6rem);
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { font-size: 20px; }
+
+    html, body {
+      height: 100%;
+      background: var(--bg0);
+      color: var(--fg);
+      font-family: "Outfit", system-ui, sans-serif;
+      font-weight: 400;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 120% 80% at 50% -20%, rgba(255, 255, 255, 0.06), transparent 50%),
+        radial-gradient(ellipse 80% 60% at 100% 100%, rgba(255, 255, 255, 0.03), transparent 45%),
+        linear-gradient(180deg, var(--bg1) 0%, var(--bg0) 100%);
+      z-index: 0;
+    }
+
+    .deck {
+      position: relative;
+      z-index: 1;
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    .slide-frame {
+      position: absolute;
+      inset: 0;
+      padding: var(--pad);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transform: translateY(14px);
+      z-index: 0;
+      transition:
+        opacity 0.48s var(--ease),
+        transform 0.55s var(--ease);
+    }
+
+    .slide-frame.active {
+      display: flex;
+      opacity: 1;
+      transform: translateY(0);
+      z-index: 2;
+    }
+
+    .slide-frame.active.entering {
+      z-index: 3;
+    }
+
+    .slide-frame.exiting {
+      display: flex;
+      opacity: 0;
+      transform: translateY(-12px);
+      z-index: 1;
+      transition-duration: 0.36s;
+      pointer-events: none;
+    }
+
+    .slide-inner {
+      position: relative;
+      width: 100%;
+      max-width: 64rem;
+      padding-left: 1.45rem;
+      border-left: 2px solid var(--line-strong);
+    }
+
+    .slide-inner::before {
+      content: "";
+      position: absolute;
+      left: -2px;
+      top: 0;
+      width: 2px;
+      height: 2.5rem;
+      background: linear-gradient(180deg, var(--fg) 0%, transparent 100%);
+      opacity: 0.85;
+    }
+
+    .kicker {
+      font-size: 0.86rem;
+      font-weight: 500;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    .kicker .dot {
+      display: inline-block;
+      width: 4px;
+      height: 4px;
+      background: var(--fg);
+      opacity: 0.35;
+      margin-right: 0.65rem;
+      vertical-align: middle;
+      border-radius: 1px;
+    }
+
+    h1 {
+      font-size: clamp(2.35rem, 5.8vw, 3.9rem);
+      font-weight: 500;
+      letter-spacing: -0.03em;
+      line-height: 1.08;
+      margin-bottom: 1.25rem;
+      color: var(--fg);
+    }
+
+    h2 {
+      font-size: clamp(1.7rem, 3.8vw, 2.55rem);
+      font-weight: 500;
+      letter-spacing: -0.025em;
+      line-height: 1.18;
+      margin-bottom: 1.35rem;
+      color: var(--fg-soft);
+    }
+
+    .subtitle {
+      font-size: clamp(1.08rem, 2.1vw, 1.32rem);
+      font-weight: 300;
+      color: var(--muted);
+      line-height: 1.6;
+      max-width: 46rem;
+    }
+
+    .cover-meta {
+      margin-top: 2.25rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--line);
+      max-width: 46rem;
+    }
+
+    .cover-meta .names {
+      font-size: clamp(1.02rem, 1.85vw, 1.18rem);
+      font-weight: 300;
+      color: var(--fg-soft);
+      line-height: 1.65;
+      margin-bottom: 0.75rem;
+    }
+
+    .cover-meta .repo {
+      margin: 0;
+    }
+
+    .cover-meta .repo a {
+      font-family: var(--font-mono);
+      font-size: 0.92rem;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      color: var(--muted);
+      text-decoration: none;
+      border-bottom: 1px solid var(--line-strong);
+      transition: color 0.2s var(--ease), border-color 0.2s var(--ease);
+    }
+
+    .cover-meta .repo a:hover {
+      color: var(--fg-soft);
+      border-color: rgba(255, 255, 255, 0.22);
+    }
+
+    .lead {
+      font-size: clamp(1.12rem, 2.1vw, 1.36rem);
+      font-weight: 300;
+      color: var(--muted);
+      line-height: 1.68;
+      max-width: 60rem;
+    }
+
+    ul.clean {
+      list-style: none;
+      margin-top: 1.5rem;
+    }
+
+    ul.clean li {
+      position: relative;
+      padding-left: 1.2rem;
+      margin-bottom: 0.75rem;
+      font-size: clamp(1.08rem, 1.9vw, 1.28rem);
+      font-weight: 300;
+      line-height: 1.55;
+      color: var(--fg-soft);
+    }
+
+    ul.clean li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.62em;
+      width: 4px;
+      height: 4px;
+      background: var(--fg);
+      opacity: 0.45;
+      border-radius: 1px;
+    }
+
+    .mono {
+      font-family: var(--font-mono);
+      font-size: 0.9em;
+      font-weight: 400;
+      color: var(--accent);
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.25rem 2rem;
+      margin-top: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .grid-2 { grid-template-columns: 1fr; }
+      .code-showcase,
+      .evaluation-layout,
+      .pair-row,
+      .conclusion-grid {
+        grid-template-columns: 1fr;
+      }
+      .evaluation-grid {
+        grid-template-columns: 1fr;
+      }
+      .pair-cell + .pair-cell {
+        border-left: 0;
+        border-top: 1px solid var(--line);
+      }
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.01) 100%);
+      padding: 1.25rem 1.35rem;
+      border-radius: 2px;
+    }
+
+    .card h3 {
+      font-size: 0.74rem;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.55rem;
+    }
+
+    .card p {
+      font-size: 1.08rem;
+      font-weight: 300;
+      line-height: 1.55;
+      color: var(--fg-soft);
+    }
+
+    .rubric {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem 0.85rem;
+      margin-top: 1.75rem;
+    }
+
+    .rubric span {
+      font-size: 0.95rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      padding: 0.4rem 0.85rem;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .rubric strong {
+      color: var(--fg);
+      font-weight: 600;
+    }
+
+    /* Cover: less horizontal padding so text (esp. first name) sits closer to the left edge */
+    .cover-rubric span {
+      padding: 0.4rem 0.65rem 0.4rem 0.3rem;
+    }
+
+    .cover-rubric span:first-of-type {
+      padding-left: 0.12rem;
+    }
+
+    .steps {
+      counter-reset: step;
+      margin-top: 1.35rem;
+    }
+
+    .steps li {
+      counter-increment: step;
+      list-style: none;
+      margin-bottom: 0.8rem;
+      padding-left: 2.1rem;
+      position: relative;
+      font-size: clamp(1.02rem, 1.8vw, 1.22rem);
+      font-weight: 300;
+      line-height: 1.55;
+      color: var(--fg-soft);
+    }
+
+    .steps li::before {
+      content: counter(step, decimal-leading-zero);
+      position: absolute;
+      left: 0;
+      top: 0.08em;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--dim);
+      letter-spacing: 0.06em;
+    }
+
+    .footnote {
+      margin-top: 1.75rem;
+      font-size: 0.94rem;
+      font-weight: 300;
+      line-height: 1.55;
+      color: var(--dim);
+      max-width: 42rem;
+    }
+
+    .code-showcase {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 2rem;
+      margin-top: 2rem;
+      align-items: stretch;
+    }
+
+    .code-panel {
+      border: 1px solid var(--line-strong);
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.015) 100%);
+      border-radius: 4px;
+      overflow: hidden;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    }
+
+    .code-panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.8rem 1rem;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .code-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .code-chip {
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      color: var(--fg-soft);
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.03);
+      padding: 0.28rem 0.55rem;
+      border-radius: 999px;
+    }
+
+    .snippet-code {
+      margin: 0;
+      padding: 1.25rem 1.35rem 1.4rem;
+      font-family: var(--font-mono);
+      font-size: 0.88rem;
+      line-height: 1.7;
+      color: #e7e5e4;
+      white-space: pre-wrap;
+    }
+
+    .hl-purple { color: #c4b5fd; }
+    .hl-green { color: #6ee7b7; }
+    .hl-amber { color: #fcd34d; }
+    .hl-blue { color: #93c5fd; }
+    .hl-red { color: #fca5a5; }
+
+    .insight-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .insight-card {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 4px;
+      padding: 1.15rem 1.2rem;
+    }
+
+    .insight-eyebrow {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.55rem;
+    }
+
+    .insight-card p {
+      font-size: 1.08rem;
+      font-weight: 300;
+      line-height: 1.6;
+      color: var(--fg-soft);
+    }
+
+    .evaluation-layout {
+      display: grid;
+      grid-template-columns: 0.86fr 1.14fr;
+      gap: 1.35rem;
+      margin-top: 2rem;
+      align-items: stretch;
+    }
+
+    .evaluation-summary {
+      border: 1px solid var(--line-strong);
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.015) 100%);
+      border-radius: 4px;
+      padding: 1.7rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .metric-number {
+      font-family: var(--font-mono);
+      font-size: clamp(2.4rem, 5vw, 3.4rem);
+      color: var(--fg);
+      line-height: 1;
+      margin-bottom: 0.7rem;
+    }
+
+    .metric-caption {
+      font-size: 1.08rem;
+      line-height: 1.55;
+      color: var(--fg-soft);
+    }
+
+    .command-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-top: 1.2rem;
+    }
+
+    .command-pill {
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      color: var(--fg-soft);
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.03);
+      padding: 0.34rem 0.62rem;
+      border-radius: 999px;
+    }
+
+    .evaluation-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .eval-card {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 4px;
+      padding: 1.15rem 1.2rem;
+      min-height: 11.25rem;
+    }
+
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 0.22rem 0.5rem;
+      border-radius: 999px;
+      border: 1px solid rgba(52, 211, 153, 0.22);
+      color: #6ee7b7;
+      background: rgba(52, 211, 153, 0.08);
+      margin-bottom: 0.75rem;
+    }
+
+    .eval-card h3 {
+      font-size: 1.06rem;
+      font-weight: 500;
+      color: var(--fg);
+      margin-bottom: 0.45rem;
+    }
+
+    .eval-card p {
+      font-size: 1.05rem;
+      font-weight: 300;
+      line-height: 1.58;
+      color: var(--fg-soft);
+    }
+
+    .pair-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.95rem;
+      margin-top: 2rem;
+    }
+
+    .pair-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.015);
+    }
+
+    .pair-cell {
+      padding: 1.15rem 1.2rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .pair-cell + .pair-cell {
+      border-left: 1px solid var(--line);
+    }
+
+    .pair-cell.is-limit {
+      background: rgba(248, 113, 113, 0.045);
+    }
+
+    .pair-cell.is-direction {
+      background: rgba(96, 165, 250, 0.05);
+    }
+
+    .pair-title {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+      color: var(--muted);
+    }
+
+    .pair-cell p {
+      font-size: 1.05rem;
+      font-weight: 300;
+      line-height: 1.58;
+      color: var(--fg-soft);
+    }
+
+    .conclusion-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .conclusion-card {
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1.35rem 1.25rem;
+      min-height: 13rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.01) 100%);
+    }
+
+    .conclusion-index {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: var(--dim);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .conclusion-card p {
+      font-size: 1.22rem;
+      font-weight: 300;
+      line-height: 1.55;
+      color: var(--fg-soft);
+      margin-top: 1.5rem;
+    }
+
+    .demo-slide {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .demo-ring {
+      position: relative;
+      width: 4.5rem;
+      height: 4.5rem;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 2.5rem;
+    }
+
+    .demo-ring::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      border-radius: 50%;
+      border: 1px solid rgba(52, 211, 153, 0.4);
+      animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); opacity: 1; }
+      100% { transform: scale(1.5); opacity: 0; }
+    }
+
+    .demo-dot {
+      width: 0.8rem;
+      height: 0.8rem;
+      border-radius: 50%;
+      background: #34d399;
+      box-shadow: 0 0 12px rgba(52, 211, 153, 0.6);
+    }
+
+    .top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      z-index: 20;
+      background: var(--line);
+    }
+
+    .top-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--fg) 0%, rgba(250, 250, 249, 0.35) 100%);
+      transition: width 0.4s var(--ease);
+    }
+
+    .corner-brand {
+      position: fixed;
+      top: var(--pad);
+      right: var(--pad);
+      z-index: 15;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+
+    .controls {
+      position: fixed;
+      bottom: var(--pad);
+      left: var(--pad);
+      right: var(--pad);
+      z-index: 15;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      pointer-events: none;
+    }
+
+    .controls > * { pointer-events: auto; }
+
+    .btn-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn {
+      appearance: none;
+      border: 1px solid var(--line-strong);
+      background: rgba(0, 0, 0, 0.35);
+      color: var(--fg);
+      width: 3.2rem;
+      height: 3.2rem;
+      border-radius: 2px;
+      cursor: pointer;
+      font-size: 1.1rem;
+      line-height: 1;
+      transition: border-color 0.2s, background 0.2s, color 0.2s;
+    }
+
+    .btn:hover {
+      border-color: rgba(255, 255, 255, 0.28);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .btn:focus-visible {
+      outline: 1px solid var(--fg);
+      outline-offset: 3px;
+    }
+
+    .meta-block {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      letter-spacing: 0.12em;
+      color: var(--dim);
+      text-align: right;
+    }
+
+    .meta-block .row { margin-top: 0.2rem; color: var(--muted); }
+
+    .hint {
+      position: fixed;
+      bottom: calc(var(--pad) + 3.25rem);
+      left: var(--pad);
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      color: var(--dim);
+      z-index: 12;
+      max-width: 20rem;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 600px) {
+      .hint { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="top-bar" aria-hidden="true"><div class="top-bar-fill" id="progressFill" style="width: 0%;"></div></div>
+  <div class="corner-brand">DeOpenRouter</div>
+
+  <div class="deck" id="deck" aria-live="polite">
+    <section class="slide-frame active" data-slide>
+      <div class="slide-inner">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Decentralization &amp; Cryptocurrency</p >
+        <h1>DeOpenRouter</h1>
+        <p class="subtitle">A transparent, low-trust-assumption AI API marketplace prototype: Solidity, Next.js, Hono, and FastAPI. Trust coordination, pricing, payments, and audit anchoring on-chain; model inference off-chain.</p >
+        <div class="rubric cover-rubric" style="margin-top: 1.5rem;">
+          <span><strong>Yuyang Qin</strong> 122090433</span>
+          <span><strong>Wu Yulun</strong> 122090589</span>
+        </div>
+        <p class="footnote" style="margin-top: 1rem;">
+          Github: <a href="https://github.com/qCanoe/DeOpenRouter" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: underline; text-underline-offset: 3px;">github.com/qCanoe/DeOpenRouter</a>
+        </p>
+      </div>
+    </section>
+
+        <!-- 1 -->
+    <section class="slide-frame" data-slide="">
+      <div class="slide-inner">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Background</p>
+        <h2>The rise of centralized AI gateways</h2>
+        <p class="lead">We are in an era of exploding LLMs and AI applications. To connect to various models, developers face complex APIs and billing systems.</p>
+        <ul class="clean">
+          <li><strong>Centralized AI Gateways (e.g. OpenRouter)</strong> emerged to solve this.</li>
+          <li>They act as <strong>aggregators</strong>, providing a unified API to route to different models and settle costs in one place.</li>
+          <li>This model significantly lowers integration costs and improves efficiency.</li>
+          <li><strong>Current Reality:</strong> While AI capabilities grow, distribution and access heavily rely on centralized platforms.</li>
+        </ul>
+      </div>
+    </section>
+
+        <!-- 2 -->
+    <section class="slide-frame" data-slide="">
+      <div class="slide-inner">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Problem</p>
+        <h2>Centralized AI gateways are trust-heavy</h2>
+        <p class="lead">Typical routers consolidate pricing, routing, billing, and disputes under one operator. That is convenient, but users cannot easily verify quiet rule changes, whether a charge matched the published policy, or whether records could be rewritten after the fact.</p>
+        <ul class="clean">
+          <li><strong>Our narrative hook:</strong> which parts of the workflow belong on an EVM so rules and settlement are <strong>publicly observable and harder to tamper with</strong>?</li>
+          <li>We do <strong>not</strong> claim fully on-chain inference; we trade realism for clearer settlement and auditability.</li>
+        </ul>
+      </div>
+    </section>
+
+        <!-- 3 -->
+    <section class="slide-frame" data-slide="">
+      <div class="slide-inner">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Solutions</p>
+        <h2>What we move on-chain </h2>
+        <ul class="clean">
+          <li>Provider identity commitments and metadata <strong>registered publicly</strong></li>
+          <li>Price updates are <strong>not instantly effective</strong>; they have observable delay</li>
+          <li>Each paid call leaves an <strong>auditable on-chain record</strong></li>
+          <li>Stake can be reduced via an on-chain <strong>slashing proposal with a challenge window</strong>; proceeds go to configurable <span class="mono">slashTreasury</span></li>
+          <li>External audit outcomes can be <strong>anchored as report hashes</strong></li>
+        </ul>
+        <p class="lead" style="margin-top:1.35rem;">Inference stays off-chain for practicality; settlement and auditing become more transparent.</p>
+      </div>
+    </section>
+
+        <!-- 4 — Three Transparency Goals -->
+    <section class="slide-frame" data-slide="">
+      <div class="slide-inner" style="max-width: 72rem;">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Design Goals</p>
+        <h2>Three Transparency Properties</h2>
+        <p class="lead" style="margin-bottom: 2rem;">Each goal maps to a concrete on-chain mechanism.</p>
+
+        <div style="display: flex; flex-direction: column; gap: 1.1rem;">
+
+          <!-- Row 1: Price Transparency -->
+          <div style="display: grid; grid-template-columns: 1fr 1.1fr 1.4fr; gap: 0; border: 1px solid rgba(167,139,250,0.25); border-radius: 4px; overflow: hidden;">
+            <div style="background: rgba(167,139,250,0.08); border-right: 1px solid rgba(167,139,250,0.2); padding: 1.1rem 1.3rem; display: flex; align-items: center;">
+              <div>
+                <div style="font-size: 0.72rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: #a78bfa; margin-bottom: 0.35rem;">Goal</div>
+                <div style="font-size: 1.1rem; font-weight: 500; color: var(--fg);">Price Transparency</div>
+              </div>
+            </div>
+            <div style="background: rgba(167,139,250,0.04); border-right: 1px solid rgba(167,139,250,0.15); padding: 1.1rem 1.3rem; display: flex; align-items: center;">
+              <div>
+                <code style="font-family: var(--font-mono); font-size: 0.88rem; color: #c4b5fd; display: block; margin-bottom: 0.3rem;">announcePriceChange()</code>
+                <code style="font-family: var(--font-mono); font-size: 0.88rem; color: #c4b5fd;">priceDelayBlocks</code>
+              </div>
+            </div>
+            <div style="background: rgba(167,139,250,0.02); padding: 1.1rem 1.3rem; display: flex; align-items: center;">
+              <p style="font-size: 1rem; color: var(--fg-soft); line-height: 1.5;">Price changes are announced on-chain and activate only after a configurable delay, reducing last-minute manipulation.</p>
+            </div>
+          </div>
+
+          <!-- Row 2: Usage Auditability -->
+          <div style="display: grid; grid-template-columns: 1fr 1.1fr 1.4fr; gap: 0; border: 1px solid rgba(52,211,153,0.25); border-radius: 4px; overflow: hidden;">
+            <div style="background: rgba(52,211,153,0.08); border-right: 1px solid rgba(52,211,153,0.2); padding: 1.1rem 1.3rem; display: flex; align-items: center;">
+              <div>
+                <div style="font-size: 0.72rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: #34d399; margin-bottom: 0.35rem;">Goal</div>
+                <div style="font-size: 1.1rem; font-weight: 500; color: var(--fg);">Usage Auditability</div>
+              </div>
+            </div>
+            <div style="background: rgba(52,211,153,0.04); border-right: 1px solid rgba(52,211,153,0.15); padding: 1.1rem 1.3rem; display: flex; align-items: center;">
+              <div>
+                <code style="font-family: var(--font-mono); font-size: 0.88rem; color: #6ee7b7; display: block; margin-bottom: 0.3rem;">invoke()</code>
+                <code style="font-family: var(--font-mono); font-size: 0.88rem; color: #6ee7b7;">CallRecorded event</code>
+              </div>
+            </div>
+            <div style="background: rgba(52,211,153,0.02); padding: 1.1rem 1.3rem; display: flex; align-items: center;">
+              <p style="font-size: 1rem; color: var(--fg-soft); line-height: 1.5;">Each payment commits request and response hashes on-chain, creating an immutable call record.</p>
+            </div>
+          </div>
+
+          <!-- Row 3: Provider Verifiability -->
+          <div style="display: grid; grid-template-columns: 1fr 1.1fr 1.4fr; gap: 0; border: 1px solid rgba(251,191,36,0.25); border-radius: 4px; overflow: hidden;">
+            <div style="background: rgba(251,191,36,0.08); border-right: 1px solid rgba(251,191,36,0.2); padding: 1.1rem 1.3rem; display: flex; align-items: center;">
+              <div>
+                <div style="font-size: 0.72rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: #fbbf24; margin-bottom: 0.35rem;">Goal</div>
+                <div style="font-size: 1.1rem; font-weight: 500; color: var(--fg);">Provider Verifiability</div>
+              </div>
+            </div>
+            <div style="background: rgba(251,191,36,0.04); border-right: 1px solid rgba(251,191,36,0.15); padding: 1.1rem 1.3rem; display: flex; align-items: center;">
+              <div>
+                <code style="font-family: var(--font-mono); font-size: 0.88rem; color: #fcd34d; display: block; margin-bottom: 0.3rem;">register()</code>
+                <code style="font-family: var(--font-mono); font-size: 0.88rem; color: #fcd34d;">staking mechanism</code>
+              </div>
+            </div>
+            <div style="background: rgba(251,191,36,0.02); padding: 1.1rem 1.3rem; display: flex; align-items: center;">
+              <p style="font-size: 1rem; color: var(--fg-soft); line-height: 1.5;">Providers post stake at registration, making misconduct costly while identity and capability claims stay publicly verifiable.</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+        <!-- 5 -->
+    <section class="slide-frame" data-slide="">
+      <div class="slide-inner">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>System</p>
+        <h2>Our System contains</h2>
+        <ul class="clean">
+          <li><strong>Smart contract marketplace:</strong> registration, stake, delayed price changes, per-call settlement, slashing, audit anchoring</li>
+          <li><strong>Web app:</strong> separate user and provider flows; browse, register, invoke (some on-chain detail panels are MVP mock layouts)</li>
+          <li><strong>Relay API:</strong> local mock or upstream OpenRouter proxy</li>
+          <li><strong>Audit server:</strong> structured checks on the relay; summaries can be written back on-chain</li>
+        </ul>
+        
+      </div>
+    </section>
+
+        <!-- 6 (was 5) -->
+    <section class="slide-frame" data-slide="">
+      <div class="slide-inner" style="max-width: 72rem;">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Work Flow</p>
+        <h2>End-to-end journey</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start;">
+          <div>
+            <ol class="steps">
+              <li>Provider registers on-chain: price, stake, metadata URI, identity and capability hashes, <span class="mono">endpointCommitment</span></li>
+              <li>Web lists providers; users can simulate calls via the relay API</li>
+              <li>Client hashes request and response, then calls on-chain <span class="mono">invoke(...)</span> with payment</li>
+              <li>Contract applies delayed price when due, transfers fees, refunds overpayment, stores call record, emits <span class="mono">CallRecorded</span></li>
+              <li>If auditing is enabled: probe relay off-chain → canonical JSON → optional off-chain publish → <span class="mono">recordAudit</span> / <span class="mono">recordAuditWithUri</span> anchors <span class="mono">keccak256(canonicalJson)</span></li>
+            </ol>
+          </div>
+          
+          <div style="background: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%); border: 1px solid var(--line); border-radius: 4px; padding: 1.5rem; font-family: var(--font-mono); font-size: 0.85rem; color: var(--fg-soft);">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--line);">
+              <span style="color: var(--muted);">On-Chain (EVM)</span>
+              <span style="color: var(--muted);">Off-Chain</span>
+            </div>
+            
+            <div style="position: relative;">
+              <!-- Flow lines -->
+              <div style="position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: dashed 1px var(--line-strong); z-index: 0;"></div>
+              
+              <!-- Steps -->
+              <div style="display: flex; flex-direction: column; gap: 1.2rem; position: relative; z-index: 1;">
+                
+                <!-- Step 1 -->
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                  <div style="flex: 1; text-align: right;">
+                    <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line-strong); padding: 0.5rem; border-radius: 2px; display: inline-block;">
+                      <span style="color: #a78bfa;">register()</span> + Stake
+                    </div>
+                  </div>
+                  <div style="width: 2rem; text-align: center; color: var(--muted);">←</div>
+                  <div style="flex: 1;">
+                    <div style="color: var(--muted);">Provider</div>
+                  </div>
+                </div>
+                
+                <!-- Step 2 -->
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                  <div style="flex: 1; text-align: right;">
+                    <div style="color: var(--muted);">Read Providers</div>
+                  </div>
+                  <div style="width: 2rem; text-align: center; color: var(--muted);">←</div>
+                  <div style="flex: 1;">
+                    <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line-strong); padding: 0.5rem; border-radius: 2px; display: inline-block;">
+                      User Client / Web
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Step 2b (Inference) -->
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                  <div style="flex: 1;"></div>
+                  <div style="width: 2rem; text-align: center; color: #34d399;">↕</div>
+                  <div style="flex: 1;">
+                    <div style="background: rgba(52, 211, 153, 0.1); border: 1px solid rgba(52, 211, 153, 0.3); padding: 0.5rem; border-radius: 2px; display: inline-block; color: #34d399;">
+                      Relay API (Inference)
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Step 3 -->
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                  <div style="flex: 1; text-align: right;">
+                    <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line-strong); padding: 0.5rem; border-radius: 2px; display: inline-block;">
+                      <span style="color: #60a5fa;">invoke()</span> + ETH
+                    </div>
+                  </div>
+                  <div style="width: 2rem; text-align: center; color: var(--muted);">←</div>
+                  <div style="flex: 1;">
+                    <div style="color: var(--muted);">Hash(Req+Resp)</div>
+                  </div>
+                </div>
+                
+                <!-- Step 4 -->
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                  <div style="flex: 1; text-align: right;">
+                    <div style="color: var(--dim); font-size: 0.75rem;">Emit <span style="color: #9ca3af;">CallRecorded</span><br>Transfer Fee</div>
+                  </div>
+                  <div style="width: 2rem; text-align: center; color: var(--muted);">→</div>
+                  <div style="flex: 1;">
+                    <div style="color: var(--muted);">Provider Wallet</div>
+                  </div>
+                </div>
+                
+                <!-- Step 5 -->
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                  <div style="flex: 1; text-align: right;">
+                    <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line-strong); padding: 0.5rem; border-radius: 2px; display: inline-block;">
+                      <span style="color: #f472b6;">recordAudit()</span>
+                    </div>
+                  </div>
+                  <div style="width: 2rem; text-align: center; color: var(--muted);">←</div>
+                  <div style="flex: 1;">
+                    <div style="background: rgba(244, 114, 182, 0.1); border: 1px solid rgba(244, 114, 182, 0.3); padding: 0.5rem; border-radius: 2px; display: inline-block; color: #f472b6;">
+                      Audit Server
+                    </div>
+                  </div>
+                </div>
+                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+        <!-- 6 -->
+    <section class="slide-frame" data-slide="">
+      <div class="slide-inner" style="max-width: 72rem;">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Governance</p>
+        <h2>Governance, Roles &amp; Slashing</h2>
+        <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 2.5rem; margin-top: 2rem; align-items: stretch;">
+          
+          <!-- Left side: Slashing Lifecycle -->
+          <div style="background: linear-gradient(145deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.01) 100%); border: 1px solid var(--line); border-radius: 4px; padding: 2rem;">
+            <h3 style="font-size: 0.85rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 1.5rem; border-bottom: 1px solid var(--line); padding-bottom: 0.8rem;">The Slashing Lifecycle</h3>
+            
+            <div style="display: flex; flex-direction: column; gap: 1.6rem; position: relative;">
+              <div style="position: absolute; left: 0.7rem; top: 1.5rem; bottom: 1.5rem; width: 1px; background: dashed 1px var(--line-strong); z-index: 0;"></div>
+              
+              <div style="display: flex; gap: 1.2rem; position: relative; z-index: 1;">
+                <div style="width: 1.5rem; height: 1.5rem; border-radius: 50%; background: var(--bg0); border: 2px solid #f87171; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 0.1rem;"></div>
+                <div>
+                  <div style="font-family: var(--font-mono); font-size: 1.05rem; color: #f87171; margin-bottom: 0.3rem;">proposeSlash()</div>
+                  <p style="font-size: 1rem; color: var(--fg-soft); line-height: 1.5;">Initiated by <span class="mono">slashOperator</span>. Marks the provider as penalized.</p>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 1.2rem; position: relative; z-index: 1;">
+                <div style="width: 1.5rem; height: 1.5rem; border-radius: 50%; background: var(--bg0); border: 2px solid #fbbf24; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 0.1rem;"></div>
+                <div>
+                  <div style="font-family: var(--font-mono); font-size: 1.05rem; color: #fbbf24; margin-bottom: 0.3rem;">challengeSlashProposal()</div>
+                  <p style="font-size: 1rem; color: var(--fg-soft); line-height: 1.5;">Provider disputes within the challenge window to block execution.</p>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 1.2rem; position: relative; z-index: 1;">
+                <div style="width: 1.5rem; height: 1.5rem; border-radius: 50%; background: var(--bg0); border: 2px solid #60a5fa; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 0.1rem;"></div>
+                <div>
+                  <div style="font-family: var(--font-mono); font-size: 1.05rem; color: #60a5fa; margin-bottom: 0.3rem;">finalizeSlashProposal()</div>
+                  <p style="font-size: 1rem; color: var(--fg-soft); line-height: 1.5;">ETH is seized and routed to the <span class="mono">slashTreasury</span> multisig.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Right side: Roles and Audits -->
+          <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--line); border-radius: 4px; padding: 1.5rem;">
+              <h3 style="font-size: 0.85rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.8rem;">Role Rotation Safety</h3>
+              <p style="font-size: 1.05rem; color: var(--fg-soft); line-height: 1.6;">Critical roles (<span class="mono">slashOperator</span>, <span class="mono">auditRecorder</span>, <span class="mono">slashTreasury</span>) require a two-step <span class="mono" style="color: #a78bfa;">propose* → accept*</span> handshake to prevent accidental loss of control.</p>
+            </div>
+            
+            <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--line); border-radius: 4px; padding: 1.5rem;">
+              <h3 style="font-size: 0.85rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.8rem;">Multi-Auditor Flow</h3>
+              <p style="font-size: 1.05rem; color: var(--fg-soft); line-height: 1.6;">Beyond direct anchoring, a round-based flow (<span class="mono" style="color: #34d399;">beginAuditRound</span> + <span class="mono" style="color: #34d399;">attestAudit</span>) allows an allowlisted quorum of auditors to submit findings.</p>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+    </section>
+
+        <!-- 7 -->
+    <section class="slide-frame" data-slide="">
+      <div class="slide-inner" style="max-width: 72rem;">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Audit Capability</p>
+        <h2>6D Risk Matrix &amp; On-Chain Anchoring</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3.5rem; align-items: center; margin-top: 2rem;">
+          
+          <!-- Left: Flow -->
+          <div>
+            <div style="display: flex; flex-direction: column; gap: 2rem;">
+              <div style="display: flex; gap: 1.5rem; align-items: flex-start;">
+                <div style="font-family: var(--font-mono); color: var(--dim); font-size: 1.5rem; font-weight: 500; line-height: 1;">01</div>
+                <div>
+                  <h4 style="font-size: 1.25rem; font-weight: 500; color: var(--fg); margin-bottom: 0.4rem;">Execute Audit</h4>
+                  <p style="font-size: 1.05rem; color: var(--muted); line-height: 1.5;"><span class="mono">POST /v1/audit</span> on the <span class="mono">FastAPI</span> server runs structural probes against Relay API.</p>
+                </div>
+              </div>
+              
+              <div style="display: flex; gap: 1.5rem; align-items: flex-start;">
+                <div style="font-family: var(--font-mono); color: var(--dim); font-size: 1.5rem; font-weight: 500; line-height: 1;">02</div>
+                <div>
+                  <h4 style="font-size: 1.25rem; font-weight: 500; color: var(--fg); margin-bottom: 0.4rem;">Canonical Hash</h4>
+                  <p style="font-size: 1.05rem; color: var(--muted); line-height: 1.5;">Report JSON is canonically serialized and hashed to produce deterministic evidence.</p>
+                </div>
+              </div>
+              
+              <div style="display: flex; gap: 1.5rem; align-items: flex-start;">
+                <div style="font-family: var(--font-mono); color: var(--dim); font-size: 1.5rem; font-weight: 500; line-height: 1;">03</div>
+                <div>
+                  <h4 style="font-size: 1.25rem; font-weight: 500; color: var(--fg); margin-bottom: 0.4rem;">On-Chain Anchoring</h4>
+                  <p style="font-size: 1.05rem; color: var(--muted); line-height: 1.5;">Scheduler writes <span class="mono">reportHash</span> via <span class="mono" style="color: #60a5fa;">recordAudit</span> for public verification.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: 6D Breakdown -->
+          <div>
+            <div style="background: linear-gradient(145deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.01) 100%); border: 1px solid var(--line); border-radius: 4px; padding: 2rem;">
+              <h3 style="font-size: 0.85rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 1.5rem; border-bottom: 1px solid var(--line); padding-bottom: 0.8rem;">Comprehensive 6D Checks</h3>
+              <ul style="list-style: none; padding: 0; margin: 0; color: var(--fg-soft); font-size: 1.15rem; line-height: 1.8;">
+                <li style="margin-bottom: 1rem;">
+                  <strong style="color: var(--fg); display: inline-block; width: 5.5rem;">D1-D2</strong> 
+                  <span style="color: var(--dim);">|</span> Hidden injection &amp; override
+                </li>
+                <li style="margin-bottom: 1rem;">
+                  <strong style="color: var(--fg); display: inline-block; width: 5.5rem;">D3-D4</strong> 
+                  <span style="color: var(--dim);">|</span> Tool substitution &amp; leak
+                </li>
+                <li>
+                  <strong style="color: var(--fg); display: inline-block; width: 5.5rem;">D5-D6</strong> 
+                  <span style="color: var(--dim);">|</span> Stream integrity &amp; Web3 risk
+                </li>
+              </ul>
+              <div style="margin-top: 2rem; padding-top: 1.2rem; border-top: 1px dashed var(--line-strong); display: flex; justify-content: space-between;">
+                <span style="font-family: var(--font-mono); font-size: 0.95rem; color: #34d399; background: rgba(52, 211, 153, 0.1); padding: 0.3rem 0.8rem; border-radius: 2px;">LOW</span>
+                <span style="font-family: var(--font-mono); font-size: 0.95rem; color: #fbbf24; background: rgba(251, 191, 36, 0.1); padding: 0.3rem 0.8rem; border-radius: 2px;">MEDIUM</span>
+                <span style="font-family: var(--font-mono); font-size: 0.95rem; color: #f87171; background: rgba(248, 113, 113, 0.1); padding: 0.3rem 0.8rem; border-radius: 2px;">HIGH</span>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+    </section>
+
+        <!-- 10 -->
+    <section class="slide-frame" data-slide="">
+      <div class="slide-inner" style="max-width: 72rem;">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Core Contract Design I</p>
+        <h2>Delayed Price Transparency</h2>
+        <p class="lead">Providers publish prices instantly, but enforcement is delayed on-chain.</p>
+
+        <div class="code-showcase">
+          <div class="code-panel">
+            <div class="code-panel-head">
+              <span class="code-label">Key Function</span>
+              <span class="code-chip">announcePriceChange()</span>
+            </div>
+            <pre class="snippet-code"><span class="hl-purple">function</span> <span class="hl-green">announcePriceChange</span>(providerId, newPrice) external {
+  requireOwner(providerId);
+  <span class="hl-blue">_applyPendingPrice</span>(providerId, p);
+  p.pendingPriceWei = newPrice;
+  p.pendingEffectiveBlock = block.number + priceDelayBlocks;
+  <span class="hl-amber">emit</span> PriceChangeAnnounced(...);
+}</pre>
+          </div>
+
+          <div class="insight-stack">
+            <div class="insight-card">
+              <div class="insight-eyebrow">Design Intent</div>
+              <p>Separates <strong>announcement</strong> from <strong>activation</strong>. Users verify prices before paying.</p>
+            </div>
+            <div class="insight-card">
+              <div class="insight-eyebrow">Core State</div>
+              <p><span class="mono">pendingPriceWei</span> and <span class="mono">pendingEffectiveBlock</span> enforce a mandatory waiting period in state.</p>
+            </div>
+            <div class="insight-card">
+              <div class="insight-eyebrow">Why It Matters</div>
+              <p>Turns pricing into an observable rule, eliminating sudden repricing entirely.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+        <!-- 11 -->
+    <section class="slide-frame" data-slide="">
+      <div class="slide-inner" style="max-width: 72rem;">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Core Contract Design II</p>
+        <h2>Atomic Settlement &amp; Evidence Anchoring</h2>
+        <p class="lead">A unified settlement function pays the provider, refunds excess ETH, and anchors evidence atomically.</p>
+
+        <div class="code-showcase" style="grid-template-columns: 0.92fr 1.08fr;">
+          <div class="insight-stack">
+            <div class="insight-card">
+              <div class="insight-eyebrow">Settlement</div>
+              <p>Applies the effective price, transfers the fee, and refunds any overpayment immediately.</p>
+            </div>
+            <div class="insight-card">
+              <div class="insight-eyebrow">Evidence</div>
+              <p><span class="mono">requestHash</span> and <span class="mono">responseHash</span> are recorded, keeping raw payloads private.</p>
+            </div>
+            <div class="insight-card">
+              <div class="insight-eyebrow">Result</div>
+              <p>Leaves an immutable ledger entry for dispute review, analytics, and audits.</p>
+            </div>
+          </div>
+
+          <div class="code-panel">
+            <div class="code-panel-head">
+              <span class="code-label">Key Function</span>
+              <span class="code-chip">invoke()</span>
+            </div>
+            <pre class="snippet-code"><span class="hl-purple">function</span> <span class="hl-green">invoke</span>(...) external payable {
+  <span class="hl-blue">_applyPendingPrice</span>(providerId, p);
+  uint256 paid = p.pricePerCall;
+  <span class="hl-red">if</span> (msg.value &lt; paid) revert PaymentTooLow();
+
+  payProvider(p.owner, paid);
+  refundCaller(msg.value - paid);
+
+  calls[nextCallId++] = CallRecord({
+    requestHash, responseHash, paid, ...
+  });
+  <span class="hl-amber">emit</span> CallRecorded(...);
+}</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+        <!-- 12 -->
+    <section class="slide-frame" data-slide="">
+      <div class="slide-inner" style="max-width: 72rem;">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Evaluation</p>
+        <h2>Functional Evaluation</h2>
+        <p class="lead">The MVP is fully validated across contract logic, API integration, and the web demo.</p>
+
+        <div class="evaluation-layout">
+          <div class="evaluation-summary">
+            <div>
+              <div class="metric-number">30</div>
+              <p class="metric-caption">contract tests verify registration, delayed pricing, settlement, slashing, audit recording, and role transfer behavior.</p>
+            </div>
+
+            <div>
+              <div class="insight-eyebrow" style="margin-bottom: 0.7rem;">Validation Surfaces</div>
+              <div class="command-row">
+                <span class="command-pill">forge test</span>
+                <span class="command-pill">npm run test:run</span>
+                <span class="command-pill">npm test</span>
+                <span class="command-pill">pytest</span>
+                <span class="command-pill">smoke demo</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="evaluation-grid">
+            <div class="eval-card">
+              <span class="status-chip">validated</span>
+              <h3>On-chain marketplace flow</h3>
+              <p>Core flows like registration, delayed pricing, settlement, and slashing are fully covered.</p>
+            </div>
+            <div class="eval-card">
+              <span class="status-chip">validated</span>
+              <h3>Web application flow</h3>
+              <p>Supports distinct user and provider paths for registration, browsing, and model invocation.</p>
+            </div>
+            <div class="eval-card">
+              <span class="status-chip">validated</span>
+              <h3>Relay compatibility</h3>
+              <p>Works in local mock mode and proxies to OpenRouter for live integration testing.</p>
+            </div>
+            <div class="eval-card">
+              <span class="status-chip">validated</span>
+              <h3>Audit pipeline</h3>
+              <p>Execution, canonical hashing, and on-chain anchoring are wired end-to-end.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+        <!-- 13 -->
+    <section class="slide-frame" data-slide="">
+      <div class="slide-inner" style="max-width: 72rem;">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Limits &amp; Future Work</p>
+        <h2>Current Limits and Next Directions</h2>
+        <p class="lead">The MVP proves the settlement model, but stronger guarantees require further infrastructure.</p>
+
+        <div class="pair-grid">
+          <div class="pair-row">
+            <div class="pair-cell is-limit">
+              <div class="pair-title">Limitation</div>
+              <p>Slashing relies on centralized operators and multisigs.</p>
+            </div>
+            <div class="pair-cell is-direction">
+              <div class="pair-title">Direction</div>
+              <p>Introduce decentralized arbitration and trust-minimized governance.</p>
+            </div>
+          </div>
+
+          <div class="pair-row">
+            <div class="pair-cell is-limit">
+              <div class="pair-title">Limitation</div>
+              <p>Settlement is immediate and single-shot.</p>
+            </div>
+            <div class="pair-cell is-direction">
+              <div class="pair-title">Direction</div>
+              <p>Support escrowed, staged, and streaming payments.</p>
+            </div>
+          </div>
+
+          <div class="pair-row">
+            <div class="pair-cell is-limit">
+              <div class="pair-title">Limitation</div>
+              <p>Audit quorums and aggregation happen off-chain.</p>
+            </div>
+            <div class="pair-cell is-direction">
+              <div class="pair-title">Direction</div>
+              <p>Move aggregation into an AVS or oracle layer for public verification.</p>
+            </div>
+          </div>
+
+          <div class="pair-row">
+            <div class="pair-cell is-limit">
+              <div class="pair-title">Limitation</div>
+              <p>No cryptographic proof of honest off-chain inference.</p>
+            </div>
+            <div class="pair-cell is-direction">
+              <div class="pair-title">Direction</div>
+              <p>Integrate TEEs or zk-proofs for verifiable execution.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+        <!-- 14 — Demo -->
+    <section class="slide-frame" data-slide="">
+      <div class="demo-slide">
+        <div class="demo-ring">
+          <div class="demo-dot"></div>
+        </div>
+        <p class="kicker" style="margin-bottom: 1.5rem; color: #34d399; letter-spacing: 0.25em;">Live Interactive Demo</p>
+        <h1 style="font-size: clamp(3.2rem, 7vw, 4.8rem); margin-bottom: 1.5rem; letter-spacing: -0.04em;">DeOpenRouter</h1>
+        <p class="lead" style="margin: 0 auto; text-align: center; font-size: 1.25rem;">Switching to the browser environment.</p>
+      </div>
+    </section>
+
+        <!-- 15 -->
+    <section class="slide-frame" data-slide="">
+      <div class="slide-inner" style="max-width: 72rem;">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Conclusion</p>
+        <h2>Conclusion</h2>
+        <p class="lead">The core argument of this project can be distilled into three concise claims.</p>
+
+        <div class="conclusion-grid">
+          <div class="conclusion-card">
+            <span class="conclusion-index">01 / Problem</span>
+            <p>Today's AI API market suffers from opaque pricing, hard-to-verify billing, and limited auditability.</p>
+          </div>
+          <div class="conclusion-card">
+            <span class="conclusion-index">02 / Solution</span>
+            <p>We make pricing rules, settlement flows, and audit records publicly verifiable through smart contracts.</p>
+          </div>
+          <div class="conclusion-card">
+            <span class="conclusion-index">03 / Value</span>
+            <p>A transparent, auditable, decentralized model API marketplace.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+        <!-- 16 — closing -->
+    <section class="slide-frame" data-slide="">
+      <div class="slide-inner">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>End</p>
+        <h1>Thank you</h1>
+        <p class="subtitle">Questions, feedback, and discussion are welcome.</p>
+        <p class="footnote" style="margin-top: 1.75rem;">DeOpenRouter — transparent settlement and audit anchoring for AI API marketplaces.</p>
+      </div>
+    </section>
+  </div>
+
+  <div class="controls">
+
+    <div class="btn-group">
+      <button type="button" class="btn" id="prev" aria-label="Previous slide">←</button>
+      <button type="button" class="btn" id="next" aria-label="Next slide">→</button>
+    </div>
+    <div class="meta-block">
+      <span id="progress">01 / 16</span>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var slides = Array.prototype.slice.call(document.querySelectorAll("[data-slide]"));
+      var i = 0;
+      var total = slides.length;
+
+      var deck = document.getElementById("deck");
+      var progressFill = document.getElementById("progressFill");
+
+      function applyProgress() {
+        var pct = total > 1 ? (i / (total - 1)) * 100 : 100;
+        progressFill.style.width = pct + "%";
+      }
+
+      function show(nextIndex) {
+        var target = Math.max(0, Math.min(nextIndex, total - 1));
+        if (target === i) return;
+
+        var current = slides[i];
+        var next = slides[target];
+        var forward = target > i;
+
+        next.classList.add("active", "entering");
+        current.classList.add("exiting");
+        window.requestAnimationFrame(function () {
+          next.classList.remove("entering");
+        });
+        window.setTimeout(function () {
+          current.classList.remove("active", "exiting");
+          i = target;
+          document.getElementById("progress").textContent =
+            String(i + 1).padStart(2, "0") + " / " + String(total).padStart(2, "0");
+          applyProgress();
+        }, forward ? 150 : 170);
+      }
+
+      function showImmediate(nextIndex) {
+        i = Math.max(0, Math.min(nextIndex, total - 1));
+        slides.forEach(function (s, idx) {
+          s.classList.toggle("active", idx === i);
+        });
+        document.getElementById("progress").textContent =
+          String(i + 1).padStart(2, "0") + " / " + String(total).padStart(2, "0");
+        applyProgress();
+      }
+
+      document.getElementById("prev").addEventListener("click", function () { show(i - 1); });
+      document.getElementById("next").addEventListener("click", function () { show(i + 1); });
+
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "f" || e.key === "F") {
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(function () {});
+          } else {
+            document.exitFullscreen();
+          }
+          e.preventDefault();
+          return;
+        }
+        if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") {
+          e.preventDefault();
+          show(i + 1);
+        } else if (e.key === "ArrowLeft" || e.key === "PageUp") {
+          e.preventDefault();
+          show(i - 1);
+        } else if (e.key === "Home") {
+          e.preventDefault();
+          showImmediate(0);
+        } else if (e.key === "End") {
+          e.preventDefault();
+          showImmediate(total - 1);
+        }
+      });
+
+      deck.addEventListener("click", function (e) {
+        if (e.target.closest(".btn") || e.target.closest("button")) return;
+        var w = window.innerWidth;
+        if (e.clientX > w * 0.55) show(i + 1);
+        else show(i - 1);
+      });
+
+      showImmediate(0);
+    })();
+  </script>
+
+
+
+</body></html>
