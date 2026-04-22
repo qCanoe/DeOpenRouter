@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DeOpenRouter · 课程展示</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #050505;
+      --fg: #f5f5f4;
+      --muted: #a8a29e;
+      --dim: #57534e;
+      --line: rgba(255, 255, 255, 0.08);
+      --accent: #e7e5e4;
+      --slide-pad: clamp(2rem, 5vw, 4rem);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: "Noto Sans SC", system-ui, sans-serif;
+      font-weight: 400;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .deck {
+      height: 100dvh;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      padding: var(--slide-pad);
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.35s ease;
+    }
+
+    .slide.active {
+      display: flex;
+      opacity: 1;
+    }
+
+    .slide-inner {
+      max-width: 56rem;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .kicker {
+      font-size: 0.7rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1.25rem;
+      font-weight: 500;
+    }
+
+    h1 {
+      font-size: clamp(1.75rem, 4.2vw, 2.75rem);
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      margin-bottom: 1.25rem;
+    }
+
+    h2 {
+      font-size: clamp(1.35rem, 3vw, 2rem);
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin-bottom: 1.5rem;
+    }
+
+    .lead {
+      font-size: clamp(1rem, 1.9vw, 1.2rem);
+      color: var(--muted);
+      font-weight: 300;
+      line-height: 1.65;
+      max-width: 42rem;
+    }
+
+    ul.clean {
+      list-style: none;
+      margin-top: 1.75rem;
+    }
+
+    ul.clean li {
+      position: relative;
+      padding-left: 1.35rem;
+      margin-bottom: 0.85rem;
+      font-size: clamp(0.95rem, 1.65vw, 1.05rem);
+      color: var(--fg);
+      line-height: 1.55;
+      font-weight: 300;
+    }
+
+    ul.clean li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.55em;
+      width: 5px;
+      height: 5px;
+      background: var(--fg);
+      border-radius: 1px;
+      opacity: 0.5;
+    }
+
+    .mono {
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 0.88em;
+      color: var(--accent);
+      font-weight: 400;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem 2.5rem;
+      margin-top: 1.5rem;
+    }
+
+    @media (max-width: 720px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      padding: 1.1rem 1.25rem;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .card h3 {
+      font-size: 0.72rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+
+    .card p {
+      font-size: 0.95rem;
+      color: var(--fg);
+      font-weight: 300;
+      line-height: 1.5;
+    }
+
+    .rubric {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1.25rem;
+      margin-top: 1.5rem;
+    }
+
+    .rubric span {
+      font-size: 0.8rem;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      padding: 0.35rem 0.75rem;
+      letter-spacing: 0.06em;
+    }
+
+    .rubric strong { color: var(--fg); font-weight: 500; }
+
+    .steps {
+      counter-reset: step;
+      margin-top: 1.5rem;
+    }
+
+    .steps li {
+      counter-increment: step;
+      list-style: none;
+      margin-bottom: 0.9rem;
+      padding-left: 2.25rem;
+      position: relative;
+      font-size: clamp(0.92rem, 1.5vw, 1.02rem);
+      line-height: 1.55;
+      font-weight: 300;
+      color: var(--fg);
+    }
+
+    .steps li::before {
+      content: counter(step, decimal-leading-zero);
+      position: absolute;
+      left: 0;
+      top: 0.05em;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+
+    .footnote {
+      margin-top: 2rem;
+      font-size: 0.8rem;
+      color: var(--dim);
+      line-height: 1.5;
+      max-width: 40rem;
+      font-weight: 300;
+    }
+
+    .timing {
+      position: fixed;
+      bottom: var(--slide-pad);
+      right: var(--slide-pad);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      color: var(--dim);
+      z-index: 10;
+    }
+
+    .nav {
+      position: fixed;
+      bottom: var(--slide-pad);
+      left: var(--slide-pad);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      z-index: 10;
+    }
+
+    .nav button {
+      background: transparent;
+      border: 1px solid var(--line);
+      color: var(--fg);
+      width: 2.5rem;
+      height: 2.5rem;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .nav button:hover {
+      border-color: var(--muted);
+      color: var(--accent);
+    }
+
+    .nav button:focus-visible {
+      outline: 1px solid var(--fg);
+      outline-offset: 2px;
+    }
+
+    .progress {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+    }
+
+    .brand-mark {
+      position: fixed;
+      top: var(--slide-pad);
+      right: var(--slide-pad);
+      font-size: 0.65rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--dim);
+      z-index: 10;
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--line);
+      margin: 1.5rem 0;
+      max-width: 8rem;
+    }
+
+    .slide-meta {
+      margin-top: 2rem;
+      font-size: 0.65rem;
+      letter-spacing: 0.14em;
+      color: var(--dim);
+      font-weight: 400;
+    }
+
+    .slide-meta em {
+      font-style: normal;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="deck" id="deck" aria-live="polite">
+    <div class="brand-mark">DeOpenRouter</div>
+
+    <!-- 1 -->
+    <section class="slide active" data-slide>
+      <div class="slide-inner">
+        <p class="kicker">去中心化与加密货币 · 课程项目</p>
+        <h1>DeOpenRouter</h1>
+        <p class="lead">基于 Solidity、Next.js、Hono 与 FastAPI 的透明、低信任假设 AI API 市场原型：链上负责信任协调、定价、支付与审计锚定；模型推理保留在链下。</p>
+        <p class="footnote">本稿内容与结构对齐仓库 <span class="mono">README.zh-CN.md</span>。全稿目标时长约 12:00；翻页键 ← →、空格；左下角显示进度。</p>
+        <p class="slide-meta"><em>本页约 0:45</em> · Opening / Rubric</p>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide" data-slide>
+      <div class="slide-inner">
+        <p class="kicker">Story · 叙事动机</p>
+        <h2>中心化 AI 网关的信任负担</h2>
+        <p class="lead">传统网关往往把定价、路由、计费与争议处理集中交给单一运营方：方便，但用户难以独立验证规则是否被悄悄改写、扣费是否与公开策略一致。</p>
+        <ul class="clean">
+          <li>DeOpenRouter 的叙事起点：哪些环节适合迁到 EVM，让用户<strong>可观察、可对账、难单方面篡改</strong>？</li>
+          <li>不假装「推理全部上链」，在<strong>现实可用性</strong>与<strong>结算透明</strong>之间做可辩护的取舍。</li>
+        </ul>
+        <p class="slide-meta"><em>本页约 1:35</em> · Story</p>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide" data-slide>
+      <div class="slide-inner">
+        <p class="kicker">Story · 链上迁移的信任边界</p>
+        <h2>项目目标（README 归纳）</h2>
+        <ul class="clean">
+          <li>提供方身份承诺与元数据在链上<strong>公开登记</strong></li>
+          <li>调价<strong>非即时生效</strong>，带有可观察延迟</li>
+          <li>每次付费调用留下<strong>可审计链上记录</strong></li>
+          <li>质押可通过<strong>带挑战期</strong>的链上罚没提案削减；罚没款进入可配置 <span class="mono">slashTreasury</span></li>
+          <li>外部审计结果以<strong>报告哈希</strong>形式锚定上链</li>
+        </ul>
+        <p class="lead" style="margin-top:1.5rem;">推理仍在链下：保留可用性，同时让结算与审计过程更透明。</p>
+        <p class="slide-meta"><em>本页约 1:20</em> · Story</p>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide" data-slide>
+      <div class="slide-inner">
+        <p class="kicker">Story · 定位声明</p>
+        <h2>MVP 原型，而非生产级推理网络</h2>
+        <p class="lead">README 明确：仓库当前重点展示<strong>信任与结算模型</strong>，不是生产级去中心化推理网络。讲述时主动划定边界，反而强化故事可信度。</p>
+        <div class="divider"></div>
+        <div class="grid-2">
+          <div class="card">
+            <h3>链上</h3>
+            <p>协调、定价、支付、审计锚定、罚没与治理钩子。</p>
+          </div>
+          <div class="card">
+            <h3>链下</h3>
+            <p>真实模型推理；Relay 可 mock 或代理 OpenRouter；审计探测与报告规范化。</p>
+          </div>
+        </div>
+        <p class="slide-meta"><em>本页约 0:45</em> · Story</p>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide" data-slide>
+      <div class="slide-inner">
+        <p class="kicker">Implementation · 系统组成</p>
+        <h2>仓库包含什么</h2>
+        <ul class="clean">
+          <li><strong>智能合约市场</strong>：注册、质押、延迟调价、按次结算、罚没、审计锚定</li>
+          <li><strong>Web 前端</strong>：用户视角与提供方视角；浏览、注册、发起调用</li>
+          <li><strong>Relay API</strong>：本地 mock 或代理至 OpenRouter</li>
+          <li><strong>审计服务</strong>：对 relay 结构化检查；可将结果摘要回写链上</li>
+        </ul>
+        <p class="footnote">路径速览：<span class="mono">contracts/</span> · <span class="mono">apps/web/</span> · <span class="mono">apps/api/</span> · <span class="mono">apps/audit-server/</span> · <span class="mono">docs/</span></p>
+        <p class="slide-meta"><em>本页约 0:50</em> · Implementation</p>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide" data-slide>
+      <div class="slide-inner">
+        <p class="kicker">Story + Implementation · 主流程</p>
+        <h2>工作流程（五步）</h2>
+        <ol class="steps">
+          <li>提供方链上注册：价格、质押、元数据 URI、身份/能力哈希、<span class="mono">endpointCommitment</span></li>
+          <li>Web 展示市场；用户可通过 relay API 先模拟请求</li>
+          <li>前端对请求与响应做哈希，随付款发起链上 <span class="mono">invoke(...)</span></li>
+          <li>合约向提供方转费、保存调用记录、发出 <span class="mono">CallRecorded</span> 事件</li>
+          <li>若启用审计：链下探测 relay → 规范 JSON（canonical）→ 可选链下发布 → <span class="mono">recordAudit</span> / <span class="mono">recordAuditWithUri</span> 锚定 <span class="mono">keccak256(canonicalJson)</span></li>
+        </ol>
+        <p class="slide-meta"><em>本页约 1:15</em> · Story + Implementation</p>
+      </div>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide" data-slide>
+      <div class="slide-inner">
+        <p class="kicker">Implementation · Solidity</p>
+        <h2>核心合约：<span class="mono">DeOpenRouterMarketplace.sol</span></h2>
+        <p class="lead">主合约位于 <span class="mono">contracts/src/</span>。下列函数名与 README 一致，便于对照代码与评分中的「智能合约实现」。</p>
+        <ul class="clean">
+          <li><span class="mono">register</span> — 带质押注册新提供方</li>
+          <li><span class="mono">updateProviderMetadata</span> — 更新 <span class="mono">metadataURI</span>、<span class="mono">metadataHash</span>、<span class="mono">identityHash</span></li>
+          <li><span class="mono">announcePriceChange</span> / <span class="mono">getEffectivePrice</span> — 声明未来价格；只读当前有效价</li>
+          <li><span class="mono">getProviderCore</span> — 紧凑读取 owner、价格、质押与罚没元数据</li>
+          <li><span class="mono">invoke</span> — 收款、记哈希、发 <span class="mono">CallRecorded</span></li>
+          <li><span class="mono">deactivate</span> + <span class="mono">withdrawStake</span> — 停用与锁定期后提取质押</li>
+        </ul>
+        <p class="slide-meta"><em>本页约 1:15</em> · Implementation</p>
+      </div>
+    </section>
+
+    <!-- 8 -->
+    <section class="slide" data-slide>
+      <div class="slide-inner">
+        <p class="kicker">Implementation · 治理与审计</p>
+        <h2>治理、审计与罚没（合约能力摘要）</h2>
+        <ul class="clean">
+          <li><strong>治理</strong>：<span class="mono">proposeSlashOperator</span> / <span class="mono">acceptSlashOperator</span>；<span class="mono">proposeAuditRecorder</span> / <span class="mono">acceptAuditRecorder</span>；<span class="mono">setSlashTreasury</span>；<span class="mono">setSlashChallengePeriodBlocks</span></li>
+          <li><strong>审计</strong>：<span class="mono">recordAudit</span>、<span class="mono">recordAuditWithUri</span>、<span class="mono">beginAuditRound</span>、<span class="mono">setAuditor</span>、多签 <span class="mono">attestAudit</span></li>
+          <li><strong>罚没</strong>：<span class="mono">proposeSlash</span> → <span class="mono">challengeSlashProposal</span>（挑战窗口）→ <span class="mono">finalizeSlashProposal</span>（ETH → <span class="mono">slashTreasury</span>）</li>
+        </ul>
+        <p class="slide-meta"><em>本页约 0:55</em> · Implementation</p>
+      </div>
+    </section>
+
+    <!-- 9 -->
+    <section class="slide" data-slide>
+      <div class="slide-inner">
+        <p class="kicker">Story · 诚实披露</p>
+        <h2>README 警告：经济安全与信任假设</h2>
+        <p class="lead">经济安全仍取决于多签/金库配置。链上已实现罚没<strong>延迟 + 挑战</strong>与审计员<strong>白名单多签</strong>，但尚无完整仲裁市场、托管结算或推理密码学证明。</p>
+        <p class="footnote">延伸阅读：<span class="mono">docs/AUDIT_GOVERNANCE.md</span> · <span class="mono">docs/TRUST_LAYERS.md</span></p>
+        <p class="slide-meta"><em>本页约 0:35</em> · Story</p>
+      </div>
+    </section>
+
+    <!-- 10 -->
+    <section class="slide" data-slide>
+      <div class="slide-inner">
+        <p class="kicker">Story · MVP 边界</p>
+        <h2>当前不承诺的能力（README）</h2>
+        <ul class="clean">
+          <li>链上仅存 <span class="mono">endpointId</span> 承诺，不公开真实 endpoint URL</li>
+          <li>调用记录仅存请求/响应<strong>哈希</strong>，无明文全文</li>
+          <li><strong>单次即时</strong>结算；无托管、流式或异步结算</li>
+          <li>罚没提案由 <span class="mono">slashOperator</span> 发起，执行有挑战期；多审计员法定人数在链下聚合</li>
+          <li>无去中心化发现、信誉系统、自动化仲裁市场或推理执行证明网络</li>
+        </ul>
+        <p class="slide-meta"><em>本页约 0:45</em> · Story</p>
+      </div>
+    </section>
+
+    <!-- 11 -->
+    <section class="slide" data-slide>
+      <div class="slide-inner">
+        <p class="kicker">Implementation · 工程落地</p>
+        <h2>技术栈与本地演示路径</h2>
+        <div class="grid-2">
+          <div class="card">
+            <h3>技术栈</h3>
+            <p>Solidity 0.8.24、Foundry · Next.js 14、wagmi、viem · Hono · Python 3.11+、FastAPI</p>
+          </div>
+          <div class="card">
+            <h3>演示提要</h3>
+            <p>Anvil（链 ID 31337）→ 部署 <span class="mono">DeOpenRouterMarketplace(100,100)</span> → relay 与 Web → 钱包连接 → Provider 注册 → User 调用 → 可选审计调度</p>
+          </div>
+        </div>
+        <p class="footnote">纯命令行流程见 <span class="mono">contracts/LOCAL_LOOP.md</span>。测试：<span class="mono">forge test</span>、前端与 API、<span class="mono">pytest</span> 等见 README。</p>
+        <p class="slide-meta"><em>本页约 0:55</em> · Implementation</p>
+      </div>
+    </section>
+
+    <!-- 12 -->
+    <section class="slide" data-slide>
+      <div class="slide-inner">
+        <p class="kicker">Presentation · 收束</p>
+        <h2>结论与评分对应</h2>
+        <ul class="clean">
+          <li><strong>Story</strong>：从中心化网关痛点 → 链上可验证结算/记录 → MVP 边界与 README 警告，形成完整叙事弧。</li>
+          <li><strong>Implementation</strong>：Solidity 主合约、关键函数与五步流程一一对应，可现场打开仓库指认。</li>
+          <li><strong>Presentation</strong>：控制总时长约 12 分钟；← → 或按钮翻页；黑底白字保持一页一主题。</li>
+        </ul>
+        <p class="lead" style="margin-top:1.5rem;">谢谢。欢迎提问。</p>
+        <p class="slide-meta"><em>本页约 1:05</em> · Presentation + Q&amp;A 缓冲</p>
+      </div>
+    </section>
+  </div>
+
+  <nav class="nav" aria-label="幻灯片导航">
+    <button type="button" id="prev" aria-label="上一页">←</button>
+    <button type="button" id="next" aria-label="下一页">→</button>
+    <span class="progress" id="progress" aria-hidden="true">01 / 12</span>
+  </nav>
+  <div class="timing" id="clock" title="按 README 节奏校准的累计时长">累计 — / 12:00</div>
+
+  <script>
+    (function () {
+      var slides = Array.prototype.slice.call(document.querySelectorAll("[data-slide]"));
+      var i = 0;
+      var total = slides.length;
+
+      /* Per-slide budgets (s): 45+95+80+45+50+75+75+55+35+45+55+65 = 12:00 */
+      var cumulativeEnd = [
+        "0:45",
+        "2:20",
+        "3:40",
+        "4:25",
+        "5:15",
+        "6:30",
+        "7:45",
+        "8:40",
+        "9:15",
+        "10:00",
+        "10:55",
+        "12:00"
+      ];
+
+      function show(n) {
+        i = Math.max(0, Math.min(n, total - 1));
+        slides.forEach(function (s, idx) {
+          s.classList.toggle("active", idx === i);
+        });
+        document.getElementById("progress").textContent =
+          String(i + 1).padStart(2, "0") + " / " + String(total).padStart(2, "0");
+        document.getElementById("clock").textContent =
+          "累计 ~" + (cumulativeEnd[i] || "—") + " / 12:00";
+      }
+
+      document.getElementById("prev").addEventListener("click", function () { show(i - 1); });
+      document.getElementById("next").addEventListener("click", function () { show(i + 1); });
+
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") {
+          e.preventDefault();
+          show(i + 1);
+        } else if (e.key === "ArrowLeft" || e.key === "PageUp") {
+          e.preventDefault();
+          show(i - 1);
+        } else if (e.key === "Home") show(0);
+        else if (e.key === "End") show(total - 1);
+      });
+
+      show(0);
+    })();
+  </script>
+</body>
+</html>

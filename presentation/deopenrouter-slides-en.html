@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="DeOpenRouter — course presentation deck" />
+  <title>DeOpenRouter — Presentation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg0: #030303;
+      --bg1: #0a0a0c;
+      --fg: #fafaf9;
+      --fg-soft: #e7e5e4;
+      --muted: #a8a29e;
+      --dim: #57534e;
+      --line: rgba(255, 255, 255, 0.06);
+      --line-strong: rgba(255, 255, 255, 0.12);
+      --accent: #f5f5f4;
+      --pad: clamp(2.2rem, 5.4vw, 4.6rem);
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { font-size: 20px; }
+
+    html, body {
+      height: 100%;
+      background: var(--bg0);
+      color: var(--fg);
+      font-family: "Outfit", system-ui, sans-serif;
+      font-weight: 400;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 120% 80% at 50% -20%, rgba(255, 255, 255, 0.06), transparent 50%),
+        radial-gradient(ellipse 80% 60% at 100% 100%, rgba(255, 255, 255, 0.03), transparent 45%),
+        linear-gradient(180deg, var(--bg1) 0%, var(--bg0) 100%);
+      z-index: 0;
+    }
+
+    .deck {
+      position: relative;
+      z-index: 1;
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    .slide-frame {
+      position: absolute;
+      inset: 0;
+      padding: var(--pad);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transform: translateY(14px);
+      z-index: 0;
+      transition:
+        opacity 0.48s var(--ease),
+        transform 0.55s var(--ease);
+    }
+
+    .slide-frame.active {
+      display: flex;
+      opacity: 1;
+      transform: translateY(0);
+      z-index: 2;
+    }
+
+    .slide-frame.active.entering {
+      z-index: 3;
+    }
+
+    .slide-frame.exiting {
+      display: flex;
+      opacity: 0;
+      transform: translateY(-12px);
+      z-index: 1;
+      transition-duration: 0.36s;
+      pointer-events: none;
+    }
+
+    .slide-inner {
+      position: relative;
+      width: 100%;
+      max-width: 64rem;
+      padding-left: 1.45rem;
+      border-left: 2px solid var(--line-strong);
+    }
+
+    .slide-inner::before {
+      content: "";
+      position: absolute;
+      left: -2px;
+      top: 0;
+      width: 2px;
+      height: 2.5rem;
+      background: linear-gradient(180deg, var(--fg) 0%, transparent 100%);
+      opacity: 0.85;
+    }
+
+    .kicker {
+      font-size: 0.86rem;
+      font-weight: 500;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    .kicker .dot {
+      display: inline-block;
+      width: 4px;
+      height: 4px;
+      background: var(--fg);
+      opacity: 0.35;
+      margin-right: 0.65rem;
+      vertical-align: middle;
+      border-radius: 1px;
+    }
+
+    h1 {
+      font-size: clamp(2.35rem, 5.8vw, 3.9rem);
+      font-weight: 500;
+      letter-spacing: -0.03em;
+      line-height: 1.08;
+      margin-bottom: 1.25rem;
+      color: var(--fg);
+    }
+
+    h2 {
+      font-size: clamp(1.7rem, 3.8vw, 2.55rem);
+      font-weight: 500;
+      letter-spacing: -0.025em;
+      line-height: 1.18;
+      margin-bottom: 1.35rem;
+      color: var(--fg-soft);
+    }
+
+    .subtitle {
+      font-size: clamp(1.08rem, 2.1vw, 1.32rem);
+      font-weight: 300;
+      color: var(--muted);
+      line-height: 1.6;
+      max-width: 46rem;
+    }
+
+    .lead {
+      font-size: clamp(1.12rem, 2.1vw, 1.36rem);
+      font-weight: 300;
+      color: var(--muted);
+      line-height: 1.68;
+      max-width: 50rem;
+    }
+
+    ul.clean {
+      list-style: none;
+      margin-top: 1.5rem;
+    }
+
+    ul.clean li {
+      position: relative;
+      padding-left: 1.2rem;
+      margin-bottom: 0.75rem;
+      font-size: clamp(1.08rem, 1.9vw, 1.28rem);
+      font-weight: 300;
+      line-height: 1.55;
+      color: var(--fg-soft);
+    }
+
+    ul.clean li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.62em;
+      width: 4px;
+      height: 4px;
+      background: var(--fg);
+      opacity: 0.45;
+      border-radius: 1px;
+    }
+
+    .mono {
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 0.9em;
+      font-weight: 400;
+      color: var(--accent);
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.25rem 2rem;
+      margin-top: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.01) 100%);
+      padding: 1.25rem 1.35rem;
+      border-radius: 2px;
+    }
+
+    .card h3 {
+      font-size: 0.74rem;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.55rem;
+    }
+
+    .card p {
+      font-size: 1.08rem;
+      font-weight: 300;
+      line-height: 1.55;
+      color: var(--fg-soft);
+    }
+
+    .rubric {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem 0.85rem;
+      margin-top: 1.75rem;
+    }
+
+    .rubric span {
+      font-size: 0.95rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      padding: 0.4rem 0.85rem;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .rubric strong {
+      color: var(--fg);
+      font-weight: 600;
+    }
+
+    .steps {
+      counter-reset: step;
+      margin-top: 1.35rem;
+    }
+
+    .steps li {
+      counter-increment: step;
+      list-style: none;
+      margin-bottom: 0.8rem;
+      padding-left: 2.1rem;
+      position: relative;
+      font-size: clamp(1.02rem, 1.8vw, 1.22rem);
+      font-weight: 300;
+      line-height: 1.55;
+      color: var(--fg-soft);
+    }
+
+    .steps li::before {
+      content: counter(step, decimal-leading-zero);
+      position: absolute;
+      left: 0;
+      top: 0.08em;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--dim);
+      letter-spacing: 0.06em;
+    }
+
+    .footnote {
+      margin-top: 1.75rem;
+      font-size: 0.94rem;
+      font-weight: 300;
+      line-height: 1.55;
+      color: var(--dim);
+      max-width: 42rem;
+    }
+
+    .top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      z-index: 20;
+      background: var(--line);
+    }
+
+    .top-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--fg) 0%, rgba(250, 250, 249, 0.35) 100%);
+      transition: width 0.4s var(--ease);
+    }
+
+    .corner-brand {
+      position: fixed;
+      top: var(--pad);
+      right: var(--pad);
+      z-index: 15;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+
+    .controls {
+      position: fixed;
+      bottom: var(--pad);
+      left: var(--pad);
+      right: var(--pad);
+      z-index: 15;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      pointer-events: none;
+    }
+
+    .controls > * { pointer-events: auto; }
+
+    .btn-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn {
+      appearance: none;
+      border: 1px solid var(--line-strong);
+      background: rgba(0, 0, 0, 0.35);
+      color: var(--fg);
+      width: 3.2rem;
+      height: 3.2rem;
+      border-radius: 2px;
+      cursor: pointer;
+      font-size: 1.1rem;
+      line-height: 1;
+      transition: border-color 0.2s, background 0.2s, color 0.2s;
+    }
+
+    .btn:hover {
+      border-color: rgba(255, 255, 255, 0.28);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .btn:focus-visible {
+      outline: 1px solid var(--fg);
+      outline-offset: 3px;
+    }
+
+    .meta-block {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.82rem;
+      letter-spacing: 0.12em;
+      color: var(--dim);
+      text-align: right;
+    }
+
+    .meta-block .row { margin-top: 0.2rem; color: var(--muted); }
+
+    .hint {
+      position: fixed;
+      bottom: calc(var(--pad) + 3.25rem);
+      left: var(--pad);
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      color: var(--dim);
+      z-index: 12;
+      max-width: 20rem;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 600px) {
+      .hint { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="top-bar" aria-hidden="true"><div class="top-bar-fill" id="progressFill"></div></div>
+  <div class="corner-brand">DeOpenRouter</div>
+
+  <div class="deck" id="deck" aria-live="polite">
+    <section class="slide-frame active" data-slide>
+      <div class="slide-inner">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Decentralization &amp; Cryptocurrency</p>
+        <h1>DeOpenRouter</h1>
+        <p class="subtitle">A transparent, low-trust-assumption AI API marketplace prototype: Solidity, Next.js, Hono, and FastAPI. Trust coordination, pricing, payments, and audit anchoring on-chain; model inference off-chain.</p>
+        
+      </div>
+    </section>
+
+        <!-- 1 -->
+    <section class="slide-frame" data-slide>
+      <div class="slide-inner">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Background</p>
+        <h2>The rise of centralized AI gateways</h2>
+        <p class="lead">We are in an era of exploding LLMs and AI applications. To connect to various models, developers face complex APIs and billing systems.</p>
+        <ul class="clean">
+          <li><strong>Centralized AI Gateways (e.g. OpenRouter)</strong> emerged to solve this.</li>
+          <li>They act as <strong>aggregators</strong>, providing a unified API to route to different models and settle costs in one place.</li>
+          <li>This model significantly lowers integration costs and improves efficiency.</li>
+          <li><strong>Current Reality:</strong> While AI capabilities grow, distribution and access heavily rely on centralized platforms.</li>
+        </ul>
+      </div>
+    </section>
+
+        <!-- 2 -->
+    <section class="slide-frame" data-slide>
+      <div class="slide-inner">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Problem</p>
+        <h2>Centralized AI gateways are trust-heavy</h2>
+        <p class="lead">Typical routers consolidate pricing, routing, billing, and disputes under one operator. That is convenient, but users cannot easily verify quiet rule changes, whether a charge matched the published policy, or whether records could be rewritten after the fact.</p>
+        <ul class="clean">
+          <li><strong>Our narrative hook:</strong> which parts of the workflow belong on an EVM so rules and settlement are <strong>publicly observable and harder to tamper with</strong>?</li>
+          <li>We do <strong>not</strong> claim fully on-chain inference; we trade realism for clearer settlement and auditability.</li>
+        </ul>
+      </div>
+    </section>
+
+        <!-- 3 -->
+    <section class="slide-frame" data-slide>
+      <div class="slide-inner">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Solutions</p>
+        <h2>What we move on-chain </h2>
+        <ul class="clean">
+          <li>Provider identity commitments and metadata <strong>registered publicly</strong></li>
+          <li>Price updates are <strong>not instantly effective</strong>; they have observable delay</li>
+          <li>Each paid call leaves an <strong>auditable on-chain record</strong></li>
+          <li>Stake can be reduced via an on-chain <strong>slashing proposal with a challenge window</strong>; proceeds go to configurable <span class="mono">slashTreasury</span></li>
+          <li>External audit outcomes can be <strong>anchored as report hashes</strong></li>
+        </ul>
+        <p class="lead" style="margin-top:1.35rem;">Inference stays off-chain for practicality; settlement and auditing become more transparent.</p>
+      </div>
+    </section>
+
+        <!-- 4 -->
+    <section class="slide-frame" data-slide>
+      <div class="slide-inner">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>System</p>
+        <h2>Our System contains</h2>
+        <ul class="clean">
+          <li><strong>Smart contract marketplace:</strong> registration, stake, delayed price changes, per-call settlement, slashing, audit anchoring</li>
+          <li><strong>Web app:</strong> separate user and provider flows; browse, register, invoke (some on-chain detail panels are MVP mock layouts)</li>
+          <li><strong>Relay API:</strong> local mock or upstream OpenRouter proxy</li>
+          <li><strong>Audit server:</strong> structured checks on the relay; summaries can be written back on-chain</li>
+        </ul>
+        
+      </div>
+    </section>
+
+        <!-- 5 -->
+    <section class="slide-frame" data-slide>
+      <div class="slide-inner" style="max-width: 72rem;">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Work Flow</p>
+        <h2>End-to-end journey</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start;">
+          <div>
+            <ol class="steps">
+              <li>Provider registers on-chain: price, stake, metadata URI, identity and capability hashes, <span class="mono">endpointCommitment</span></li>
+              <li>Web lists providers; users can simulate calls via the relay API</li>
+              <li>Client hashes request and response, then calls on-chain <span class="mono">invoke(...)</span> with payment</li>
+              <li>Contract applies delayed price when due, transfers fees, refunds overpayment, stores call record, emits <span class="mono">CallRecorded</span></li>
+              <li>If auditing is enabled: probe relay off-chain → canonical JSON → optional off-chain publish → <span class="mono">recordAudit</span> / <span class="mono">recordAuditWithUri</span> anchors <span class="mono">keccak256(canonicalJson)</span></li>
+            </ol>
+          </div>
+          
+          <div style="background: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%); border: 1px solid var(--line); border-radius: 4px; padding: 1.5rem; font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem; color: var(--fg-soft);">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--line);">
+              <span style="color: var(--muted);">On-Chain (EVM)</span>
+              <span style="color: var(--muted);">Off-Chain</span>
+            </div>
+            
+            <div style="position: relative;">
+              <!-- Flow lines -->
+              <div style="position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: dashed 1px var(--line-strong); z-index: 0;"></div>
+              
+              <!-- Steps -->
+              <div style="display: flex; flex-direction: column; gap: 1.2rem; position: relative; z-index: 1;">
+                
+                <!-- Step 1 -->
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                  <div style="flex: 1; text-align: right;">
+                    <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line-strong); padding: 0.5rem; border-radius: 2px; display: inline-block;">
+                      <span style="color: #a78bfa;">register()</span> + Stake
+                    </div>
+                  </div>
+                  <div style="width: 2rem; text-align: center; color: var(--muted);">←</div>
+                  <div style="flex: 1;">
+                    <div style="color: var(--muted);">Provider</div>
+                  </div>
+                </div>
+                
+                <!-- Step 2 -->
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                  <div style="flex: 1; text-align: right;">
+                    <div style="color: var(--muted);">Read Providers</div>
+                  </div>
+                  <div style="width: 2rem; text-align: center; color: var(--muted);">←</div>
+                  <div style="flex: 1;">
+                    <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line-strong); padding: 0.5rem; border-radius: 2px; display: inline-block;">
+                      User Client / Web
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Step 2b (Inference) -->
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                  <div style="flex: 1;"></div>
+                  <div style="width: 2rem; text-align: center; color: #34d399;">↕</div>
+                  <div style="flex: 1;">
+                    <div style="background: rgba(52, 211, 153, 0.1); border: 1px solid rgba(52, 211, 153, 0.3); padding: 0.5rem; border-radius: 2px; display: inline-block; color: #34d399;">
+                      Relay API (Inference)
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Step 3 -->
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                  <div style="flex: 1; text-align: right;">
+                    <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line-strong); padding: 0.5rem; border-radius: 2px; display: inline-block;">
+                      <span style="color: #60a5fa;">invoke()</span> + ETH
+                    </div>
+                  </div>
+                  <div style="width: 2rem; text-align: center; color: var(--muted);">←</div>
+                  <div style="flex: 1;">
+                    <div style="color: var(--muted);">Hash(Req+Resp)</div>
+                  </div>
+                </div>
+                
+                <!-- Step 4 -->
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                  <div style="flex: 1; text-align: right;">
+                    <div style="color: var(--dim); font-size: 0.75rem;">Emit <span style="color: #9ca3af;">CallRecorded</span><br>Transfer Fee</div>
+                  </div>
+                  <div style="width: 2rem; text-align: center; color: var(--muted);">→</div>
+                  <div style="flex: 1;">
+                    <div style="color: var(--muted);">Provider Wallet</div>
+                  </div>
+                </div>
+                
+                <!-- Step 5 -->
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                  <div style="flex: 1; text-align: right;">
+                    <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line-strong); padding: 0.5rem; border-radius: 2px; display: inline-block;">
+                      <span style="color: #f472b6;">recordAudit()</span>
+                    </div>
+                  </div>
+                  <div style="width: 2rem; text-align: center; color: var(--muted);">←</div>
+                  <div style="flex: 1;">
+                    <div style="background: rgba(244, 114, 182, 0.1); border: 1px solid rgba(244, 114, 182, 0.3); padding: 0.5rem; border-radius: 2px; display: inline-block; color: #f472b6;">
+                      Audit Server
+                    </div>
+                  </div>
+                </div>
+                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+        <!-- 6 -->
+    <section class="slide-frame" data-slide>
+      <div class="slide-inner" style="max-width: 72rem;">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Governance</p>
+        <h2>Governance, Roles &amp; Slashing</h2>
+        <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 2.5rem; margin-top: 2rem; align-items: stretch;">
+          
+          <!-- Left side: Slashing Lifecycle -->
+          <div style="background: linear-gradient(145deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.01) 100%); border: 1px solid var(--line); border-radius: 4px; padding: 2rem;">
+            <h3 style="font-size: 0.85rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 1.5rem; border-bottom: 1px solid var(--line); padding-bottom: 0.8rem;">The Slashing Lifecycle</h3>
+            
+            <div style="display: flex; flex-direction: column; gap: 1.6rem; position: relative;">
+              <div style="position: absolute; left: 0.7rem; top: 1.5rem; bottom: 1.5rem; width: 1px; background: dashed 1px var(--line-strong); z-index: 0;"></div>
+              
+              <div style="display: flex; gap: 1.2rem; position: relative; z-index: 1;">
+                <div style="width: 1.5rem; height: 1.5rem; border-radius: 50%; background: var(--bg0); border: 2px solid #f87171; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 0.1rem;"></div>
+                <div>
+                  <div style="font-family: 'IBM Plex Mono', monospace; font-size: 1.05rem; color: #f87171; margin-bottom: 0.3rem;">proposeSlash()</div>
+                  <p style="font-size: 1rem; color: var(--fg-soft); line-height: 1.5;">Initiated by <span class="mono">slashOperator</span>. Marks the provider as penalized.</p>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 1.2rem; position: relative; z-index: 1;">
+                <div style="width: 1.5rem; height: 1.5rem; border-radius: 50%; background: var(--bg0); border: 2px solid #fbbf24; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 0.1rem;"></div>
+                <div>
+                  <div style="font-family: 'IBM Plex Mono', monospace; font-size: 1.05rem; color: #fbbf24; margin-bottom: 0.3rem;">challengeSlashProposal()</div>
+                  <p style="font-size: 1rem; color: var(--fg-soft); line-height: 1.5;">Provider disputes within the challenge window to block execution.</p>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 1.2rem; position: relative; z-index: 1;">
+                <div style="width: 1.5rem; height: 1.5rem; border-radius: 50%; background: var(--bg0); border: 2px solid #60a5fa; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 0.1rem;"></div>
+                <div>
+                  <div style="font-family: 'IBM Plex Mono', monospace; font-size: 1.05rem; color: #60a5fa; margin-bottom: 0.3rem;">finalizeSlashProposal()</div>
+                  <p style="font-size: 1rem; color: var(--fg-soft); line-height: 1.5;">ETH is seized and routed to the <span class="mono">slashTreasury</span> multisig.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Right side: Roles and Audits -->
+          <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--line); border-radius: 4px; padding: 1.5rem;">
+              <h3 style="font-size: 0.85rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.8rem;">Role Rotation Safety</h3>
+              <p style="font-size: 1.05rem; color: var(--fg-soft); line-height: 1.6;">Critical roles (<span class="mono">slashOperator</span>, <span class="mono">auditRecorder</span>, <span class="mono">slashTreasury</span>) require a two-step <span class="mono" style="color: #a78bfa;">propose* → accept*</span> handshake to prevent accidental loss of control.</p>
+            </div>
+            
+            <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--line); border-radius: 4px; padding: 1.5rem;">
+              <h3 style="font-size: 0.85rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.8rem;">Multi-Auditor Flow</h3>
+              <p style="font-size: 1.05rem; color: var(--fg-soft); line-height: 1.6;">Beyond direct anchoring, a round-based flow (<span class="mono" style="color: #34d399;">beginAuditRound</span> + <span class="mono" style="color: #34d399;">attestAudit</span>) allows an allowlisted quorum of auditors to submit findings.</p>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+    </section>
+
+        <!-- 7 -->
+    <section class="slide-frame" data-slide>
+      <div class="slide-inner" style="max-width: 72rem;">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Audit Capability</p>
+        <h2>6D Risk Matrix & On-Chain Anchoring</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3.5rem; align-items: center; margin-top: 2rem;">
+          
+          <!-- Left: Flow -->
+          <div>
+            <div style="display: flex; flex-direction: column; gap: 2rem;">
+              <div style="display: flex; gap: 1.5rem; align-items: flex-start;">
+                <div style="font-family: 'IBM Plex Mono', monospace; color: var(--dim); font-size: 1.5rem; font-weight: 500; line-height: 1;">01</div>
+                <div>
+                  <h4 style="font-size: 1.25rem; font-weight: 500; color: var(--fg); margin-bottom: 0.4rem;">Execute Audit</h4>
+                  <p style="font-size: 1.05rem; color: var(--muted); line-height: 1.5;"><span class="mono">POST /v1/audit</span> on the <span class="mono">FastAPI</span> server runs structural probes against Relay API.</p>
+                </div>
+              </div>
+              
+              <div style="display: flex; gap: 1.5rem; align-items: flex-start;">
+                <div style="font-family: 'IBM Plex Mono', monospace; color: var(--dim); font-size: 1.5rem; font-weight: 500; line-height: 1;">02</div>
+                <div>
+                  <h4 style="font-size: 1.25rem; font-weight: 500; color: var(--fg); margin-bottom: 0.4rem;">Canonical Hash</h4>
+                  <p style="font-size: 1.05rem; color: var(--muted); line-height: 1.5;">Report JSON is canonically serialized and hashed to produce deterministic evidence.</p>
+                </div>
+              </div>
+              
+              <div style="display: flex; gap: 1.5rem; align-items: flex-start;">
+                <div style="font-family: 'IBM Plex Mono', monospace; color: var(--dim); font-size: 1.5rem; font-weight: 500; line-height: 1;">03</div>
+                <div>
+                  <h4 style="font-size: 1.25rem; font-weight: 500; color: var(--fg); margin-bottom: 0.4rem;">On-Chain Anchoring</h4>
+                  <p style="font-size: 1.05rem; color: var(--muted); line-height: 1.5;">Scheduler writes <span class="mono">reportHash</span> via <span class="mono" style="color: #60a5fa;">recordAudit</span> for public verification.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: 6D Breakdown -->
+          <div>
+            <div style="background: linear-gradient(145deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.01) 100%); border: 1px solid var(--line); border-radius: 4px; padding: 2rem;">
+              <h3 style="font-size: 0.85rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 1.5rem; border-bottom: 1px solid var(--line); padding-bottom: 0.8rem;">Comprehensive 6D Checks</h3>
+              <ul style="list-style: none; padding: 0; margin: 0; color: var(--fg-soft); font-size: 1.15rem; line-height: 1.8;">
+                <li style="margin-bottom: 1rem;">
+                  <strong style="color: var(--fg); display: inline-block; width: 5.5rem;">D1-D2</strong> 
+                  <span style="color: var(--dim);">|</span> Hidden injection &amp; override
+                </li>
+                <li style="margin-bottom: 1rem;">
+                  <strong style="color: var(--fg); display: inline-block; width: 5.5rem;">D3-D4</strong> 
+                  <span style="color: var(--dim);">|</span> Tool substitution &amp; leak
+                </li>
+                <li>
+                  <strong style="color: var(--fg); display: inline-block; width: 5.5rem;">D5-D6</strong> 
+                  <span style="color: var(--dim);">|</span> Stream integrity &amp; Web3 risk
+                </li>
+              </ul>
+              <div style="margin-top: 2rem; padding-top: 1.2rem; border-top: 1px dashed var(--line-strong); display: flex; justify-content: space-between;">
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 0.95rem; color: #34d399; background: rgba(52, 211, 153, 0.1); padding: 0.3rem 0.8rem; border-radius: 2px;">LOW</span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 0.95rem; color: #fbbf24; background: rgba(251, 191, 36, 0.1); padding: 0.3rem 0.8rem; border-radius: 2px;">MEDIUM</span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 0.95rem; color: #f87171; background: rgba(248, 113, 113, 0.1); padding: 0.3rem 0.8rem; border-radius: 2px;">HIGH</span>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+    </section>
+
+        <!-- 8 -->
+    <section class="slide-frame" data-slide>
+      <div class="slide-inner">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Weakness and Future Development</p>
+        <h2>Economic security</h2>
+        <p class="lead">Economic safety still depends on multisig and treasury configuration. The chain implements slashing <strong>delay + challenge</strong> and auditor <strong>allowlisted multisig</strong>, but there is no full arbitration market, escrow settlement, or cryptographic proof of correct inference.</p>
+      </div>
+    </section>
+  </div>
+
+        <!-- 9 -->
+    <section class="slide-frame" data-slide>
+      <div class="slide-inner" style="max-width: 68rem;">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Deep Dive: Smart Contracts 1/3</p>
+        <h2>Provider Lifecycle &amp; Market Entry</h2>
+        <div class="grid-2">
+          <div class="card">
+            <h3 style="color: #a78bfa;">register() &amp; Stake</h3>
+            <p>Providers join the network by staking ETH and registering their <span class="mono">endpointCommitment</span>, identity hash, and metadata. Stake acts as a security bond.</p>
+          </div>
+          <div class="card">
+            <h3 style="color: #fbbf24;">announcePriceChange()</h3>
+            <p>Protects users from "rug-pull" price hikes. New prices do not take effect immediately; they are subject to a mandatory <span class="mono">priceDelayBlocks</span> window.</p>
+          </div>
+          <div class="card">
+            <h3 style="color: #60a5fa;">getEffectivePrice()</h3>
+            <p>Lazily evaluates pending prices. It cleanly separates price announcement from execution without requiring background cron jobs.</p>
+          </div>
+          <div class="card">
+            <h3 style="color: #f87171;">deactivate() &amp; withdrawStake()</h3>
+            <p>Providers cannot hit-and-run. Withdrawing stake requires deactivation followed by a mandatory lock-up period to ensure accountability for recent calls.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+        <!-- 10 -->
+    <section class="slide-frame" data-slide>
+      <div class="slide-inner" style="max-width: 68rem;">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Deep Dive: Smart Contracts 2/3</p>
+        <h2>Pricing &amp; The Settlement Engine</h2>
+        <p class="lead" style="margin-bottom: 2rem;">The <span class="mono" style="color: #34d399;">invoke()</span> function acts as the transactional hub bridging off-chain inference with on-chain clearing.</p>
+        
+        <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--line); border-radius: 4px; padding: 2rem;">
+          <div style="display: flex; flex-direction: column; gap: 1.8rem;">
+            
+            <div style="display: flex; gap: 1.5rem; align-items: flex-start;">
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: 1.2rem; color: #a78bfa; margin-top: 0.2rem;">01.</div>
+              <div>
+                <h4 style="font-size: 1.15rem; font-weight: 500; color: var(--fg); margin-bottom: 0.4rem;">Payment Clearing</h4>
+                <p style="font-size: 1.05rem; color: var(--fg-soft); line-height: 1.5;">Automatically calculates the <span class="mono">effectivePrice</span>, routes the exact ETH fee to the provider, and instantly refunds any excess payment back to the user.</p>
+              </div>
+            </div>
+            
+            <div style="display: flex; gap: 1.5rem; align-items: flex-start;">
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: 1.2rem; color: #34d399; margin-top: 0.2rem;">02.</div>
+              <div>
+                <h4 style="font-size: 1.15rem; font-weight: 500; color: var(--fg); margin-bottom: 0.4rem;">Evidence Anchoring</h4>
+                <p style="font-size: 1.05rem; color: var(--fg-soft); line-height: 1.5;">Accepts <span class="mono">requestHash</span> and <span class="mono">responseHash</span> generated off-chain, tying the inference result to the payment transaction.</p>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 1.5rem; align-items: flex-start;">
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: 1.2rem; color: #fbbf24; margin-top: 0.2rem;">03.</div>
+              <div>
+                <h4 style="font-size: 1.15rem; font-weight: 500; color: var(--fg); margin-bottom: 0.4rem;">Event Emission</h4>
+                <p style="font-size: 1.05rem; color: var(--fg-soft); line-height: 1.5;">Emits the <span class="mono">CallRecorded</span> event, creating an immutable, publicly verifiable ledger entry for future audits and dispute resolution.</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+        <!-- 11 -->
+    <section class="slide-frame" data-slide>
+      <div class="slide-inner" style="max-width: 72rem;">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Deep Dive: Smart Contracts 3/3</p>
+        <h2>Governance parameterization</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; margin-top: 2rem; align-items: stretch;">
+          
+          <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--line); border-radius: 4px; padding: 1.5rem;">
+              <h3 style="font-size: 0.85rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.8rem;">Treasury Control</h3>
+              <p style="font-size: 1.05rem; color: var(--fg-soft); line-height: 1.6;">The <span class="mono" style="color: #60a5fa;">setSlashTreasury()</span> function ensures slashed ETH flows to a community pool (like a DAO or insurance fund), explicitly separating penalty execution from financial reward.</p>
+            </div>
+            <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--line); border-radius: 4px; padding: 1.5rem;">
+              <h3 style="font-size: 0.85rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.8rem;">Challenge Window Sizing</h3>
+              <p style="font-size: 1.05rem; color: var(--fg-soft); line-height: 1.6;">The <span class="mono" style="color: #fbbf24;">setSlashChallengePeriodBlocks()</span> sets a minimum delay allowing providers to post counter-evidence off-chain before finalization occurs.</p>
+            </div>
+          </div>
+          
+          <div style="background: linear-gradient(145deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.01) 100%); border: 1px solid var(--line); border-radius: 4px; padding: 2rem;">
+            <h3 style="font-size: 0.85rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 1.5rem; border-bottom: 1px solid var(--line); padding-bottom: 0.8rem;">Role Rotation Safety</h3>
+            <p style="font-size: 1.05rem; color: var(--fg-soft); line-height: 1.6; margin-bottom: 1.5rem;">Critical roles require a two-step handshake to prevent accidental loss of control or hijacking.</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+              <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="font-family: 'IBM Plex Mono', monospace; font-size: 1.05rem; color: #a78bfa; width: 14rem; text-align: right;">propose*()</div>
+                <div style="color: var(--dim);">→</div>
+                <div style="color: var(--muted); font-size: 0.95rem;">Set <span class="mono">pendingOperator</span></div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="font-family: 'IBM Plex Mono', monospace; font-size: 1.05rem; color: #34d399; width: 14rem; text-align: right;">accept*()</div>
+                <div style="color: var(--dim);">→</div>
+                <div style="color: var(--muted); font-size: 0.95rem;">Must be called by pending</div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="font-family: 'IBM Plex Mono', monospace; font-size: 1.05rem; color: #f87171; width: 14rem; text-align: right;">cancel*Proposal()</div>
+                <div style="color: var(--dim);">→</div>
+                <div style="color: var(--muted); font-size: 0.95rem;">Abort ongoing transfer</div>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+    </section>
+
+        <!-- 12 — closing -->
+    <section class="slide-frame" data-slide>
+      <div class="slide-inner">
+        <p class="kicker"><span class="dot" aria-hidden="true"></span>Thank you</p>
+        <h1>End of presentation</h1>
+        <p class="subtitle">Thanks for your time. We are happy to take questions and discuss ideas, feedback, or collaboration.</p>
+      </div>
+    </section>
+
+  <div class="controls">
+
+    <div class="btn-group">
+      <button type="button" class="btn" id="prev" aria-label="Previous slide">←</button>
+      <button type="button" class="btn" id="next" aria-label="Next slide">→</button>
+    </div>
+    <div class="meta-block">
+      <span id="progress">01 / 12</span>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var slides = Array.prototype.slice.call(document.querySelectorAll("[data-slide]"));
+      var i = 0;
+      var total = slides.length;
+
+      var deck = document.getElementById("deck");
+      var progressFill = document.getElementById("progressFill");
+
+      function applyProgress() {
+        var pct = total > 1 ? (i / (total - 1)) * 100 : 100;
+        progressFill.style.width = pct + "%";
+      }
+
+      function show(nextIndex) {
+        var target = Math.max(0, Math.min(nextIndex, total - 1));
+        if (target === i) return;
+
+        var current = slides[i];
+        var next = slides[target];
+        var forward = target > i;
+
+        next.classList.add("active", "entering");
+        current.classList.add("exiting");
+        window.requestAnimationFrame(function () {
+          next.classList.remove("entering");
+        });
+        window.setTimeout(function () {
+          current.classList.remove("active", "exiting");
+          i = target;
+          document.getElementById("progress").textContent =
+            String(i + 1).padStart(2, "0") + " / " + String(total).padStart(2, "0");
+          applyProgress();
+        }, forward ? 150 : 170);
+      }
+
+      function showImmediate(nextIndex) {
+        i = Math.max(0, Math.min(nextIndex, total - 1));
+        slides.forEach(function (s, idx) {
+          s.classList.toggle("active", idx === i);
+        });
+        document.getElementById("progress").textContent =
+          String(i + 1).padStart(2, "0") + " / " + String(total).padStart(2, "0");
+        applyProgress();
+      }
+
+      document.getElementById("prev").addEventListener("click", function () { show(i - 1); });
+      document.getElementById("next").addEventListener("click", function () { show(i + 1); });
+
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "f" || e.key === "F") {
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(function () {});
+          } else {
+            document.exitFullscreen();
+          }
+          e.preventDefault();
+          return;
+        }
+        if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") {
+          e.preventDefault();
+          show(i + 1);
+        } else if (e.key === "ArrowLeft" || e.key === "PageUp") {
+          e.preventDefault();
+          show(i - 1);
+        } else if (e.key === "Home") {
+          e.preventDefault();
+          showImmediate(0);
+        } else if (e.key === "End") {
+          e.preventDefault();
+          showImmediate(total - 1);
+        }
+      });
+
+      deck.addEventListener("click", function (e) {
+        if (e.target.closest(".btn") || e.target.closest("button")) return;
+        var w = window.innerWidth;
+        if (e.clientX > w * 0.55) show(i + 1);
+        else show(i - 1);
+      });
+
+      showImmediate(0);
+    })();
+  </script>
+</body>
+</html>
+
